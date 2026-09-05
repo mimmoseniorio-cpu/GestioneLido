@@ -1,124 +1,163 @@
 # Registro delle decisioni
 
 Stati: `APERTA` · `DECISA` · `SUPERATA`.
-Le decisioni marcate **DECISIONE RICHIESTA** bloccano il lavoro e richiedono
-una risposta dell'utente. Per ognuna c'è già una proposta: basta approvarla.
+Le decisioni marcate **DECISIONE RICHIESTA** bloccano il lavoro e richiedono una
+risposta dell'utente.
+
+Le decisioni `DECISA` in FASE 1 sono state prese secondo `AGENT_PROTOCOL.md` §11:
+scelta la soluzione più sensata, motivata, e segnalata. Restano contestabili —
+cambiarle ora costa poco, dopo F3 costa una migrazione.
+
+| ID | Argomento | Stato |
+|---|---|---|
+| `D-01` | Conflitto assenza già rivenduta | **APERTA — DECISIONE RICHIESTA** |
+| `D-02` | Granularità della prenotazione | DECISA |
+| `D-03` | Unità del credito | DECISA |
+| `D-04` | Identificativo cliente | DECISA |
+| `D-05` | Auth area stagionale | DECISA |
+| `D-06` | Enforcement no-overlap | DECISA |
+| `D-07` | Monolite vs backend separato | DECISA |
+| `D-08` | Strategia multi-tenant | DECISA |
+| `D-09` | Hosting e database | DECISA in parte — fornitore da scegliere in F4 |
+| `D-10` | Stato ombrellone derivato | DECISA |
+| `D-11` | Entità `Season` | DECISA |
+| `D-12` | Cutoff per le assenze | DECISA — default da confermare |
+| `D-13` | Tetto al credito stagionale | DECISA — default da confermare |
+| `D-14` | Chiavi esterne composte | DECISA |
+| `D-15` | `visible_number` testuale | DECISA |
 
 ---
 
 ### D-01 — Stagionale che annulla un'assenza il cui giorno è già stato rivenduto
-**Stato:** APERTA · **DECISIONE RICHIESTA** · blocca `RF-SEA-05`, `RD-03`
+**Stato:** APERTA · **DECISIONE RICHIESTA** · blocca `F6-08`
 
-**Contesto.** Lo stagionale dichiara "il 12 agosto non vengo". Il gestore vende
-il posto a un giornaliero. Il 10 agosto lo stagionale cambia idea. Due clienti,
-un ombrellone. Qualcuno resta scontento: la policy decide chi.
+Lo stagionale dichiara "il 12 agosto non vengo". Il gestore vende il posto. Il
+10 agosto lo stagionale cambia idea. Due clienti, un ombrellone.
 
-**Opzioni**
-- **A — Assenza irrevocabile una volta venduta.** Chi ha pagato tiene il posto.
-  Lo stagionale riceve il credito maturato, eventualmente maggiorato, e la
-  proposta di un ombrellone alternativo equivalente se disponibile.
-- **B — Priorità allo stagionale.** Il giornaliero viene ricollocato o rimborsato.
-- **C — Configurabile per stabilimento**, con default A.
+**Proposta: `IRREVOCABLE` come default, configurabile per stabilimento.**
+Chi ha pagato tiene il posto; lo stagionale conserva il credito e riceve, se
+disponibile, un ombrellone alternativo per quel giorno.
 
-**Proposta: C con default A.** L'irrevocabilità è l'unica regola che rende
-l'assenza vendibile con serenità: se il gestore teme di dover disdire a un
-cliente pagante, non rivenderà mai il posto e la funzione più distintiva del
-prodotto muore. Il credito maggiorato compensa lo stagionale. La configurabilità
-costa poco ora e molto dopo.
+**Motivo.** Non è una questione di equità astratta ma del comportamento del
+gestore: se sa di poter essere costretto a disdire a un cliente che ha già
+pagato ed è magari già arrivato, non rivenderà mai il posto — e l'unica funzione
+che genera ricavo aggiuntivo smette di esistere. Alternative disponibili come
+configurazione: `SEASONAL_PRIORITY` e `MANUAL`, mai automatiche.
+
+Analisi completa in `docs/08` §8.
 
 ---
 
 ### D-02 — Granularità della prenotazione
-**Stato:** APERTA · proposta pronta
+**Stato:** DECISA (2026-09-05)
 
-**Proposta:** giornata intera nell'MVP. Intervalli inclusivi `[start_date, end_date]`.
-Il modello dati resta compatibile con l'aggiunta futura di fasce (mattina/pomeriggio)
-tramite una colonna `slot` con default `FULL_DAY`.
-
----
+Giornata intera. Intervalli inclusivi `[start_date, end_date]`: il 10–12 agosto
+sono tre giorni, come dice il gestore. Il modello resta compatibile con una
+colonna `slot` (default `FULL_DAY`) per le mezze giornate future (`R5`).
 
 ### D-03 — Unità del credito stagionale
-**Stato:** APERTA · proposta pronta
+**Stato:** DECISA (2026-09-05)
 
-**Proposta:** **euro**, non punti. Il calcolo di default è una percentuale
-configurabile dell'incasso della rivendita (default suggerito: 30%). I punti
-richiedono un tasso di conversione che nessuno ha ancora definito e complicano
-la conversazione con il cliente. `CreditTransaction` memorizza comunque
-`amount` + `unit`, quindi passare a punti in futuro non è un cambio strutturale.
-
----
+**Euro**, non punti. Default: 30% dell'incasso della rivendita, configurabile.
+I punti richiedono un tasso di conversione che nessuno ha definito e complicano
+la conversazione con il cliente. `CreditTransaction` memorizza `amount` + `unit`,
+quindi passare a punti resta un cambio di configurazione, non di schema.
 
 ### D-04 — Identificativo operativo del cliente
-**Stato:** APERTA · proposta pronta
+**Stato:** DECISA (2026-09-05)
 
-**Proposta:** telefono normalizzato in formato E.164, con unique
-`(beach_club_id, phone_normalized)`. È il dato che il gestore ha sempre e con
-cui cerca al telefono. Email opzionale. Duplicati bloccati con proposta di
-merge invece che errore secco.
-
----
+Telefono normalizzato E.164, unique `(beach_club_id, phone_normalized)`. È il
+dato che il gestore ha sempre e con cui cerca mentre è al telefono. I duplicati
+non danno errore secco: propongono l'unione.
 
 ### D-05 — Autenticazione dell'area stagionale
-**Stato:** APERTA · proposta pronta
+**Stato:** DECISA (2026-09-05)
 
-**Proposta:** magic link senza password. Token lungo, legato al contratto
-stagionale, valido per la stagione, revocabile dal gestore. Il link si manda
-via WhatsApp. Nessuna password da ricordare per un cliente che usa il servizio
-tre volte in un'estate.
-
----
+Magic link senza password: token ≥ 32 byte, memorizzato hashato, legato al
+contratto, valido per la stagione, revocabile. Superficie minima (`docs/02` §4.2)
+per contenere il rischio del link inoltrato su WhatsApp (`C-06`).
 
 ### D-06 — Come si impedisce l'overlap
-**Stato:** APERTA · proposta pronta
+**Stato:** DECISA (2026-09-05)
 
-**Proposta:** vincolo di esclusione PostgreSQL (`btree_gist` + `EXCLUDE`), come
-in `RD-02` del brief, **oltre** ai controlli applicativi. Il solo controllo
-applicativo lascia passare due richieste concorrenti. Questa scelta vincola a
-PostgreSQL: è accettabile e già nelle preferenze.
-
----
+Vincolo di esclusione PostgreSQL (`btree_gist` + `EXCLUDE`) **oltre** ai
+controlli applicativi. Il solo controllo applicativo lascia passare due richieste
+concorrenti. Vincola a PostgreSQL: accettato, ed è già la preferenza del brief.
 
 ### D-07 — Monolite Next.js vs backend separato
-**Stato:** APERTA · proposta pronta
+**Stato:** DECISA (2026-09-05)
 
-**Proposta:** applicazione Next.js unica con API routes versionate sotto
-`/api/v1`, e logica di dominio in un livello `domain/` completamente isolato
-dal framework. Un backend separato aggiunge deploy, autenticazione fra servizi
-e latenza senza portare nulla a uno stabilimento con qualche decina di utenti.
-L'isolamento del livello `domain/` rende comunque possibile estrarre un
-servizio in futuro senza riscrivere le regole.
-
----
+Applicazione Next.js unica, API sotto `/api/v1`, logica in un livello `domain/`
+isolato da framework e ORM. Un backend separato aggiungerebbe deploy,
+autenticazione fra servizi e latenza senza benefici a questa scala; l'isolamento
+del dominio consente comunque di estrarlo in futuro senza riscrivere le regole.
 
 ### D-08 — Strategia multi-tenant
-**Stato:** APERTA · proposta pronta
+**Stato:** DECISA (2026-09-05)
 
-**Proposta:** database unico, colonna `beach_club_id` su ogni tabella di
-dominio, scoping forzato in un repository layer che rende impossibile scrivere
-una query non filtrata, più test automatici di isolamento. Row Level Security
-di Postgres come rinforzo successivo, non come unica difesa nell'MVP.
-
----
+Database unico, `beach_club_id` ovunque, scoping forzato dal repository layer,
+lint rule contro l'uso diretto di Prisma, test di isolamento automatici. Le
+risorse di altri tenant rispondono 404, mai 403. RLS come rinforzo successivo.
 
 ### D-09 — Hosting e database
-**Stato:** APERTA · proposta pronta
+**Stato:** DECISA in parte (2026-09-05)
 
-**Proposta:** deploy su piattaforma serverless per il frontend/API e Postgres
-gestito, con tre ambienti separati (development, staging, production) e backup
-automatici. Scelta del fornitore da confermare in F4 in base a costi e a dove
-l'utente ha già account. Vincolo: il fornitore deve supportare estensioni
-Postgres (`btree_gist`), altrimenti `D-06` non è applicabile.
-
----
+Deciso: PostgreSQL gestito con estensioni abilitate (`btree_gist` è vincolante),
+tre ambienti separati, backup automatici con ripristino a un punto nel tempo.
+Da decidere in F4: il fornitore, in base ai costi e a dove l'utente ha già
+account. L'applicazione non dipende da servizi proprietari.
 
 ### D-10 — Lo stato dell'ombrellone è derivato, non persistito
 **Stato:** DECISA (2026-09-05)
 
-**Motivo.** Uno stato persistito si disallinea al primo caso limite (modifica
-periodo, annullamento, ritorno anticipato dello stagionale) e il disallineamento
-si manifesta come doppia vendita davanti al cliente. La derivazione ha un costo
-di calcolo trascurabile su 100 ombrelloni e si può memoizzare per giornata.
+Uno stato persistito si disallinea al primo caso limite e il disallineamento si
+manifesta come doppia vendita davanti al cliente. La derivazione costa
+microsecondi su 96 ombrelloni ed elimina la necessità di un processo notturno
+per il rientro degli stagionali (`docs/08` §5.3). Unico stato memorizzato:
+`Umbrella.blocked`, che non è derivabile da nulla.
 
-**Conseguenze.** Nessuna colonna `status` su `Umbrella` se non `blocked`.
-La funzione `statoOmbrellone(umbrellaId, data)` di `RD-01` è il punto unico di
-verità ed è coperta da test esaustivi.
+### D-11 — Introdurre l'entità `Season`
+**Stato:** DECISA (2026-09-05) · nata dall'analisi, non prevista dal brief
+
+Senza `Season` un contratto stagionale non ha contenitore temporale, il listino
+non distingue gli anni, lo storico si mescola e il rinnovo annuale (`R9`) diventa
+una migrazione manuale. Aggiungerla dopo tocca quasi tutte le tabelle;
+aggiungerla ora costa una colonna. Vedi `C-01` e `docs/03` §3.2.
+
+### D-12 — Orario di taglio per le assenze
+**Stato:** DECISA (2026-09-05) · **default da confermare**
+
+Un'assenza dichiarata alle 11:30 di ferragosto libera un posto che nessuno
+comprerà più: i clienti sono arrivati alle 9. Se il sistema accredita comunque
+un credito, lo stabilimento paga per nulla.
+
+**Default proposto:** entro le 20:00 del giorno precedente, nel fuso dello
+stabilimento. Dopo il taglio l'assenza si registra comunque — al gestore serve
+saperlo — ma con `is_late = true` e senza maturazione di credito, e la UI lo dice
+**prima** della conferma. Configurabile. Vedi `C-02` e `docs/08` §4.2.
+
+### D-13 — Tetto al credito stagionale
+**Stato:** DECISA (2026-09-05) · **default da confermare**
+
+Un credito senza limite incentiva le assenze speculative ("dichiaro, tanto se poi
+vengo annullo"), che producono posti mostrati come vendibili e poi ritirati.
+
+**Default proposto:** tetto stagionale configurabile al credito maturabile per
+contratto, più il conteggio delle assenze annullate visibile al gestore. Il
+credito matura comunque solo a rivendita avvenuta, che è già il freno principale.
+Vedi `C-03` e `docs/08` §7.2.
+
+### D-14 — Chiavi esterne composte per l'integrità tenant
+**Stato:** DECISA (2026-09-05)
+
+Ogni FK che attraversa entità include `beach_club_id`, così il database stesso
+impedisce di collegare righe di tenant diversi. Costa un indice unique
+`(beach_club_id, id)` per tabella e rende **strutturalmente impossibile** l'errore
+più grave del sistema. Vedi `docs/03` §5.7.
+
+### D-15 — `visible_number` è testo, non intero
+**Stato:** DECISA (2026-09-05)
+
+Esistono ombrelloni `63A`, `12bis`, numerazioni con lettera di fila. Un intero
+renderebbe impossibile rappresentare mappe reali e costringerebbe a una
+migrazione al primo stabilimento con numerazione irregolare. Vedi `C-07`.
