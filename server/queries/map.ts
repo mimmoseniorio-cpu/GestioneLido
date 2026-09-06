@@ -30,6 +30,8 @@ export type MapUmbrella = {
   period: { from: string; to: string } | null
   /** valorizzato quando il posto è vendibile perché lo stagionale è assente */
   absence: { id: string; from: string; to: string; seasonalName: string } | null
+  /** valorizzato su ogni posto stagionale: serve a rimandare il magic link */
+  seasonalContractId: string | null
   reservationId: string | null
   isTemporarySlot: boolean
   amountDueCents: number | null
@@ -142,6 +144,7 @@ export async function getMapForDate(
         ? { id: absence.id, from: iso(absence.startDate), to: iso(absence.endDate),
             seasonalName: `${contract.customer.firstName} ${contract.customer.lastName}` }
         : null,
+      seasonalContractId: contract?.id ?? null,
       reservationId: item?.reservationId ?? null,
       isTemporarySlot: item?.isTemporarySlot ?? false,
       amountDueCents: item ? Math.max(0, item.reservation.totalCents - pagato) : null,

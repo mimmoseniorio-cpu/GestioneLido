@@ -69,11 +69,11 @@ tocca al massimo 5–6 file e ha un criterio di "fatto" verificabile.
 | ✅ F6-03 | Schermata ricerca disponibilità (S-03) | 🟡 | Scenario B ≤ 4 interazioni |
 | ✅ F6-04 | Soluzioni parziali quando non c'è copertura completa | 🔴 | T-30 verde, mai "nessun risultato" |
 | F6-05 | CRUD contratti stagionali | 🟡 | T-27, T-28 verdi |
-| F6-06 | Magic link: generazione, hash, revoca, scadenza | 🔴 | T-19, T-62, T-63 verdi |
+| ✅ F6-06 | Magic link: generazione, hash, revoca, scadenza | 🔴 | T-19, T-62, T-63 verdi |
 | ✅ F6-07 | **`declareAbsence()`** con cutoff (`docs/08` §4) | 🔴 | T-01…T-06, T-17 verdi |
 | ✅ F6-08 | **`cancelAbsence()`** con spezzatura dell'intervallo | 🔴 | **T-12** verde |
-| F6-09 | Area cliente C-01: la mia postazione | 🟡 | Leggibile senza istruzioni |
-| F6-10 | Area cliente C-02: assenza in 3 tap | 🔴 | Scenario C ≤ 3 tap |
+| ✅ F6-09 | Area cliente C-01: la mia postazione | 🟡 | Leggibile senza istruzioni |
+| ✅ F6-10 | Area cliente C-02: assenza in 3 tap | 🔴 | Scenario C ≤ 3 tap |
 | F6-11 | Registrazione assenza da parte dell'operatore | 🟡 | ≤ 4 interazioni |
 | F6-12 | **`sellTemporarySlot()`** con credito in transazione | 🔴 | T-07, **T-08**, T-09 verdi |
 | F6-13 | Pannello stagionale assente con credito visibile prima della vendita | 🟡 | `docs/06` §3.3 |
@@ -91,7 +91,7 @@ tocca al massimo 5–6 file e ha un criterio di "fatto" verificabile.
 | F6-25 | Calendario: griglia ombrelloni × giorni | 🟡 | Sostituisce le tre viste |
 | F6-26 | **Generatore di griglia** (S-23) | 🔴 | 96 ombrelloni configurati in < 2 minuti |
 | F6-27 | Editor mappa: sposta, rinumera, zone, passerelle | 🟡 | T-83, T-84, T-85 verdi |
-| F6-28 | Pulsante WhatsApp con messaggio precompilato modificabile | 🟢 | `RF-SYS-03` |
+| 🟡 F6-28 | Pulsante WhatsApp — **parziale**: fatto per il link stagionale; manca per la conferma prenotazione | 🟢 | `RF-SYS-03` |
 | F6-29 | `NotificationPort` con implementazione a log | 🟢 | Astrazione pronta per `R2` |
 | F6-30 | PWA: manifest, service worker (shell, **non** dati) | 🟡 | Installabile, criterio 7 |
 | F6-31 | Stato di sincronizzazione + coda retry | 🔴 | T-70, T-71 verdi, criterio 10 |

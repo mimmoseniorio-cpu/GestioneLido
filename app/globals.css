@@ -166,6 +166,15 @@ svg.map .umb:focus-visible rect.body { stroke-width: 5; }
 .due { color: var(--danger); font-weight: 700; }
 .err { background: #fef2f2; border: 1px solid #fca5a5; color: #7f1d1d; padding: 12px; border-radius: 10px; }
 
+.link-personale {
+  display: block; word-break: break-all; font-size: 13px; background: #f3f4f6;
+  border: 1px solid var(--line); border-radius: 8px; padding: 8px; margin: 6px 0;
+}
+.wa {
+  display: block; text-align: center; padding: 12px; border-radius: 10px;
+  background: #dcfce7; border: 1px solid #86efac; color: #14532d;
+  text-decoration: none; font-weight: 600; min-height: 44px;
+}
 .box.form { display: grid; gap: 10px; }
 .due-campi { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .due-campi label, .persone { display: grid; gap: 4px; font-size: 14px; color: var(--ink-soft); }
@@ -209,3 +218,83 @@ svg.map .umb:focus-visible rect.body { stroke-width: 5; }
            border-radius: 16px 16px 0 0; max-height: 88vh; }
   .datebar .day { min-width: 0; font-size: 15px; }
 }
+
+/* ── Area del cliente stagionale ──────────────────────────────────────────
+   Chi la usa è spesso una persona anziana, sul telefono, al primo tentativo.
+   Tutto è più grande del resto dell'applicazione, e c'è una sola azione. */
+.cliente {
+  max-width: 560px; margin: 0 auto; padding: 20px 18px 48px;
+  display: grid; gap: 18px;
+}
+.cliente .intestazione {
+  font-size: 13px; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--ink-soft); font-weight: 700;
+}
+.cliente .saluto { font-size: 26px; margin: 0; font-weight: 600; }
+.cliente h1 { font-size: 27px; margin: 0 0 4px; line-height: 1.2; text-wrap: balance; }
+.cliente .scheda {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
+  padding: 20px; display: grid; gap: 14px;
+}
+.cliente .etichetta {
+  font-size: 13px; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ink-soft); font-weight: 700;
+}
+.cliente .ombrellone { text-align: center; gap: 6px; }
+.cliente .numerone {
+  font-size: 88px; line-height: 1; font-weight: 800; letter-spacing: -.03em;
+  color: var(--accent); font-variant-numeric: tabular-nums;
+}
+.cliente .calmo { color: var(--ink-soft); margin: 0; font-size: 16px; }
+.cliente .grande { font-size: 20px; margin: 0; line-height: 1.4; }
+
+/* L'unica azione della pagina. */
+.cliente .grandissimo {
+  width: 100%; min-height: 76px; font-size: 21px; font-weight: 700;
+  letter-spacing: .01em; border-radius: 14px;
+  background: var(--accent); border: 1px solid var(--accent); color: #fff;
+}
+.cliente .grandissimo:hover:not(:disabled) { background: #0d5f59; }
+.cliente .grandissimo.secondario {
+  background: var(--surface); color: var(--ink); border-color: var(--line);
+}
+.cliente .grandissimo.secondario:hover:not(:disabled) { background: #f3f4f6; }
+.cliente .testuale {
+  border: 0; background: transparent; color: var(--ink-soft);
+  text-decoration: underline; min-height: 48px;
+}
+.cliente label { display: grid; gap: 6px; font-size: 16px; color: var(--ink-soft); }
+.cliente input[type="date"] { min-height: 56px; font-size: 18px; }
+
+/* La frase che toglie la paura di perdere il posto. */
+.cliente .rassicura {
+  margin: 0; padding: 14px 16px; border-radius: 12px;
+  background: #ecfdf5; border: 1px solid #6ee7b7; color: #065f46;
+  font-size: 18px; line-height: 1.4;
+}
+.cliente .avviso {
+  padding: 14px 16px; border-radius: 12px; font-size: 16px; line-height: 1.45;
+  background: #fffbeb; border: 1px solid #fcd34d; color: #78350f;
+}
+.cliente .esito { text-align: center; }
+.cliente .spunta {
+  font-size: 54px; line-height: 1; color: var(--accent);
+  width: 92px; height: 92px; margin: 0 auto; border-radius: 50%;
+  background: #ecfdf5; display: grid; place-items: center;
+}
+.cliente .assenze { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.cliente .assenze li {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  padding-bottom: 12px; border-bottom: 1px solid var(--line); font-size: 17px;
+}
+.cliente .assenze li:last-child { border-bottom: 0; padding-bottom: 0; }
+.cliente .assenze button { min-height: 48px; }
+.cliente .importone {
+  font-size: 40px; font-weight: 800; color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+.cliente .riga-credito {
+  display: flex; justify-content: space-between; gap: 12px;
+  font-size: 15px; color: var(--ink-soft);
+}
+.cliente .riga-credito b { color: var(--ink); font-variant-numeric: tabular-nums; }

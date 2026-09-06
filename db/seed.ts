@@ -12,6 +12,7 @@ import { PrismaClient, Role, SeasonStatus, ReservationSource, ReservationStatus,
          PaymentStatus, PaymentMethod, MapFeatureKind, DeclaredBy, AbsenceStatus,
          CreditKind, ContractStatus } from '@prisma/client'
 import { makeRandom } from './prng'
+import { generaToken } from '../server/auth/magic-link'
 import { day, addDays, nightsInclusive, fmt, overlaps } from './dates'
 
 const prisma = new PrismaClient()
@@ -157,20 +158,23 @@ async function main() {
   const liberi = umbrellas.filter(u => !blockedIds.has(u.id))
   const stagionaliUmb = liberi.filter((_, i) => i % 3 === 1).slice(0, 28)
   const contracts: { id: string; umbrellaId: string; customerId: string }[] = []
+  let linkDiProva = ''
 
   for (let i = 0; i < stagionaliUmb.length; i++) {
     const u = stagionaliUmb[i]!
     const cust = customers[i]!
+    const token = generaToken()
     const ct = await prisma.seasonalContract.create({
       data: {
         beachClubId: club.id, seasonId: season.id, customerId: cust.id, umbrellaId: u.id,
         startDate: season.startDate, endDate: season.endDate,
         priceCents: 180000 + rnd.int(0, 8) * 5000,
         status: ContractStatus.ACTIVE,
-        accessTokenHash: `hash-demo-${i}`, // token reale generato in F6-06
+        accessTokenHash: token.hash,
       },
     })
     contracts.push({ id: ct.id, umbrellaId: u.id, customerId: cust.id })
+    if (i === 0) linkDiProva = `/s/${token.token}`
     await prisma.customer.update({ where: { id: cust.id }, data: { isSeasonal: true } })
     cust.isSeasonal = true
   }
@@ -313,6 +317,7 @@ async function main() {
   console.log(`  96 ombrelloni (3 bloccati) · 28 stagionali · 120 clienti`)
   console.log(`  ${prenotazioni} prenotazioni · ${assenze.length} assenze · ${rivendite} rivendite`)
   console.log(`  crediti maturati: ${(creditiTotali / 100).toFixed(2)} €`)
+  console.log(`\n  area cliente stagionale, da provare:\n  http://localhost:3000${linkDiProva}`)
 }
 
 main()

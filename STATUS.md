@@ -3,9 +3,10 @@
 Aggiornato: 2026-09-06 · Branch: `main` · Repository: `mimmoseniorio-cpu/GestioneLido`
 
 ## Fase corrente
-**F6 — MVP: in corso.** Mappa rifinita dopo la prova sul campo, ricerca
-disponibilità collegata, **assenze stagionali complete lato dominio**.
-138 test verdi, fra cui `T-12` — uno dei sei che decidono il rilascio.
+**F6 — MVP: in corso.** Il giro completo del prodotto funziona end-to-end:
+il gestore manda il link su WhatsApp → lo stagionale dichiara l'assenza in
+**3 tap** dal telefono → il posto compare fra i vendibili sulla mappa del
+gestore. 150 test verdi, fra cui `T-12`.
 
 Aggiornato: 2026-09-06 · dopo il riscontro dell'utente sulla demo
 
@@ -70,6 +71,10 @@ Aggiornato: 2026-09-06
 - [F6-07] `declareAbsence()` con cutoff nel fuso dello stabilimento → `server/use-cases/absences.ts`
 - [F6-08] `cancelAbsence()` con giorni già venduti — **T-12 verde**
 - [F6-07 dominio] `domain/seasonal/cutoff.ts` e `domain/seasonal/intervals.ts`, funzioni pure
+- [F6-06] Magic link: generazione, hash, revoca, rigenerazione + messaggio WhatsApp
+- [F6-09] Area cliente `/s/[token]`: ombrellone, assenze, credito
+- [F6-10] "Non sarò presente" in **3 tap**, verificato nel browser
+- [F6-28 parziale] WhatsApp con messaggio pronto per il link stagionale
 
 ## In corso
 Nessun task in corso.
@@ -84,13 +89,13 @@ Mancano le sessioni, che richiedono la tabella `Session` (`D-18`) e le rotte
 Next.js. Si completa quando esiste l'app.
 
 ## Prossimi 3
-1. [F6-06] Magic link: generazione, hash, revoca, scadenza
-2. [F6-09/F6-10] Area cliente stagionale: "non sarò presente" in 3 tap
-3. [F6-12] `sellTemporarySlot()` con maturazione del credito (T-07, T-08, T-14)
+1. [F6-12] `sellTemporarySlot()` con maturazione del credito (T-07, T-14, T-15)
+2. [F6-13] Il costo in credito visibile nel pannello **prima** di vendere
+3. [F6-16] Motore prezzi vero (oggi: tariffa base × giorni, già congelata)
 
-**Nota**: `declareAbsence` e `cancelAbsence` funzionano e sono testati, ma il
-cliente non li può ancora raggiungere: manca il magic link (`F6-06`) e l'area
-cliente (`F6-09`, `F6-10`). Oggi l'assenza si registra solo dallo staff.
+**Nota**: la vendita di un posto liberato funziona e marca l'item come
+temporaneo, ma **il credito non matura ancora**: è `F6-12`. I contatori di
+capacità recuperata leggono le vendite temporanee, quindi già funzionano.
 
 **Nota su F6-23**: la ricerca è istantanea perché lavora sul giorno già
 caricato in memoria. Trova chi è sulla mappa oggi, non tutti i clienti dello
@@ -113,9 +118,10 @@ cp .env.example .env              # DATABASE_URL e TEST_DATABASE_URL
 npm install
 npm run db:deploy                 # applica le migrazioni
 npm run seed                      # 96 ombrelloni, dati realistici
-npm test                          # 138 test
+npm test                          # 150 test
 npm run dev                       # mappa su http://localhost:3000/map
 npm run e2e                       # scenario A, conta le interazioni
+# `npm run seed` stampa in fondo un link stagionale pronto da aprire
 npm run typecheck
 ```
 Il database di sviluppo e' usa-e-getta: `npm run db:reset` lo ricrea da zero.
@@ -142,5 +148,7 @@ I test girano su `gestionelido_test`, mai sul database di sviluppo.
 | `domain/availability/` | Adiacenza e ricerca: pure, deterministiche, senza database |
 | `domain/seasonal/` | Cutoff e aritmetica degli intervalli, pure |
 | `server/use-cases/absences.ts` | Assenze: contiene una **correzione a `docs/08` §6.2** |
+| `server/auth/magic-link.ts` | Token stagionale: generato, hashato, revocabile |
+| `app/s/[token]/` | Area cliente: 3 tap, nessuna password |
 | `app/map/MapClient.tsx` | La schermata principale del prodotto |
 | `server/dev-session.ts` | **Ponte temporaneo**: sparisce con `F4-01` |

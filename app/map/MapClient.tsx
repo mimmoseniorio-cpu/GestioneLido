@@ -297,6 +297,7 @@ function Pannello({ u, data, errore, onChiudi, onErrore, onSync, onCambiato, onO
   const [persone, setPersone] = useState(2)
   const [pagato, setPagato] = useState(false)
   const [attesa, setAttesa] = useState(false)
+  const [link, setLink] = useState<{ link: string; whatsapp: string | null } | null>(null)
 
   // Preventivo immediato: l'operatore deve poter dire il prezzo al telefono
   // mentre compila. Il server ricalcola e resta l'unica verità.
@@ -370,6 +371,17 @@ function Pannello({ u, data, errore, onChiudi, onErrore, onSync, onCambiato, onO
     } catch (e: any) {
       onSync('error'); onErrore(e?.message ?? 'Operazione non riuscita.'); await onCambiato()
     } finally { setAttesa(false) }
+  }
+
+  async function mandaLink() {
+    if (!u.seasonalContractId) return
+    setAttesa(true); onErrore(null)
+    try {
+      const r = await fetch(`/api/v1/contracts/${u.seasonalContractId}/token`, { method: 'POST' })
+      if (!r.ok) throw await r.json()
+      setLink(await r.json())
+    } catch (e: any) { onErrore(e?.message ?? 'Non è stato possibile generare il link.') }
+    finally { setAttesa(false) }
   }
 
   const daIncassare = (u.amountDueCents ?? 0) > 0
@@ -485,6 +497,26 @@ function Pannello({ u, data, errore, onChiudi, onErrore, onSync, onCambiato, onO
         <button className="danger" onClick={() => void libera()} disabled={attesa}>
           Libera ombrellone
         </button>
+      )}
+
+      {/* Il cliente non installa nulla: riceve il suo link su WhatsApp e da lì
+          comunica le assenze. Rigenerarlo invalida il precedente (C-06). */}
+      {u.seasonalContractId && !link && (
+        <button onClick={() => void mandaLink()} disabled={attesa}>
+          Manda il link personale allo stagionale
+        </button>
+      )}
+      {link && (
+        <div className="box">
+          <div className="row"><span className="k">Link personale</span></div>
+          <code className="link-personale">{link.link}</code>
+          {link.whatsapp
+            ? <a className="wa" href={link.whatsapp} target="_blank" rel="noreferrer">
+                Apri WhatsApp con il messaggio pronto
+              </a>
+            : <div className="k">Nessun telefono in anagrafica: copia il link e mandaglielo.</div>}
+          <div className="k" style={{ marginTop: 8 }}>Il link precedente non funziona più.</div>
+        </div>
       )}
     </aside>
   )
