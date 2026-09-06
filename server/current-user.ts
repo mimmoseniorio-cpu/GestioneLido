@@ -6,19 +6,29 @@
  */
 import { cookies, headers } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { contestoDaSessione, NOME_COOKIE } from '@/server/auth/session'
+import { contestoDaSessione, NOME_COOKIE, type SessioneCorrente }
+  from '@/server/auth/session'
 import { DomainError } from '@/domain/errors'
 import type { StaffContext } from '@/server/context'
 
-export async function contestoCorrente(): Promise<StaffContext | null> {
+export async function contestoCorrente(): Promise<SessioneCorrente | null> {
   const c = await cookies()
   return contestoDaSessione(c.get(NOME_COOKIE)?.value)
 }
 
-/** Per le pagine: chi non è autenticato va al login. */
+/**
+ * Per le pagine: chi non è autenticato va al login, chi ha lo schermo
+ * bloccato va al PIN.
+ *
+ * Il blocco reindirizza invece di sovrapporre un velo: una pagina già
+ * disegnata contiene i nomi e i telefoni dei clienti, e un velo si toglie
+ * con due tocchi negli strumenti del browser. Chi si allontana dal tablet
+ * perde il punto in cui era — è il prezzo, ed è basso.
+ */
 export async function richiediStaff(): Promise<StaffContext> {
   const ctx = await contestoCorrente()
   if (!ctx) redirect('/login')
+  if (ctx.bloccata) redirect('/blocco')
   return ctx
 }
 
@@ -26,6 +36,10 @@ export async function richiediStaff(): Promise<StaffContext> {
 export async function richiediStaffApi(): Promise<StaffContext> {
   const ctx = await contestoCorrente()
   if (!ctx) throw new DomainError('UNAUTHENTICATED', 'Sessione scaduta. Rientra e riprova.')
+  // 423: il client deve poter distinguere «rientra» da «sblocca», altrimenti
+  // butterebbe via una sessione ancora buona e con essa la coda di scritture.
+  if (ctx.bloccata)
+    throw new DomainError('SESSION_LOCKED', 'Schermo bloccato: inserisci il PIN.')
   return ctx
 }
 

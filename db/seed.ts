@@ -52,6 +52,7 @@ export async function seedDemo() {
         corridorPenalty: 2.0,
         operatorDiscountPercent: 20,
         operatorMaxRefundCents: 5000,
+        screenLockMinutes: 10,          // F6-32: il tablet sul bancone
       },
     },
   })
@@ -64,13 +65,17 @@ export async function seedDemo() {
   // Password uguale per i due utenti demo: serve a provare l'app, e viene
   // stampata in fondo al seed. In produzione la sceglie l'admin.
   const PASSWORD_DEMO = 'lido2026'
+  // F6-32 · il blocco schermo va provato, non solo letto nel backlog: senza un
+  // PIN già impostato, la demo mostrerebbe una funzione spenta.
+  const PIN_DEMO = '2604'
   const hash = await hashPassword(PASSWORD_DEMO)
+  const pin = await hashPassword(PIN_DEMO)
   await prisma.user.createMany({
     data: [
       { beachClubId: club.id, email: 'admin@lidoadriano.it', name: 'Titolare',
-        role: Role.ADMIN, passwordHash: hash },
+        role: Role.ADMIN, passwordHash: hash, pinHash: pin },
       { beachClubId: club.id, email: 'reception@lidoadriano.it', name: 'Reception',
-        role: Role.OPERATOR, passwordHash: hash },
+        role: Role.OPERATOR, passwordHash: hash, pinHash: pin },
     ],
   })
   const admin = await prisma.user.findFirstOrThrow({ where: { role: Role.ADMIN } })
@@ -355,6 +360,7 @@ export async function seedDemo() {
   console.log(`  crediti maturati: ${(creditiTotali / 100).toFixed(2)} €`)
   console.log(`\n  accesso staff:  admin@lidoadriano.it / ${PASSWORD_DEMO}`)
   console.log(`                  reception@lidoadriano.it / ${PASSWORD_DEMO}  (operatore)`)
+  console.log(`  PIN del blocco schermo: ${PIN_DEMO}`)
   const base = process.env.APP_URL ?? 'http://localhost:3000'
   console.log(`\n  area cliente stagionale, da provare:\n  ${base}${linkDiProva}`)
 }

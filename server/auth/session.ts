@@ -13,13 +13,25 @@
  */
 import { randomBytes, createHash } from 'node:crypto'
 import { prisma } from '@/server/repositories/scoped'
-import { verifyPassword } from '@/server/auth/password'
 import { readSettings, type StaffContext } from '@/server/context'
 import { DomainError } from '@/domain/errors'
+import { verifyPassword } from '@/server/auth/password'
+import { daBloccare, TENTATIVI_MASSIMI } from '@/domain/auth/pin'
 
 export const NOME_COOKIE = 'lido_sess'
 const DURATA_GIORNI = 30
 const RINNOVA_DOPO_ORE = 12
+/**
+ * Ogni quanto si annota che il tablet è vivo (F6-32).
+ *
+ * `lastSeenAt` serviva solo a rinnovare la sessione, e si scriveva ogni 12 ore
+ * perché una scrittura a ogni richiesta avrebbe trasformato ogni lettura della
+ * mappa in una scrittura. Ora è anche la misura dell'inattività, e con 12 ore
+ * di granularità il blocco automatico non potrebbe funzionare. Un minuto è il
+ * compromesso: al massimo una scrittura al minuto per tablet acceso, e uno
+ * stabilimento ne ha due o tre.
+ */
+const TRACCIA_ATTIVITA_SECONDI = 60
 
 const hash = (t: string) => createHash('sha256').update(t).digest('hex')
 
@@ -54,7 +66,14 @@ export async function accedi(input: {
   return { token, scadenza, nome: utente.name, ruolo: utente.role }
 }
 
-export async function contestoDaSessione(token: string | undefined): Promise<StaffContext | null> {
+export type SessioneCorrente = StaffContext & {
+  /** schermo bloccato: la sessione è viva, ma non si passa senza PIN */
+  bloccata: boolean
+  sessionId: string
+  haPin: boolean
+}
+
+export async function contestoDaSessione(token: string | undefined): Promise<SessioneCorrente | null> {
   if (!token || token.length < 20) return null
 
   const sessione = await prisma.session.findUnique({
@@ -66,25 +85,90 @@ export async function contestoDaSessione(token: string | undefined): Promise<Sta
   if (sessione.expiresAt < new Date()) return null
   if (!sessione.user.active) return null
 
-  // Si aggiorna solo ogni tanto: una scrittura a ogni richiesta trasformerebbe
-  // ogni lettura della mappa in una scrittura.
-  if (Date.now() - sessione.lastSeenAt.getTime() > RINNOVA_DOPO_ORE * 3_600_000) {
-    await prisma.session.update({
-      where: { id: sessione.id }, data: { lastSeenAt: new Date() },
-    })
-  }
-
   const club = await prisma.beachClub.findUnique({ where: { id: sessione.beachClubId } })
   if (!club) return null
+  const settings = readSettings(club.settings)
 
-  return {
+  // F6-32 · il blocco si decide QUI, non nel browser. Un tablet lasciato sul
+  // bancone si blocca anche se lo schermo è spento e la pagina non gira più:
+  // è il server che, alla richiesta successiva, si accorge del vuoto.
+  const adesso = new Date()
+  let bloccata = sessione.lockedAt !== null
+  if (!bloccata && daBloccare(sessione.lastSeenAt, adesso, settings.screenLockMinutes,
+                              sessione.user.pinHash !== null)) {
+    await prisma.session.update({ where: { id: sessione.id }, data: { lockedAt: adesso } })
+    bloccata = true
+  } else if (!bloccata &&
+             adesso.getTime() - sessione.lastSeenAt.getTime() > TRACCIA_ATTIVITA_SECONDI * 1000) {
+    await prisma.session.update({ where: { id: sessione.id }, data: { lastSeenAt: adesso } })
+  }
+
+  const ctx: StaffContext = {
     kind: 'STAFF',
     beachClubId: club.id,
     userId: sessione.userId,
     actor: sessione.user.role as 'ADMIN' | 'OPERATOR',
     timezone: club.timezone,
-    settings: readSettings(club.settings),
+    settings,
   }
+  return { ...ctx, bloccata, sessionId: sessione.id, haPin: sessione.user.pinHash !== null }
+}
+
+/** Blocco a mano: il pulsante che l'operatore preme quando si allontana. */
+export async function blocca(token: string | undefined) {
+  if (!token) return
+  await prisma.session.updateMany({
+    where: { tokenHash: hash(token), revokedAt: null },
+    data: { lockedAt: new Date() },
+  })
+}
+
+export type EsitoSblocco =
+  | { esito: 'APERTO' }
+  | { esito: 'PIN_ERRATO'; tentativiRimasti: number }
+  /** troppi errori: la sessione è chiusa, si rientra con la password */
+  | { esito: 'SESSIONE_CHIUSA' }
+
+/**
+ * Sbloccare con il PIN.
+ *
+ * Il PIN sbagliato non chiude subito la sessione — un operatore che digita
+ * male con le mani bagnate non deve perdere la giornata — ma dopo pochi
+ * tentativi si torna alla password: quattro cifre non reggono un attacco, e
+ * fingere il contrario sarebbe peggio che non avere il blocco.
+ */
+export async function sblocca(token: string | undefined, pin: string): Promise<EsitoSblocco> {
+  if (!token) return { esito: 'SESSIONE_CHIUSA' }
+  const sessione = await prisma.session.findUnique({
+    where: { tokenHash: hash(token) }, include: { user: true },
+  })
+  if (!sessione || sessione.revokedAt || sessione.expiresAt < new Date())
+    return { esito: 'SESSIONE_CHIUSA' }
+
+  const atteso = sessione.user.pinHash
+  // Senza PIN impostato non c'è nulla da sbloccare: si riapre e basta.
+  if (!atteso) {
+    await prisma.session.update({
+      where: { id: sessione.id }, data: { lockedAt: null, lastSeenAt: new Date() } })
+    return { esito: 'APERTO' }
+  }
+
+  if (await verifyPassword(atteso, pin.trim())) {
+    await prisma.session.update({
+      where: { id: sessione.id },
+      data: { lockedAt: null, pinAttempts: 0, lastSeenAt: new Date() },
+    })
+    return { esito: 'APERTO' }
+  }
+
+  const tentativi = sessione.pinAttempts + 1
+  if (tentativi >= TENTATIVI_MASSIMI) {
+    await prisma.session.update({
+      where: { id: sessione.id }, data: { revokedAt: new Date(), pinAttempts: tentativi } })
+    return { esito: 'SESSIONE_CHIUSA' }
+  }
+  await prisma.session.update({ where: { id: sessione.id }, data: { pinAttempts: tentativi } })
+  return { esito: 'PIN_ERRATO', tentativiRimasti: TENTATIVI_MASSIMI - tentativi }
 }
 
 export async function esci(token: string | undefined) {

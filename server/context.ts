@@ -39,6 +39,8 @@ export type ClubSettings = {
   corridorPenalty: number
   operatorDiscountPercent: number
   operatorMaxRefundCents: number
+  /** F6-32 · minuti di inattività dopo i quali il tablet si blocca da solo */
+  screenLockMinutes: number
 }
 
 export const DEFAULT_SETTINGS: ClubSettings = {
@@ -51,6 +53,7 @@ export const DEFAULT_SETTINGS: ClubSettings = {
   corridorPenalty: 2.0,
   operatorDiscountPercent: 20,
   operatorMaxRefundCents: 5_000,
+  screenLockMinutes: 10,
 }
 
 export function readSettings(raw: unknown): ClubSettings {

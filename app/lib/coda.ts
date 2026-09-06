@@ -95,11 +95,19 @@ export class CodaScritture {
         // coda, l'operatore rientra e la ritenta con la stessa chiave di
         // idempotenza. Perdere i dati di una prenotazione perché la sessione è
         // scaduta è il modo più sicuro per farlo tornare al quaderno.
-        if (r.status === 401) {
-          voce.op.ultimoErrore = 'Sessione scaduta: rientra e riprova'
+        // F6-32 · schermo bloccato: come sopra, ma la sessione è ancora buona.
+        // Va tenuto distinto dal 401, altrimenti si direbbe all'operatore di
+        // rifare il login quando gli basta il PIN — e chi non ricorda la
+        // password torna al quaderno.
+        if (r.status === 401 || r.status === 423) {
+          const bloccato = r.status === 423
+          voce.op.ultimoErrore = bloccato
+            ? 'Schermo bloccato: inserisci il PIN e riprova'
+            : 'Sessione scaduta: rientra e riprova'
           voce.op.tentativi = ATTESE_MS.length      // niente ritentativi automatici
           this.avvisa()
-          throw Object.assign(new Error(voce.op.ultimoErrore), { inCoda: id, scaduta: true })
+          throw Object.assign(new Error(voce.op.ultimoErrore),
+            { inCoda: id, scaduta: !bloccato, bloccata: bloccato })
         }
 
         // Un rifiuto del server (posto occupato, sconto oltre soglia) NON è un
@@ -113,7 +121,7 @@ export class CodaScritture {
       } catch (e: any) {
         // Rifiuto di dominio o sessione scaduta: risalgono, non sono problemi
         // di rete e ritentarli non cambierebbe nulla.
-        if (e?.dominio || e?.scaduta) throw e
+        if (e?.dominio || e?.scaduta || e?.bloccata) throw e
         voce.op.ultimoErrore = 'Connessione assente'
       }
       this.avvisa()

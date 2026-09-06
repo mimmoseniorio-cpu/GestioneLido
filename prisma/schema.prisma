@@ -167,6 +167,11 @@ model Session {
   tokenHash    String   @unique @map("token_hash")
   expiresAt    DateTime @map("expires_at")
   lastSeenAt   DateTime @default(now()) @map("last_seen_at")
+  /// F6-32 · sessione viva ma schermo bloccato: si riapre con il PIN, non
+  /// rifacendo il login. Perdere la sessione a metà prenotazione sarebbe peggio.
+  lockedAt     DateTime? @map("locked_at")
+  /// PIN sbagliati di fila: dopo qualche tentativo si torna alla password.
+  pinAttempts  Int      @default(0) @map("pin_attempts")
   revokedAt    DateTime? @map("revoked_at")
   userAgent    String?  @map("user_agent")
   ip           String?
@@ -184,6 +189,9 @@ model User {
   beachClubId  String    @map("beach_club_id")
   email        String
   passwordHash String    @map("password_hash")
+  /// F6-32 · PIN del blocco schermo, hashato come la password. Nullo = nessun
+  /// blocco per questo utente.
+  pinHash      String?   @map("pin_hash")
   name         String
   role         Role      @default(OPERATOR)
   active       Boolean   @default(true)

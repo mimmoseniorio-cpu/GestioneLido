@@ -26,6 +26,8 @@ export type DomainErrorCode =
    *  da «non ti è permesso», altrimenti non sa se riproporre il login */
   | 'UNAUTHENTICATED'
   | 'IDEMPOTENCY_MISMATCH'
+  /** sessione viva ma schermo bloccato: si riapre con il PIN, non col login */
+  | 'SESSION_LOCKED'
 
 const HTTP_STATUS: Record<DomainErrorCode, number> = {
   UMBRELLA_NOT_AVAILABLE: 409,
@@ -46,6 +48,7 @@ const HTTP_STATUS: Record<DomainErrorCode, number> = {
   FORBIDDEN: 403,
   UNAUTHENTICATED: 401,
   IDEMPOTENCY_MISMATCH: 422,
+  SESSION_LOCKED: 423,
 }
 
 export class DomainError extends Error {

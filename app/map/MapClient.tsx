@@ -138,6 +138,13 @@ export default function MapClient({ iniziale, clubName }:
                  aria-label="Cerca" inputMode="search" />
           {cerca && <button className="clear" onClick={() => setCerca('')} aria-label="Pulisci">✕</button>}
         </div>
+        {/* F6-32 · va accanto a «Esci» perché è il gesto che lo sostituisce:
+            chi si allontana dal bancone non deve chiudere la sessione e
+            perdere la coda delle scritture, gli basta bloccare. */}
+        <button className="blocca" onClick={async () => {
+          await fetch('/api/v1/auth/lock', { method: 'POST' })
+          window.location.href = '/blocco'
+        }}>Blocca</button>
         <button className="esci" onClick={async () => {
           await fetch('/api/v1/auth/logout', { method: 'POST' })
           window.location.href = '/login'
@@ -320,6 +327,7 @@ export default function MapClient({ iniziale, clubName }:
         <Link href="/seasonal" className="bottone-link">Stagionali</Link>
         <Link href="/calendar" className="bottone-link">Calendario</Link>
         <Link href="/settings/pricing" className="bottone-link">Listino</Link>
+        <Link href="/settings/blocco" className="bottone-link">Blocco schermo</Link>
         {evidenziati && <button onClick={() => setEvidenziati(null)}>Togli evidenza</button>}
       </div>
 
