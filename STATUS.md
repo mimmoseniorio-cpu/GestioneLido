@@ -7,7 +7,7 @@ Aggiornato: 2026-09-06 · Branch: `main` · Repository: `mimmoseniorio-cpu/Gesti
 link su WhatsApp → assenza in 3 tap dal telefono → il posto compare fra i
 vendibili → il gestore lo rivende vedendo quanto gli costa → **il credito
 matura allo stagionale** → i contatori di capacità recuperata si muovono.
-193 test verdi, fra cui `T-12`, `T-14`, `T-15`, `T-16`, `T-40`, `T-44`.
+205 test verdi, fra cui `T-12`, `T-14`, `T-15`, `T-16`, `T-40`, `T-44`, `T-81`.
 
 Aggiornato: 2026-09-06 · dopo il riscontro dell'utente sulla demo
 
@@ -83,6 +83,10 @@ Aggiornato: 2026-09-06
 - [F6-16] Motore prezzi: regole con priorità, valutate giorno per giorno → `domain/pricing/engine.ts`
 - [F6-18] Scostamento manuale con soglia per ruolo e traccia nell'audit
 - [F6-16 extra] `GET /api/v1/quote`: preventivo dal server, stesso motore della conferma
+- [F6-20] Normalizzazione telefono E.164 con regole italiane → `domain/customers/phone.ts`
+- [F6-21] Preferenze cliente mostrate (non applicate: è `R4`)
+- [F6-22] Scheda cliente con storico, ombrelloni ricorrenti, saldi — **scenario E in 3 interazioni**
+- [F6-23] Ricerca globale completa: mappa (istantanea) + anagrafica (server)
 
 ## In corso
 Nessun task in corso.
@@ -97,9 +101,10 @@ Mancano le sessioni, che richiedono la tabella `Session` (`D-18`) e le rotte
 Next.js. Si completa quando esiste l'app.
 
 ## Prossimi 3
-1. [F6-20/F6-22] Anagrafica clienti e scheda con storico (scenario E)
-2. [F6-24] Dashboard giornaliera
-3. [F6-17] Editor del listino (le regole oggi si creano solo dal seed)
+1. [F6-24] Dashboard giornaliera
+2. [F6-17] Editor del listino (le regole oggi si creano solo dal seed)
+3. [F6-26/F6-27] Generatore di griglia ed editor mappa — senza, un gestore non
+   può configurare il proprio stabilimento (`C-08`, rischio di adozione alto)
 
 **Nota su F6-17**: il motore prezzi funziona e le regole sono nel database, ma
 **non c'è ancora una schermata per modificarle**: oggi arrivano dal seed. Finché
@@ -126,7 +131,7 @@ cp .env.example .env              # DATABASE_URL e TEST_DATABASE_URL
 npm install
 npm run db:deploy                 # applica le migrazioni
 npm run seed                      # 96 ombrelloni, dati realistici
-npm test                          # 193 test
+npm test                          # 205 test
 npm run dev                       # mappa su http://localhost:3000/map
 npm run e2e                       # scenario A, conta le interazioni
 # `npm run seed` stampa in fondo un link stagionale pronto da aprire

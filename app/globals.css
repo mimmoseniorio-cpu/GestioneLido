@@ -300,3 +300,64 @@ svg.map .umb:focus-visible rect.body { stroke-width: 5; }
   font-size: 15px; color: var(--ink-soft);
 }
 .cliente .riga-credito b { color: var(--ink); font-variant-numeric: tabular-nums; }
+
+/* ── Scheda cliente (scenario E) ────────────────────────────────────────── */
+.indietro { color: var(--accent); text-decoration: none; font-weight: 600; }
+.scheda-cliente { max-width: 900px; margin: 0 auto; padding: 20px 16px 48px; display: grid; gap: 16px; }
+.scheda-cliente .testa {
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap;
+}
+.scheda-cliente h1 { margin: 0; font-size: 30px; letter-spacing: -.02em; }
+.scheda-cliente .tel { color: var(--ink-soft); font-size: 18px; margin-top: 2px; }
+.scheda-cliente .wa { flex: none; }
+.riquadro {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+  padding: 16px; display: grid; gap: 10px;
+}
+.riquadro .etichetta {
+  font-size: 12px; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ink-soft); font-weight: 700;
+}
+.riquadro p { margin: 0; }
+.riquadro .vuoto { color: var(--ink-soft); }
+.riquadro.stagionale { border-color: var(--s-seasonal-line); background: #eff6ff; }
+.riquadro.stagionale .grande { font-size: 18px; }
+.riquadro.stagionale .credito { color: #065f46; font-weight: 600; }
+/* Le preferenze sono ciò che l'operatore legge al cliente: vanno viste subito. */
+.riquadro.preferenze { border-color: var(--s-sellable-line); background: #fffbeb; }
+.riquadro.preferenze ul { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+.ricorrenti { display: flex; gap: 8px; flex-wrap: wrap; }
+.pastiglia {
+  border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px;
+  background: var(--bg); font-size: 16px;
+}
+.tabella { overflow-x: auto; }
+.tabella table { width: 100%; border-collapse: collapse; font-size: 15px; }
+.tabella th {
+  text-align: left; font-size: 12px; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--ink-soft); padding: 6px 10px 6px 0; border-bottom: 1px solid var(--line);
+}
+.tabella td { padding: 10px 10px 10px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+.tabella .num { text-align: right; font-variant-numeric: tabular-nums; }
+.tabella tr.annullata td { opacity: .55; }
+.minuto { color: var(--ink-soft); font-size: 13px; }
+.dovuto { color: var(--danger); font-weight: 600; }
+.saldato { color: #047857; }
+
+/* Risultati della ricerca clienti nella barra superiore. */
+.azione-primaria {
+  display: block; text-align: center; text-decoration: none;
+  background: var(--accent); color: #fff; font-weight: 700; font-size: 17px;
+  padding: 18px; border-radius: 12px; letter-spacing: .01em;
+}
+.azione-primaria:hover { background: #0d5f59; }
+
+.clienti-trovati { display: grid; gap: 6px; padding: 8px 16px 12px; }
+.clienti-trovati a {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  padding: 10px 14px; background: var(--surface); border: 1px solid var(--line);
+  border-radius: 10px; text-decoration: none; color: var(--ink); min-height: 48px;
+}
+.clienti-trovati a:hover { background: #f3f4f6; }
+.clienti-trovati .chi { font-weight: 600; }
+.clienti-trovati .dove { color: var(--ink-soft); font-size: 14px; }

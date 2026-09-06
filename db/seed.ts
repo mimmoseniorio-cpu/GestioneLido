@@ -154,6 +154,26 @@ async function main() {
     customers.push({ id: c.id, isSeasonal: false })
   }
 
+  // ── preferenze: senza, la scheda cliente non dimostra nulla ──────────────
+  // Nell'MVP si mostrano all'operatore, non si applicano da sole (R4).
+  const zone = [zPrima.id, zCentro.id, zRetro.id]
+  for (let i = 0; i < 24; i++) {
+    const cust = customers[i * 3]!
+    await prisma.customerPreference.create({
+      data: {
+        beachClubId: club.id, customerId: cust.id,
+        preferredRow: rnd.chance(0.7) ? rnd.pick(FILE) : null,
+        preferredZoneId: rnd.chance(0.4) ? rnd.pick(zone) : null,
+        seaProximity: rnd.pick(['NEAR', 'FAR', 'INDIFFERENT'] as const),
+        side: rnd.chance(0.5) ? rnd.pick(['LEFT', 'RIGHT', 'CENTER'] as const) : null,
+        freeNotes: rnd.chance(0.3)
+          ? rnd.pick(['Arriva sempre dopo le 10', 'Ombrellone lontano dagli altoparlanti',
+                      'Due lettini in più', 'Preferisce non stare vicino al bar'])
+          : null,
+      },
+    })
+  }
+
   // ── 28 contratti stagionali (~29% degli ombrelloni) ───────────────────────
   const liberi = umbrellas.filter(u => !blockedIds.has(u.id))
   const stagionaliUmb = liberi.filter((_, i) => i % 3 === 1).slice(0, 28)

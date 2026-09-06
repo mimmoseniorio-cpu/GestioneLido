@@ -9,7 +9,9 @@
  * tutta sua.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import Link from 'next/link'
 import type { MapDay, MapUmbrella } from '@/server/queries/map'
+import type { ClienteTrovato } from '@/server/queries/customers'
 import { STATES, euro, dataLunga, dataBreve, spostaGiorni, oggiIso } from './states'
 
 const CELLA = 56          // bersagli generosi: sole, mani bagnate, una mano sola
@@ -31,7 +33,9 @@ export default function MapClient({ iniziale, clubName }:
   const [sync, setSync] = useState<Sync>('ok')
   const [errore, setErrore] = useState<string | null>(null)
   const [cerca, setCerca] = useState('')
+  // Arrivando dalla scheda cliente il pannello di ricerca si apre da solo.
   const [trovaAperto, setTrovaAperto] = useState(false)
+  const [clienti, setClienti] = useState<ClienteTrovato[]>([])
   const [evidenziati, setEvidenziati] = useState<Set<string> | null>(null)
   const cache = useRef<Map<string, MapDay>>(new Map([[iniziale.date, iniziale]]))
 
@@ -54,7 +58,28 @@ export default function MapClient({ iniziale, clubName }:
     void carica(spostaGiorni(data, -1), false)
   }, [data, carica])
 
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('trova') === '1') setTrovaAperto(true)
+  }, [])
+
   const vaiA = (giorno: string) => { setData(giorno); setScelto(null); void carica(giorno) }
+
+  // Scenario E · la ricerca sulla mappa trova chi c'è OGGI; per il cliente che
+  // telefona serve tutta l'anagrafica, quindi si interroga anche il server.
+  useEffect(() => {
+    const q = cerca.trim()
+    if (q.length < 2) { setClienti([]); return }
+    let annullato = false
+    const t = setTimeout(async () => {
+      try {
+        const r = await fetch(`/api/v1/customers?q=${encodeURIComponent(q)}`)
+        if (!r.ok) return
+        const dati = await r.json()
+        if (!annullato) setClienti(dati)
+      } catch { /* la ricerca sulla mappa funziona comunque */ }
+    }, 180)
+    return () => { annullato = true; clearTimeout(t) }
+  }, [cerca])
 
   const rinfresca = useCallback(async (giorno = data) => {
     cache.current.delete(giorno)
@@ -126,6 +151,22 @@ export default function MapClient({ iniziale, clubName }:
                 : <>{trovati.size} {trovati.size === 1 ? 'risultato' : 'risultati'} per <b>«{cerca}»</b></>)
             : <>Proposta evidenziata sulla mappa: <b>{trovati.size} ombrelloni</b></>}
           <button onClick={() => { setCerca(''); setEvidenziati(null) }}>Mostra tutti</button>
+        </div>
+      )}
+
+      {cerca.trim().length >= 2 && clienti.length > 0 && (
+        <div className="clienti-trovati">
+          {clienti.map(c => (
+            <Link key={c.id} href={`/customers/${c.id}`}>
+              <span className="chi">
+                {c.nome}{c.stagionale && ' ★'}
+                {c.telefono && <span className="dove"> · {c.telefono}</span>}
+              </span>
+              <span className="dove">
+                {c.ultimoOmbrellone ? `ultimo: ombrellone ${c.ultimoOmbrellone}` : 'apri scheda'}
+              </span>
+            </Link>
+          ))}
         </div>
       )}
 

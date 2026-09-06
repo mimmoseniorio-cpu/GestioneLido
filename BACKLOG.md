@@ -83,9 +83,9 @@ tocca al massimo 5–6 file e ha un criterio di "fatto" verificabile.
 | F6-17 | Editor listino (S-24) | 🟡 | Regole con priorità, ordine visibile |
 | ✅ F6-18 | Override prezzo con soglia per ruolo | 🟡 | T-65 verde |
 | 🟡 F6-19 | Pagamenti — **parziale**: incasso e stato fatti; mancano rimborsi e metodi | 🟡 | T-45…T-48 verdi |
-| F6-20 | Anagrafica clienti + normalizzazione telefono E.164 | 🟡 | T-80, T-81 verdi |
-| F6-21 | Preferenze cliente (mostrate, non applicate) | 🟢 | Visibili in scheda e in prenotazione |
-| F6-22 | Scheda cliente con storico (S-09) | 🟡 | Scenario E ≤ 3 interazioni |
+| ✅ F6-20 | Anagrafica clienti + normalizzazione telefono E.164 | 🟡 | T-80, T-81 verdi |
+| ✅ F6-21 | Preferenze cliente (mostrate, non applicate) | 🟢 | Visibili in scheda e in prenotazione |
+| ✅ F6-22 | Scheda cliente con storico (S-09) | 🟡 | Scenario E ≤ 3 interazioni |
 | 🟡 F6-23 | Ricerca globale — **parziale**: istantanea sul giorno caricato; manca la ricerca su tutti i clienti | 🟡 | `63` trova l'ombrellone, T-86 verde |
 | F6-24 | Dashboard giornaliera (S-12) | 🟡 | Criterio 9: i numeri quadrano |
 | F6-25 | Calendario: griglia ombrelloni × giorni | 🟡 | Sostituisce le tre viste |
