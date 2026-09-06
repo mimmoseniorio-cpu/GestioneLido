@@ -3,8 +3,7 @@
 Aggiornato: 2026-09-05 · Branch: `main` · Repository: `mimmoseniorio-cpu/GestioneLido`
 
 ## Fase corrente
-**F1 — Specification: COMPLETA.** Gate superato tranne `D-01`, che richiede una
-risposta dell'utente prima di implementare `F6-08`.
+**F1 — Specification: COMPLETA, gate superato.** Prossima: F3 — Fondamenta.
 
 ## Fatto
 - [F0] Brief, protocollo, registro decisioni, prompt di avvio, repository
@@ -24,12 +23,12 @@ risposta dell'utente prima di implementare `F6-08`.
 Nessun task in corso.
 
 ## Prossimi 3
-1. **`D-01`** — conferma della policy sul conflitto assenza/rivendita (utente)
-2. [F3-01] Setup Next.js + TypeScript + Prisma + Postgres locale
-3. [F3-02] Migrazione `CREATE EXTENSION btree_gist`
+1. [F3-01] Setup Next.js + TypeScript + Prisma + Postgres locale
+2. [F3-02] Migrazione `CREATE EXTENSION btree_gist`
+3. [F3-03] Schema `BeachClub`, `Season`, `User`
 
 ## Blocchi e decisioni aperte
-- `D-01` policy conflitto assenza già rivenduta → **DECISIONE RICHIESTA**.
+- ~~`D-01`~~ CHIUSA il 2026-09-06: chi ha pagato tiene il posto. Credito solo a rivendita avvenuta.
   Proposta: `IRREVOCABLE` di default, configurabile. Motivazione in `docs/08` §8.
   Blocca solo `F6-08`: F3 e F4 possono partire subito.
 - `D-12` cutoff assenze (default 20:00 del giorno prima) — confermabile o modificabile

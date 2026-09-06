@@ -10,7 +10,7 @@ cambiarle ora costa poco, dopo F3 costa una migrazione.
 
 | ID | Argomento | Stato |
 |---|---|---|
-| `D-01` | Conflitto assenza già rivenduta | **APERTA — DECISIONE RICHIESTA** |
+| `D-01` | Conflitto assenza già rivenduta | DECISA |
 | `D-02` | Granularità della prenotazione | DECISA |
 | `D-03` | Unità del credito | DECISA |
 | `D-04` | Identificativo cliente | DECISA |
@@ -29,12 +29,12 @@ cambiarle ora costa poco, dopo F3 costa una migrazione.
 ---
 
 ### D-01 — Stagionale che annulla un'assenza il cui giorno è già stato rivenduto
-**Stato:** APERTA · **DECISIONE RICHIESTA** · blocca `F6-08`
+**Stato:** DECISA (2026-09-06) · confermata dall'utente: «chi ha pagato tiene il posto»
 
 Lo stagionale dichiara "il 12 agosto non vengo". Il gestore vende il posto. Il
 10 agosto lo stagionale cambia idea. Due clienti, un ombrellone.
 
-**Proposta: `IRREVOCABLE` come default, configurabile per stabilimento.**
+**Scelta: `IRREVOCABLE` come default, configurabile per stabilimento.**
 Chi ha pagato tiene il posto; lo stagionale conserva il credito e riceve, se
 disponibile, un ombrellone alternativo per quel giorno.
 
@@ -43,6 +43,12 @@ gestore: se sa di poter essere costretto a disdire a un cliente che ha già
 pagato ed è magari già arrivato, non rivenderà mai il posto — e l'unica funzione
 che genera ricavo aggiuntivo smette di esistere. Alternative disponibili come
 configurazione: `SEASONAL_PRIORITY` e `MANUAL`, mai automatiche.
+
+**Confermato contestualmente** il principio di maturazione del credito già
+previsto in `RF-CRD-01` e `docs/08` §5.2: il credito matura **solo se il gestore
+riesce effettivamente a rivendere** il posto liberato. Se l'ombrellone resta
+vuoto, nessun credito. Vincolo K-04 (`docs/08` §7.2): il credito si calcola sui
+giorni realmente rivenduti, mai sull'intervallo dichiarato.
 
 Analisi completa in `docs/08` §8.
 
