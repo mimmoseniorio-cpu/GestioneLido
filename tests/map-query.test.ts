@@ -34,7 +34,8 @@ async function scenario(label: string, quanti = 6) {
   for (let i = 1; i < quanti; i++) {
     umbrellas.push(await prisma.umbrella.create({
       data: { beachClubId: ctx.club.id, beachMapId: ctx.map.id,
-              visibleNumber: String(100 + i), rowLabel: 'A', posX: i, posY: 0 },
+              visibleNumber: String(100 + i), rowLabel: 'A', posX: i, posY: 0,
+              basePriceCents: 2500 },
     }))
   }
   const cliente = async (nome: string) => prisma.customer.create({
@@ -156,7 +157,29 @@ describe('stati e contatori', () => {
     // gestore la paura di vendere (docs/06 §3.3).
     expect(riga.absence).toEqual({
       id: expect.any(String), from: '2030-08-12', to: '2030-08-14', seasonalName: 'Verdi Test',
+      // F6-13 · e quanto gli costa venderlo, mentre decide
+      creditoGiornoCents: 750,        // 30% di 25 €
+      creditoMotivo: 'MATURATO',
     })
+  })
+
+  it("dice che un'assenza tardiva non costa nulla", async () => {
+    const { ctx, umbrellas, cliente } = await scenario('map-late', 2)
+    const u = (umbrellas as any[])[1]
+    const tizio = await cliente('Tardivo')
+    const ct = await prisma.seasonalContract.create({
+      data: { beachClubId: ctx.club.id, seasonId: ctx.season.id, customerId: tizio.id,
+              umbrellaId: u.id, startDate: day(2030, 5, 1), endDate: day(2030, 9, 30),
+              priceCents: 180000, accessTokenHash: 'h-late' },
+    })
+    await prisma.seasonalAbsence.create({
+      data: { beachClubId: ctx.club.id, seasonalContractId: ct.id,
+              startDate: OGGI, endDate: OGGI, declaredBy: 'CUSTOMER', isLate: true },
+    })
+    const mappa = await getMapForDate(ctxOf(ctx.club.id), OGGI, OGGI)
+    const riga = mappa.umbrellas.find(x => x.id === u.id)!
+    expect(riga.absence!.creditoGiornoCents).toBe(0)
+    expect(riga.absence!.creditoMotivo).toBe('ASSENZA_TARDIVA')
   })
 })
 

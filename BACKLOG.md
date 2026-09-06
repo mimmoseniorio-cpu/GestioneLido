@@ -75,10 +75,10 @@ tocca al massimo 5–6 file e ha un criterio di "fatto" verificabile.
 | ✅ F6-09 | Area cliente C-01: la mia postazione | 🟡 | Leggibile senza istruzioni |
 | ✅ F6-10 | Area cliente C-02: assenza in 3 tap | 🔴 | Scenario C ≤ 3 tap |
 | F6-11 | Registrazione assenza da parte dell'operatore | 🟡 | ≤ 4 interazioni |
-| F6-12 | **`sellTemporarySlot()`** con credito in transazione | 🔴 | T-07, **T-08**, T-09 verdi |
-| F6-13 | Pannello stagionale assente con credito visibile prima della vendita | 🟡 | `docs/06` §3.3 |
-| F6-14 | Registro crediti + storno (`docs/08` §7) | 🔴 | T-14, T-15, **T-16** verdi |
-| F6-15 | Area cliente C-03: i miei crediti | 🟢 | Storico leggibile |
+| ✅ F6-12 | **`sellTemporarySlot()`** con credito in transazione | 🔴 | T-07, **T-08**, T-09 verdi |
+| ✅ F6-13 | Pannello stagionale assente con credito visibile prima della vendita | 🟡 | `docs/06` §3.3 |
+| ✅ F6-14 | Registro crediti + storno (`docs/08` §7) | 🔴 | T-14, T-15, **T-16** verdi |
+| ✅ F6-15 | Area cliente C-03: i miei crediti | 🟢 | Storico leggibile |
 | F6-16 | Motore prezzi `computePrice()` puro | 🔴 | T-40…T-44 verdi, mai zero |
 | F6-17 | Editor listino (S-24) | 🟡 | Regole con priorità, ordine visibile |
 | F6-18 | Override prezzo con soglia per ruolo | 🟡 | T-65 verde |

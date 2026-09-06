@@ -433,6 +433,18 @@ function Pannello({ u, data, errore, onChiudi, onErrore, onSync, onCambiato, onO
           <div className="row"><span className="k">Stagionale</span><b>{u.absence.seasonalName}</b></div>
           <div className="row"><span className="k">Assente</span>
             <span>{dataBreve(u.absence.from)} – {dataBreve(u.absence.to)}</span></div>
+
+          {/* Il costo della vendita, visibile MENTRE si decide. È anche ciò che
+              fa capire il meccanismo senza che nessuno lo spieghi. */}
+          <div className="row">
+            <span className="k">Credito a {u.absence.seasonalName.split(' ')[0]}</span>
+            {u.absence.creditoGiornoCents > 0
+              ? <b>{euro(u.absence.creditoGiornoCents)} al giorno</b>
+              : <span>{u.absence.creditoMotivo === 'ASSENZA_TARDIVA'
+                  ? 'nessuno — comunicata fuori tempo'
+                  : 'nessuno — ha raggiunto il massimo stagionale'}</span>}
+          </div>
+
           <div style={{ marginTop: 8 }}>
             Torna riservato il <b>{dataBreve(spostaGiorni(u.absence.to, 1))}</b>.
           </div>

@@ -14,6 +14,9 @@ import { P } from '@/domain/auth/permissions'
 import { DomainError } from '@/domain/errors'
 import { audit } from '@/server/audit'
 import { covers } from '@/domain/umbrella/state'
+import { calcolaCredito, descrizioneCredito } from '@/domain/seasonal/credit'
+
+const iso = (d: Date) => d.toISOString().slice(0, 10)
 
 const giorni = (from: Date, to: Date) =>
   Math.round((to.getTime() - from.getTime()) / 86_400_000) + 1
@@ -31,7 +34,14 @@ export type CreateReservationInput = {
   notes?: string
 }
 
-export const createReservation = useCase<CreateReservationInput, { id: string; totalCents: number }>({
+export type EsitoPrenotazione = {
+  id: string
+  totalCents: number
+  /** credito maturato allo stagionale, quando si è venduto un posto liberato */
+  creditoMaturatoCents: number
+}
+
+export const createReservation = useCase<CreateReservationInput, EsitoPrenotazione>({
   permission: P.RESERVATION_CREATE,
   async run({ db, tx, ctx }, input) {
     if (input.umbrellaIds.length === 0)
@@ -72,7 +82,8 @@ export const createReservation = useCase<CreateReservationInput, { id: string; t
                seasonalContractId: { in: (contratti as any[]).map(c => c.id) },
                startDate: { lte: input.from }, endDate: { gte: input.to } },
     })
-    const assenzaPerOmbrellone = new Map<string, string>()
+    const assenzaPerOmbrellone = new Map<string, any>()
+    const contrattoPerOmbrellone = new Map<string, any>()
     for (const c of contratti as any[]) {
       const a = (assenze as any[]).find(x => x.seasonalContractId === c.id)
       if (!a) {
@@ -80,7 +91,8 @@ export const createReservation = useCase<CreateReservationInput, { id: string; t
           `L'ombrellone è riservato a un cliente stagionale per quel periodo.`,
           { umbrellaId: c.umbrellaId })
       }
-      assenzaPerOmbrellone.set(c.umbrellaId, a.id)
+      assenzaPerOmbrellone.set(c.umbrellaId, a)
+      contrattoPerOmbrellone.set(c.umbrellaId, c)
     }
 
     const totale = (umbrellas as any[])
@@ -101,8 +113,12 @@ export const createReservation = useCase<CreateReservationInput, { id: string; t
 
     // Gli item si creano separatamente: `beachClubId` fa parte della relazione
     // composta verso `reservation` e Prisma lo esclude dal create annidato (D-16).
+    let creditoMaturatoCents = 0
+
     for (const u of umbrellas as any[]) {
-      const assenzaId = assenzaPerOmbrellone.get(u.id) ?? null
+      const assenza = assenzaPerOmbrellone.get(u.id) ?? null
+      const prezzoRiga = prezzoProvvisorio(u.basePriceCents, input.from, input.to)
+
       await db.reservationItem.create({
         data: {
           reservationId: prenotazione.id,
@@ -110,12 +126,53 @@ export const createReservation = useCase<CreateReservationInput, { id: string; t
           startDate: input.from,
           endDate: input.to,
           status: 'CONFIRMED',
-          priceCents: prezzoProvvisorio(u.basePriceCents, input.from, input.to),
+          priceCents: prezzoRiga,
           priceBreakdown: [{ giorni: giorni(input.from, input.to), tariffaCents: u.basePriceCents ?? 0 }],
-          isTemporarySlot: assenzaId !== null,
-          seasonalAbsenceId: assenzaId,
+          isTemporarySlot: assenza !== null,
+          seasonalAbsenceId: assenza?.id ?? null,
         },
       })
+
+      // F6-12 · il credito matura QUI, nella stessa transazione della vendita:
+      // se una delle due fallisce non deve restare traccia dell'altra.
+      if (!assenza) continue
+      const contratto = contrattoPerOmbrellone.get(u.id)
+      const maturati = await db.creditTransaction.findMany({
+        where: { seasonalContractId: contratto.id, kind: 'EARNED' },
+      })
+      const giaMaturatoCents = (maturati as any[]).reduce((s, c) => s + c.amountCents, 0)
+
+      const esito = calcolaCredito({
+        prezzoVenditaCents: prezzoRiga,
+        giaMaturatoCents,
+        assenzaTardiva: assenza.isLate,
+        regole: ctx.settings,
+      })
+      if (esito.importoCents <= 0) continue
+
+      await db.creditTransaction.create({
+        data: {
+          seasonalContractId: contratto.id,
+          amountCents: esito.importoCents,
+          unit: 'EUR',
+          kind: 'EARNED',
+          absenceDate: input.from,
+          sourceReservationId: prenotazione.id,
+          seasonalAbsenceId: assenza.id,
+          description: descrizioneCredito(iso(input.from), iso(input.to), esito.motivo),
+          createdById: ctx.kind === 'STAFF' ? ctx.userId : null,
+        },
+      })
+      await tx.seasonalContract.update({
+        where: { id: contratto.id },
+        data: { creditBalanceCents: { increment: esito.importoCents } },
+      })
+      creditoMaturatoCents += esito.importoCents
+
+      await audit(tx, ctx, 'credit.earn',
+        { type: 'seasonal_contract', id: contratto.id },
+        { after: { importoCents: esito.importoCents, motivo: esito.motivo,
+                   prenotazione: prenotazione.id } })
     }
 
     await audit(tx, ctx,
@@ -124,7 +181,7 @@ export const createReservation = useCase<CreateReservationInput, { id: string; t
       { after: { umbrelle: (umbrellas as any[]).map(u => u.visibleNumber),
                  dal: input.from, al: input.to, totaleCents: totale } })
 
-    return { id: prenotazione.id, totalCents: totale }
+    return { id: prenotazione.id, totalCents: totale, creditoMaturatoCents }
   },
 })
 
@@ -144,9 +201,40 @@ export const cancelReservation = useCase<{ reservationId: string; reason?: strin
     await db.reservation.updateById(input.reservationId,
       { status: 'CANCELLED', cancelledAt: new Date() })
 
+    // T-14 · se la rivendita salta, il credito già riconosciuto va stornato:
+    // non è stato incassato nulla (K-02). Si storna con una riga nuova, non
+    // cancellando quella vecchia — il registro è append-only (K-05).
+    const maturati = await db.creditTransaction.findMany({
+      where: { sourceReservationId: input.reservationId, kind: 'EARNED' },
+    })
+    for (const c of maturati as any[]) {
+      await db.creditTransaction.create({
+        data: {
+          seasonalContractId: c.seasonalContractId,
+          amountCents: -c.amountCents,
+          unit: c.unit,
+          kind: 'REVERSED',
+          absenceDate: c.absenceDate,
+          sourceReservationId: input.reservationId,
+          seasonalAbsenceId: c.seasonalAbsenceId,
+          description: `Storno: la prenotazione è stata annullata`,
+          createdById: ctx.kind === 'STAFF' ? ctx.userId : null,
+        },
+      })
+      await tx.seasonalContract.update({
+        where: { id: c.seasonalContractId },
+        data: { creditBalanceCents: { decrement: c.amountCents } },
+      })
+      await audit(tx, ctx, 'credit.reverse',
+        { type: 'seasonal_contract', id: c.seasonalContractId },
+        { before: { importoCents: c.amountCents }, after: { stornato: true } })
+    }
+
     await audit(tx, ctx, 'reservation.cancel',
       { type: 'reservation', id: input.reservationId },
-      { before: { status: prima.status }, after: { status: 'CANCELLED', motivo: input.reason ?? null } })
+      { before: { status: prima.status },
+        after: { status: 'CANCELLED', motivo: input.reason ?? null,
+                 creditiStornati: (maturati as any[]).length } })
   },
 })
 

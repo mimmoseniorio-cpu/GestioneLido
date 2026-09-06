@@ -12,6 +12,7 @@ import type { Ctx } from '@/server/context'
 import { scoped, prisma, type Tx } from '@/server/repositories/scoped'
 import { umbrellaViewState, isSellable, umbrellaState,
          type UmbrellaViewState } from '@/domain/umbrella/state'
+import { calcolaCredito } from '@/domain/seasonal/credit'
 
 export type MapUmbrella = {
   id: string
@@ -29,7 +30,13 @@ export type MapUmbrella = {
   customerPhone: string | null
   period: { from: string; to: string } | null
   /** valorizzato quando il posto è vendibile perché lo stagionale è assente */
-  absence: { id: string; from: string; to: string; seasonalName: string } | null
+  absence: {
+    id: string; from: string; to: string; seasonalName: string
+    /** F6-13 · quanto costa vendere questo posto, per giornata.
+     *  Il gestore deve saperlo MENTRE decide, non a fine mese. */
+    creditoGiornoCents: number
+    creditoMotivo: string
+  } | null
   /** valorizzato su ogni posto stagionale: serve a rimandare il magic link */
   seasonalContractId: string | null
   reservationId: string | null
@@ -101,6 +108,17 @@ export async function getMapForDate(
   // ── indicizzazione in memoria: O(n), nessun accesso al database ──────────
   // `any` deliberato: il repository layer restituisce righe non tipizzate.
   // I tipi veri sono garantiti dal confine — MapUmbrella qui sotto.
+  // F6-13 · quanto ha già maturato ciascuno stagionale: serve per applicare il
+  // tetto anche alla stima mostrata nel pannello, altrimenti prometteremmo al
+  // gestore un costo diverso da quello che si verificherà davvero.
+  const contrattiConAssenza = (absences as any[]).map(a => a.seasonalContractId)
+  const maturati = contrattiConAssenza.length === 0 ? [] : await db.creditTransaction.findMany({
+    where: { seasonalContractId: { in: contrattiConAssenza }, kind: 'EARNED' },
+  })
+  const giaMaturato = new Map<string, number>()
+  for (const c of maturati as any[])
+    giaMaturato.set(c.seasonalContractId, (giaMaturato.get(c.seasonalContractId) ?? 0) + c.amountCents)
+
   const contractByUmbrella = new Map<string, any>((contracts as any[]).map(c => [c.umbrellaId, c]))
   const absenceByContract  = new Map<string, any>((absences as any[]).map(a => [a.seasonalContractId, a]))
   const itemByUmbrella     = new Map<string, any>((items as any[]).map(i => [i.umbrellaId, i]))
@@ -141,8 +159,20 @@ export async function getMapForDate(
       customerPhone: persona?.phoneRaw ?? null,
       period: item ? { from: iso(item.startDate), to: iso(item.endDate) } : null,
       absence: absence && contract
-        ? { id: absence.id, from: iso(absence.startDate), to: iso(absence.endDate),
-            seasonalName: `${contract.customer.firstName} ${contract.customer.lastName}` }
+        ? (() => {
+            const stima = calcolaCredito({
+              prezzoVenditaCents: u.basePriceCents ?? 0,
+              giaMaturatoCents: giaMaturato.get(contract.id) ?? 0,
+              assenzaTardiva: absence.isLate,
+              regole: ctx.settings,
+            })
+            return {
+              id: absence.id, from: iso(absence.startDate), to: iso(absence.endDate),
+              seasonalName: `${contract.customer.firstName} ${contract.customer.lastName}`,
+              creditoGiornoCents: stima.importoCents,
+              creditoMotivo: stima.motivo,
+            }
+          })()
         : null,
       seasonalContractId: contract?.id ?? null,
       reservationId: item?.reservationId ?? null,
