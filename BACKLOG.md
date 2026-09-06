@@ -41,7 +41,7 @@ tocca al massimo 5–6 file e ha un criterio di "fatto" verificabile.
 | ✅ F4-07 | Middleware idempotenza (`Idempotency-Key`) | 🔴 | T-21 verde |
 | ✅ F4-08 | Servizio audit log (before/after, solo campi cambiati) | 🟡 | Ogni operazione critica lascia traccia |
 | ✅ F4-09 | CI: typecheck, lint, unit, integration su Postgres effimero | 🟡 | Pipeline verde su push |
-| F4-10 | Tre ambienti + backup automatici (`D-09`) | 🟡 | Deploy su staging funzionante |
+| 🟡 F4-10 | Tre ambienti + backup automatici (`D-09`) — **parziale**: produzione su Vercel + Neon online; mancano ambienti separati e backup | 🟡 | Deploy su staging funzionante |
 
 ## F5 — Prototipo
 *Gate: scenari A e F dimostrabili su tablet reale.*

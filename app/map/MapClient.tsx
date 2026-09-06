@@ -13,7 +13,7 @@ import Link from 'next/link'
 import type { MapDay, MapUmbrella } from '@/server/queries/map'
 import type { ClienteTrovato } from '@/server/queries/customers'
 import { coda, type OperazioneInCoda } from '@/app/lib/coda'
-import { STATES, euro, dataLunga, dataBreve, spostaGiorni, oggiIso } from './states'
+import { STATES, euro, dataLunga, dataBreve, dataChiara, spostaGiorni, oggiIso } from './states'
 
 const CELLA = 56          // bersagli generosi: sole, mani bagnate, una mano sola
 const PADDING = 10
@@ -181,6 +181,15 @@ export default function MapClient({ iniziale, clubName }:
               )}
             </div>
           ))}
+        </div>
+      )}
+
+      {/* A pannello chiuso l'errore non ha più dove comparire: senza questa
+          fascia, una prenotazione rifiutata sparirebbe in silenzio. */}
+      {errore && !scelto && (
+        <div className="err fascia" role="alert">
+          <span className="grow">{errore}</span>
+          <button onClick={() => setErrore(null)} aria-label="Chiudi">✕</button>
         </div>
       )}
 
@@ -478,6 +487,12 @@ function Pannello({ u, data, errore, onChiudi, onErrore, onSync, onCambiato, onO
     if (al < dal) { onErrore('La data di fine precede quella di inizio.'); return }
     setAttesa(true); onErrore(null); onSync('pending')
     onOttimistico({ state: 'OCCUPATO', customerName: `${nome} ${cognome}`.trim() })
+    // Il pannello si chiude QUI, non alla fine (F5-10: azione riflessa subito).
+    // Le tre chiamate proseguono da sole: chi ha un cliente davanti ha già
+    // finito, e non deve guardare un pulsante grigio mentre la rete lavora.
+    // Se qualcosa fallisce lo dice la fascia rossa sopra la mappa, e la
+    // scrittura resta in coda con Riprova/Scarta.
+    onChiudi()
     try {
       const cliente = await coda.esegui<any>({
         url: '/api/v1/customers', metodo: 'POST',
@@ -636,8 +651,14 @@ function Pannello({ u, data, errore, onChiudi, onErrore, onSync, onCambiato, onO
                  onChange={e => setTel(e.target.value)} />
 
           <div className="due-campi">
-            <label>Dal<input type="date" value={dal} onChange={e => setDal(e.target.value)} /></label>
-            <label>Al<input type="date" value={al} min={dal} onChange={e => setAl(e.target.value)} /></label>
+            <label>Dal
+              <input type="date" value={dal} onChange={e => setDal(e.target.value)} />
+              <span className="data-chiara">{dataChiara(dal)}</span>
+            </label>
+            <label>Al
+              <input type="date" value={al} min={dal} onChange={e => setAl(e.target.value)} />
+              <span className="data-chiara">{dataChiara(al)}</span>
+            </label>
           </div>
           <label className="persone">Persone
             <input type="number" min={1} max={u.capacity} value={persone}
@@ -776,8 +797,15 @@ function TrovaPosti({ data, onChiudi, onMostra, onPrenotato, onSync }: {
 
       <div className="box form">
         <div className="due-campi">
-          <label>Dal<input type="date" value={dal} onChange={e => { setDal(e.target.value); if (al < e.target.value) setAl(e.target.value) }} /></label>
-          <label>Al<input type="date" value={al} min={dal} onChange={e => setAl(e.target.value)} /></label>
+          <label>Dal
+            <input type="date" value={dal}
+                   onChange={e => { setDal(e.target.value); if (al < e.target.value) setAl(e.target.value) }} />
+            <span className="data-chiara">{dataChiara(dal)}</span>
+          </label>
+          <label>Al
+            <input type="date" value={al} min={dal} onChange={e => setAl(e.target.value)} />
+            <span className="data-chiara">{dataChiara(al)}</span>
+          </label>
         </div>
         <label className="persone">Quanti ombrelloni
           <input type="number" min={1} max={8} value={quanti}

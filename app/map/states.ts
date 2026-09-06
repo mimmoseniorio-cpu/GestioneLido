@@ -71,6 +71,19 @@ export const dataBreve = (iso: string) =>
   new Date(iso + 'T00:00:00Z').toLocaleDateString('it-IT',
     { day: 'numeric', month: 'short', timeZone: 'UTC' })
 
+/**
+ * La data scritta a parole, sotto il campo `type="date"`.
+ *
+ * Il selettore nativo si disegna nella lingua del TELEFONO, non del sito: su
+ * un dispositivo con l'inglese attivo, il 6 settembre appare come
+ * «09/06/2026», che un italiano legge 9 giugno. Sulla schermata dove si
+ * conferma quanto paga un cliente, quell'ambiguità costa soldi. Questa riga
+ * la toglie, qualunque lingua abbia il telefono.
+ */
+export const dataChiara = (iso: string) =>
+  new Date(iso + 'T00:00:00Z').toLocaleDateString('it-IT',
+    { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' })
+
 export const spostaGiorni = (iso: string, n: number) => {
   const d = new Date(iso + 'T00:00:00Z')
   d.setUTCDate(d.getUTCDate() + n)

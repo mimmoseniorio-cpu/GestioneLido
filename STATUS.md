@@ -7,7 +7,7 @@ Aggiornato: 2026-09-06 · Branch: `main` · Repository: `mimmoseniorio-cpu/Gesti
 link su WhatsApp → assenza in 3 tap dal telefono → il posto compare fra i
 vendibili → il gestore lo rivende vedendo quanto gli costa → **il credito
 matura allo stagionale** → i contatori di capacità recuperata si muovono.
-308 test verdi, fra cui `T-12`, `T-14`, `T-15`, `T-16`, `T-27`, `T-28`, `T-40`,
+318 test verdi, fra cui `T-12`, `T-14`, `T-15`, `T-16`, `T-27`, `T-28`, `T-40`,
 `T-44`, `T-81`, `T-83` e il criterio 9 (la dashboard quadra con le prenotazioni).
 Da questo checkpoint gli stagionali **non arrivano più solo dal seed**: il
 gestore li crea, li chiude e registra le assenze di chi telefona.
@@ -102,11 +102,28 @@ Aggiornato: 2026-09-06
 - [correzione] I giorni fuori stagione non contano più come «vendibili»: mappa e calendario lo dicono
 - [F4-01] **Autenticazione staff completa**: login, logout, sessioni revocabili (`D-18`)
 - [F6-35] Sessione scaduta: l'operazione resta in coda e si ritenta dopo il rientro
+- [F4-10 parziale] Rilascio su Vercel + Neon, dati dimostrativi al primo avvio → `DEPLOY.md`
+- [riscontro tel.] Il pannello di prenotazione si chiude in **66 ms**, non dopo la rete (era 8 s)
+- [riscontro tel.] La data scritta a parole sotto il selettore: «09/06/2026» su un telefono
+  inglese è il 6 settembre, e su quella schermata l'ambiguità costa soldi
+- [riscontro tel.] Fascia d'errore sopra la mappa: a pannello chiuso il rifiuto non sparisce
 - [F6-05] **Contratti stagionali dalla UI** (`/seasonal`): creazione con link personale, chiusura
 - [F6-05 · C-16] Il conflitto dice **quali** prenotazioni bloccano il contratto, con cliente e date
 - [F6-11] L'operatore registra l'assenza di chi telefona: scorciatoia **DOMANI**, 2 interazioni
 - [F6-05 extra] `elencoStagionali()` mette in cima **chi è assente oggi**: è il posto vendibile adesso
 - [e2e] `npm run e2e:seasonal` — 14 verifiche nel browser, e ripulisce il contratto che crea
+
+## In produzione
+**È online e provabile dal telefono**: `https://gestione-lido.vercel.app`
+(`admin@lidoadriano.it` / `lido2026`). Vercel per l'applicazione, Neon per il
+database, entrambi a costo zero — procedura in `DEPLOY.md`.
+
+Il primo rilascio ha chiuso l'incognita che pesava di più: **Neon applica
+`btree_gist`** e i tre vincoli EXCLUDE. La garanzia «non si vende due volte
+lo stesso ombrellone» è attiva sul database vero, non solo in locale.
+
+`F4-10` resta **parziale**: mancano ambienti separati e backup automatici.
+Non ci metterei ancora i clienti veri di uno stabilimento vero.
 
 ## In corso
 Nessun task in corso.
@@ -161,10 +178,11 @@ cp .env.example .env              # DATABASE_URL e TEST_DATABASE_URL
 npm install
 npm run db:deploy                 # applica le migrazioni
 npm run seed                      # 96 ombrelloni, dati realistici
-npm test                          # 308 test
+npm test                          # 318 test
 npm run dev                       # mappa su http://localhost:3000/map
 npm run e2e                       # scenario A, conta le interazioni
 npm run e2e:seasonal              # contratto → link → assenza → posto vendibile
+npm run e2e:rapida                # telefono in inglese: date e chiusura del pannello
 # `npm run seed` stampa in fondo le credenziali e un link stagionale
 #   admin@lidoadriano.it / lido2026
 npm run typecheck

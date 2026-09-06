@@ -540,3 +540,30 @@ tr.assente-oggi { background: #fffbeb; }
   display: flex; justify-content: space-between; align-items: center; gap: 12px;
   width: 100%; text-align: left; min-height: 48px;
 }
+
+/* La data scritta a parole sotto il selettore nativo: quel selettore si
+   disegna nella lingua del telefono, e «09/06/2026» su un telefono inglese
+   è il 6 settembre, non il 9 giugno. */
+.data-chiara {
+  display: block;
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--muto, #5b6b6a);
+}
+
+/* L'errore quando il pannello è già chiuso: sta sopra la mappa, dove
+   l'operatore sta guardando. */
+.err.fascia {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.err.fascia .grow { flex: 1; }
+.err.fascia button {
+  min-width: 44px;
+  min-height: 44px;
+  background: none;
+  border: 0;
+  font-size: 18px;
+  color: inherit;
+}
