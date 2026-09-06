@@ -1,0 +1,532 @@
+// Schema GestioneLido — vedi docs/03-modello-dati.md
+// Regole non negoziabili:
+//  - ogni tabella di dominio ha beachClubId
+//  - le date di soggiorno sono DATE (@db.Date), mai timestamp
+//  - il denaro e' in centesimi interi, mai float
+//  - lo stato dell'ombrellone NON e' persistito: si deriva (docs/03 §6)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── enum ────────────────────────────────────────────────────────────────────
+
+enum Role {
+  ADMIN
+  OPERATOR
+}
+enum SeasonStatus {
+  PLANNING
+  ACTIVE
+  CLOSED
+}
+enum ReservationStatus {
+  CONFIRMED
+  CHECKED_IN
+  CANCELLED
+  NO_SHOW
+}
+enum PaymentStatus {
+  UNPAID
+  PARTIAL
+  PAID
+  REFUNDED
+}
+enum PaymentMethod {
+  CASH
+  CARD
+  TRANSFER
+  ONLINE
+  OTHER
+}
+enum ReservationSource {
+  PHONE
+  WHATSAPP
+  RECEPTION
+  WEB
+  OTHER
+}
+enum AbsenceStatus {
+  ACTIVE
+  CANCELLED
+}
+enum DeclaredBy {
+  CUSTOMER
+  STAFF
+}
+enum CreditKind {
+  EARNED
+  USED
+  REVERSED
+  ADJUSTMENT
+}
+enum CreditUnit {
+  EUR
+  POINTS
+}
+enum MapFeatureKind {
+  WALKWAY
+  CORRIDOR
+  ENTRANCE
+  SERVICE
+  BLOCKED_AREA
+}
+enum SeaProximity {
+  NEAR
+  FAR
+  INDIFFERENT
+}
+enum UmbrellaSide {
+  LEFT
+  RIGHT
+  CENTER
+}
+enum ActorType {
+  USER
+  CUSTOMER
+  SYSTEM
+}
+enum ContractStatus {
+  ACTIVE
+  CANCELLED
+}
+enum CustomerType {
+  DAILY
+  SEASONAL
+}
+
+// ─── tenant ──────────────────────────────────────────────────────────────────
+
+model BeachClub {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  timezone  String   @default("Europe/Rome")
+  /// policy configurabili: absenceCutoff, creditPercent, creditCap,
+  /// absenceConflictPolicy, rowChangePenalty, corridorPenalty (docs/03 §3.1)
+  settings  Json     @default("{}")
+  createdAt DateTime @default(now())
+
+  seasons     Season[]
+  users       User[]
+  maps        BeachMap[]
+  zones       Zone[]
+  features    MapFeature[]
+  customers   Customer[]
+  preferences CustomerPreference[]
+  priceRules  PriceRule[]
+  payments    Payment[]
+  credits     CreditTransaction[]
+  auditLogs   AuditLog[]
+  idempotency IdempotencyKey[]
+
+  @@map("beach_club")
+}
+
+model Season {
+  id          String       @id @default(uuid())
+  beachClubId String       @map("beach_club_id")
+  year        Int
+  startDate   DateTime     @map("start_date") @db.Date
+  endDate     DateTime     @map("end_date")   @db.Date
+  status      SeasonStatus @default(PLANNING)
+  createdAt   DateTime     @default(now())
+
+  beachClub    BeachClub          @relation(fields: [beachClubId], references: [id], onDelete: Cascade)
+  maps         BeachMap[]
+  contracts    SeasonalContract[]
+  reservations Reservation[]
+  priceRules   PriceRule[]
+
+  @@unique([beachClubId, year])
+  @@unique([beachClubId, id])
+  @@index([beachClubId, status])
+  @@map("season")
+}
+
+model User {
+  id           String    @id @default(uuid())
+  beachClubId  String    @map("beach_club_id")
+  email        String
+  passwordHash String    @map("password_hash")
+  name         String
+  role         Role      @default(OPERATOR)
+  active       Boolean   @default(true)
+  lastLoginAt  DateTime? @map("last_login_at")
+  createdAt    DateTime  @default(now())
+
+  beachClub    BeachClub           @relation(fields: [beachClubId], references: [id], onDelete: Cascade)
+  reservations Reservation[]
+  payments     Payment[]
+  credits      CreditTransaction[]
+
+  @@unique([beachClubId, email])
+  @@unique([beachClubId, id])
+  @@map("user")
+}
+
+// ─── mappa ───────────────────────────────────────────────────────────────────
+
+model BeachMap {
+  id          String  @id @default(uuid())
+  beachClubId String  @map("beach_club_id")
+  seasonId    String? @map("season_id")
+  name        String  @default("Mappa principale")
+  width       Int     @default(20)
+  height      Int     @default(12)
+
+  beachClub BeachClub    @relation(fields: [beachClubId], references: [id], onDelete: Cascade)
+  season    Season?      @relation(fields: [seasonId], references: [id])
+  zones     Zone[]
+  features  MapFeature[]
+  umbrellas Umbrella[]
+
+  @@unique([beachClubId, id])
+  @@index([beachClubId])
+  @@map("beach_map")
+}
+
+model Zone {
+  id          String @id @default(uuid())
+  beachClubId String @map("beach_club_id")
+  beachMapId  String @map("beach_map_id")
+  name        String
+  color       String @default("#888888")
+  sortOrder   Int    @default(0) @map("sort_order")
+
+  beachClub   BeachClub            @relation(fields: [beachClubId], references: [id], onDelete: Cascade)
+  beachMap    BeachMap             @relation(fields: [beachMapId], references: [id], onDelete: Cascade)
+  umbrellas   Umbrella[]
+  priceRules  PriceRule[]
+  preferences CustomerPreference[]
+
+  @@unique([beachClubId, id])
+  @@index([beachClubId, beachMapId])
+  @@map("zone")
+}
+
+model MapFeature {
+  id          String         @id @default(uuid())
+  beachClubId String         @map("beach_club_id")
+  beachMapId  String         @map("beach_map_id")
+  kind        MapFeatureKind
+  label       String?
+  posX        Int            @map("pos_x")
+  posY        Int            @map("pos_y")
+  width       Int            @default(1)
+  height      Int            @default(1)
+
+  beachClub BeachClub @relation(fields: [beachClubId], references: [id], onDelete: Cascade)
+  beachMap  BeachMap  @relation(fields: [beachMapId], references: [id], onDelete: Cascade)
+
+  @@index([beachClubId, beachMapId])
+  @@map("map_feature")
+}
+
+model Umbrella {
+  id          String  @id @default(uuid())
+  beachClubId String  @map("beach_club_id")
+  beachMapId  String  @map("beach_map_id")
+  zoneId      String? @map("zone_id")
+  /// testo, non intero: esistono 63A, 12bis (D-15)
+  visibleNumber  String  @map("visible_number")
+  rowLabel       String  @map("row_label")
+  posX           Int     @map("pos_x")
+  posY           Int     @map("pos_y")
+  category       String?
+  basePriceCents Int?    @map("base_price_cents")
+  capacity       Int     @default(4)
+  /// unico stato persistito ammesso: non e' derivabile da nulla (D-10)
+  blocked       Boolean @default(false)
+  blockedReason String? @map("blocked_reason")
+  blockedUntil  DateTime? @map("blocked_until") @db.Date
+  notes         String?
+
+  // D-14: la relazione include beachClubId, cosi' il database rifiuta di
+  // collegare un ombrellone alla mappa di un altro stabilimento.
+  beachMap    BeachMap             @relation(fields: [beachClubId, beachMapId], references: [beachClubId, id], onDelete: Cascade)
+  zone        Zone?                @relation(fields: [zoneId], references: [id])
+  items       ReservationItem[]
+  contracts   SeasonalContract[]
+  preferences CustomerPreference[]
+
+  @@unique([beachClubId, visibleNumber])
+  @@unique([beachClubId, id])
+  @@index([beachClubId, beachMapId])
+  @@index([beachClubId, rowLabel])
+  @@map("umbrella")
+}
+
+// ─── clienti ─────────────────────────────────────────────────────────────────
+
+model Customer {
+  id              String    @id @default(uuid())
+  beachClubId     String    @map("beach_club_id")
+  firstName       String    @map("first_name")
+  lastName        String    @map("last_name")
+  phoneRaw        String?   @map("phone_raw")
+  phoneNormalized String?   @map("phone_normalized")
+  email           String?
+  notes           String?
+  /// denormalizzato per la ricerca, ricalcolato a ogni variazione di contratto
+  isSeasonal   Boolean   @default(false) @map("is_seasonal")
+  anonymizedAt DateTime? @map("anonymized_at")
+  createdAt    DateTime  @default(now())
+
+  beachClub    BeachClub           @relation(fields: [beachClubId], references: [id], onDelete: Cascade)
+  preference   CustomerPreference?
+  contracts    SeasonalContract[]
+  reservations Reservation[]
+
+  @@unique([beachClubId, id])
+  @@index([beachClubId, phoneNormalized])
+  @@index([beachClubId, lastName])
+  @@map("customer")
+}
+
+model CustomerPreference {
+  id                  String         @id @default(uuid())
+  beachClubId         String         @map("beach_club_id")
+  customerId          String         @unique @map("customer_id")
+  preferredRow        String?        @map("preferred_row")
+  preferredZoneId     String?        @map("preferred_zone_id")
+  preferredUmbrellaId String?        @map("preferred_umbrella_id")
+  nearCustomerIds     String[]       @default([]) @map("near_customer_ids")
+  seaProximity        SeaProximity?  @map("sea_proximity")
+  side                UmbrellaSide?
+  freeNotes           String?        @map("free_notes")
+
+  beachClub         BeachClub @relation(fields: [beachClubId], references: [id], onDelete: Cascade)
+  customer          Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  preferredZone     Zone?     @relation(fields: [preferredZoneId], references: [id])
+  preferredUmbrella Umbrella? @relation(fields: [preferredUmbrellaId], references: [id])
+
+  @@index([beachClubId])
+  @@map("customer_preference")
+}
+
+// ─── stagionali ──────────────────────────────────────────────────────────────
+
+model SeasonalContract {
+  id          String         @id @default(uuid())
+  beachClubId String         @map("beach_club_id")
+  seasonId    String         @map("season_id")
+  customerId  String         @map("customer_id")
+  umbrellaId  String         @map("umbrella_id")
+  startDate   DateTime       @map("start_date") @db.Date
+  endDate     DateTime       @map("end_date")   @db.Date
+  priceCents  Int            @map("price_cents")
+  status      ContractStatus @default(ACTIVE)
+  /// magic link: memorizzato hashato, mai in chiaro (D-05)
+  accessTokenHash    String    @map("access_token_hash")
+  tokenRevokedAt     DateTime? @map("token_revoked_at")
+  /// denormalizzazione: la verita' e' la somma delle CreditTransaction
+  creditBalanceCents Int       @default(0) @map("credit_balance_cents")
+  createdAt          DateTime  @default(now())
+
+  // D-14: ogni relazione porta con se' il tenant.
+  season    Season              @relation(fields: [beachClubId, seasonId],   references: [beachClubId, id])
+  customer  Customer            @relation(fields: [beachClubId, customerId], references: [beachClubId, id])
+  umbrella  Umbrella            @relation(fields: [beachClubId, umbrellaId], references: [beachClubId, id])
+  absences  SeasonalAbsence[]
+  credits   CreditTransaction[]
+
+  @@unique([beachClubId, id])
+  @@index([beachClubId, seasonId, umbrellaId])
+  @@index([accessTokenHash])
+  @@map("seasonal_contract")
+}
+
+model SeasonalAbsence {
+  id                 String        @id @default(uuid())
+  beachClubId        String        @map("beach_club_id")
+  seasonalContractId String        @map("seasonal_contract_id")
+  startDate          DateTime      @map("start_date") @db.Date
+  endDate            DateTime      @map("end_date")   @db.Date
+  declaredAt         DateTime      @default(now()) @map("declared_at")
+  declaredBy         DeclaredBy    @map("declared_by")
+  /// dichiarata dopo il cutoff: non matura credito (D-12)
+  isLate      Boolean       @default(false) @map("is_late")
+  status      AbsenceStatus @default(ACTIVE)
+  cancelledAt DateTime?     @map("cancelled_at")
+  notes       String?
+
+  contract  SeasonalContract    @relation(fields: [beachClubId, seasonalContractId], references: [beachClubId, id], onDelete: Cascade)
+  items     ReservationItem[]
+  credits   CreditTransaction[]
+
+  @@unique([beachClubId, id])
+  @@index([beachClubId, startDate, endDate])
+  @@map("seasonal_absence")
+}
+
+// ─── prenotazioni ────────────────────────────────────────────────────────────
+
+model Reservation {
+  id            String            @id @default(uuid())
+  beachClubId   String            @map("beach_club_id")
+  seasonId      String            @map("season_id")
+  customerId    String            @map("customer_id")
+  peopleCount   Int               @default(2) @map("people_count")
+  source        ReservationSource @default(RECEPTION)
+  status        ReservationStatus @default(CONFIRMED)
+  totalCents    Int               @default(0) @map("total_cents")
+  paymentStatus PaymentStatus     @default(UNPAID) @map("payment_status")
+  notes         String?
+  createdById   String?           @map("created_by_id")
+  createdAt     DateTime          @default(now())
+  cancelledAt   DateTime?         @map("cancelled_at")
+
+  season    Season              @relation(fields: [beachClubId, seasonId],   references: [beachClubId, id])
+  customer  Customer            @relation(fields: [beachClubId, customerId], references: [beachClubId, id])
+  createdBy User?               @relation(fields: [createdById], references: [id])
+  items     ReservationItem[]
+  payments  Payment[]
+  credits   CreditTransaction[]
+
+  @@unique([beachClubId, id])
+  @@index([beachClubId, createdAt])
+  @@map("reservation")
+}
+
+/// E' qui che vive il vincolo di non sovrapposizione (RD-02).
+model ReservationItem {
+  id            String            @id @default(uuid())
+  beachClubId   String            @map("beach_club_id")
+  reservationId String            @map("reservation_id")
+  umbrellaId    String            @map("umbrella_id")
+  startDate     DateTime          @map("start_date") @db.Date
+  endDate       DateTime          @map("end_date")   @db.Date
+  /// copia denormalizzata dello stato della testata: il vincolo EXCLUDE puo'
+  /// filtrare solo su colonne della stessa riga. Mantenuta da trigger.
+  status        ReservationStatus @default(CONFIRMED)
+  priceCents    Int               @map("price_cents")
+  priceBreakdown Json             @default("[]") @map("price_breakdown")
+  /// true se venduto su un giorno di assenza stagionale
+  isTemporarySlot   Boolean @default(false) @map("is_temporary_slot")
+  seasonalAbsenceId String? @map("seasonal_absence_id")
+
+  reservation Reservation      @relation(fields: [beachClubId, reservationId], references: [beachClubId, id], onDelete: Cascade)
+  umbrella    Umbrella         @relation(fields: [beachClubId, umbrellaId],    references: [beachClubId, id])
+  absence     SeasonalAbsence? @relation(fields: [seasonalAbsenceId], references: [id])
+
+  @@index([beachClubId, startDate, endDate])
+  @@index([umbrellaId, startDate, endDate])
+  @@map("reservation_item")
+}
+
+// ─── prezzi, pagamenti, crediti ──────────────────────────────────────────────
+
+model PriceRule {
+  id          String  @id @default(uuid())
+  beachClubId String  @map("beach_club_id")
+  seasonId    String  @map("season_id")
+  name        String
+  /// piu' alto vince, prima corrispondenza (docs/03 §3.11)
+  priority     Int           @default(0)
+  zoneId       String?       @map("zone_id")
+  rowLabel     String?       @map("row_label")
+  category     String?
+  dateFrom     DateTime?     @map("date_from") @db.Date
+  dateTo       DateTime?     @map("date_to")   @db.Date
+  weekdays     Int[]         @default([])
+  minDays      Int?          @map("min_days")
+  maxDays      Int?          @map("max_days")
+  customerType CustomerType? @map("customer_type")
+  priceCents   Int           @map("price_cents")
+  active       Boolean       @default(true)
+
+  beachClub BeachClub @relation(fields: [beachClubId], references: [id], onDelete: Cascade)
+  season    Season    @relation(fields: [seasonId], references: [id])
+  zone      Zone?     @relation(fields: [zoneId], references: [id])
+
+  @@index([beachClubId, seasonId, priority])
+  @@map("price_rule")
+}
+
+model Payment {
+  id            String        @id @default(uuid())
+  beachClubId   String        @map("beach_club_id")
+  reservationId String        @map("reservation_id")
+  /// negativo per i rimborsi
+  amountCents   Int           @map("amount_cents")
+  method        PaymentMethod @default(CASH)
+  paidAt        DateTime      @default(now()) @map("paid_at")
+  collectedById String?       @map("collected_by_id")
+  providerRef   String?       @map("provider_ref")
+  notes         String?
+
+  beachClub   BeachClub   @relation(fields: [beachClubId], references: [id], onDelete: Cascade)
+  reservation Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  collectedBy User?       @relation(fields: [collectedById], references: [id])
+
+  @@index([beachClubId, paidAt])
+  @@map("payment")
+}
+
+/// Registro append-only: un credito sbagliato si storna, non si cancella.
+model CreditTransaction {
+  id                 String     @id @default(uuid())
+  beachClubId        String     @map("beach_club_id")
+  seasonalContractId String     @map("seasonal_contract_id")
+  amountCents        Int        @map("amount_cents")
+  unit               CreditUnit @default(EUR)
+  kind               CreditKind
+  absenceDate        DateTime?  @map("absence_date") @db.Date
+  sourceReservationId String?   @map("source_reservation_id")
+  seasonalAbsenceId   String?   @map("seasonal_absence_id")
+  description         String
+  createdById         String?   @map("created_by_id")
+  createdAt           DateTime  @default(now())
+
+  beachClub         BeachClub        @relation(fields: [beachClubId], references: [id], onDelete: Cascade)
+  contract          SeasonalContract @relation(fields: [seasonalContractId], references: [id], onDelete: Cascade)
+  sourceReservation Reservation?     @relation(fields: [sourceReservationId], references: [id])
+  absence           SeasonalAbsence? @relation(fields: [seasonalAbsenceId], references: [id])
+  createdBy         User?            @relation(fields: [createdById], references: [id])
+
+  @@index([beachClubId, seasonalContractId, createdAt])
+  @@map("credit_transaction")
+}
+
+// ─── trasversali ─────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id          BigInt    @id @default(autoincrement())
+  beachClubId String    @map("beach_club_id")
+  actorType   ActorType @map("actor_type")
+  actorId     String?   @map("actor_id")
+  action      String
+  entityType  String    @map("entity_type")
+  entityId    String    @map("entity_id")
+  before      Json?
+  after       Json?
+  ip          String?
+  userAgent   String?   @map("user_agent")
+  createdAt   DateTime  @default(now())
+
+  beachClub BeachClub @relation(fields: [beachClubId], references: [id], onDelete: Cascade)
+
+  @@index([beachClubId, entityType, entityId, createdAt])
+  @@map("audit_log")
+}
+
+model IdempotencyKey {
+  key            String   @id
+  beachClubId    String   @map("beach_club_id")
+  endpoint       String
+  requestHash    String   @map("request_hash")
+  responseStatus Int      @map("response_status")
+  responseBody   Json     @map("response_body")
+  createdAt      DateTime @default(now())
+
+  beachClub BeachClub @relation(fields: [beachClubId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+  @@map("idempotency_key")
+}
