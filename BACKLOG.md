@@ -89,8 +89,8 @@ tocca al massimo 5–6 file e ha un criterio di "fatto" verificabile.
 | 🟡 F6-23 | Ricerca globale — **parziale**: istantanea sul giorno caricato; manca la ricerca su tutti i clienti | 🟡 | `63` trova l'ombrellone, T-86 verde |
 | ✅ F6-24 | Dashboard giornaliera (S-12) | 🟡 | Criterio 9: i numeri quadrano |
 | F6-25 | Calendario: griglia ombrelloni × giorni | 🟡 | Sostituisce le tre viste |
-| F6-26 | **Generatore di griglia** (S-23) | 🔴 | 96 ombrelloni configurati in < 2 minuti |
-| F6-27 | Editor mappa: sposta, rinumera, zone, passerelle | 🟡 | T-83, T-84, T-85 verdi |
+| ✅ F6-26 | **Generatore di griglia** (S-23) | 🔴 | 96 ombrelloni configurati in < 2 minuti |
+| 🟡 F6-27 | Editor mappa — **parziale**: rinumerazione e blocco fatti; manca lo spostamento | 🟡 | T-83, T-84, T-85 verdi |
 | 🟡 F6-28 | Pulsante WhatsApp — **parziale**: fatto per il link stagionale; manca per la conferma prenotazione | 🟢 | `RF-SYS-03` |
 | F6-29 | `NotificationPort` con implementazione a log | 🟢 | Astrazione pronta per `R2` |
 | F6-30 | PWA: manifest, service worker (shell, **non** dati) | 🟡 | Installabile, criterio 7 |

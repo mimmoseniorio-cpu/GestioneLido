@@ -7,8 +7,8 @@ Aggiornato: 2026-09-06 · Branch: `main` · Repository: `mimmoseniorio-cpu/Gesti
 link su WhatsApp → assenza in 3 tap dal telefono → il posto compare fra i
 vendibili → il gestore lo rivende vedendo quanto gli costa → **il credito
 matura allo stagionale** → i contatori di capacità recuperata si muovono.
-214 test verdi, fra cui `T-12`, `T-14`, `T-15`, `T-16`, `T-40`, `T-44`, `T-81`
-e il criterio 9 (la dashboard quadra con le prenotazioni).
+237 test verdi, fra cui `T-12`, `T-14`, `T-15`, `T-16`, `T-40`, `T-44`, `T-81`,
+`T-83` e il criterio 9 (la dashboard quadra con le prenotazioni).
 
 Aggiornato: 2026-09-06 · dopo il riscontro dell'utente sulla demo
 
@@ -89,6 +89,8 @@ Aggiornato: 2026-09-06
 - [F6-22] Scheda cliente con storico, ombrelloni ricorrenti, saldi — **scenario E in 3 interazioni**
 - [F6-23] Ricerca globale completa: mappa (istantanea) + anagrafica (server)
 - [F6-24] Dashboard: occupazione, incassi, capacità recuperata, prossimi 7 giorni
+- [F6-26] **Generatore di griglia**: «6 file da 16» crea 96 ombrelloni, zone e passerelle
+- [F6-27 parziale] Rinumerazione con traccia; lo spostamento manuale manca
 
 ## In corso
 Nessun task in corso.
@@ -103,10 +105,13 @@ Mancano le sessioni, che richiedono la tabella `Session` (`D-18`) e le rotte
 Next.js. Si completa quando esiste l'app.
 
 ## Prossimi 3
-1. [F6-26] **Generatore di griglia** — senza, un gestore non può configurare il
-   proprio stabilimento: è il rischio di adozione più alto (`C-08`)
-2. [F6-27] Editor mappa: sposta, rinumera, zone, passerelle
-3. [F6-17] Editor del listino (le regole oggi si creano solo dal seed)
+1. [F6-17] Editor del listino — senza, il gestore non può cambiare i propri prezzi
+2. [F6-30] PWA installabile (`MVP-16`, criterio 7 di accettazione)
+3. [F6-31] Coda di retry e stato di sincronizzazione (criterio 10)
+
+**Nota su F6-26**: una mappa generata senza tariffe non può vendere, e il
+motore lo dice invece di registrare zero (`C-43`). Il generatore assegna già
+prezzi predefiniti per zona; l'editor del listino (`F6-17`) serve a cambiarli.
 
 **Nota su F6-17**: il motore prezzi funziona e le regole sono nel database, ma
 **non c'è ancora una schermata per modificarle**: oggi arrivano dal seed. Finché
@@ -133,7 +138,7 @@ cp .env.example .env              # DATABASE_URL e TEST_DATABASE_URL
 npm install
 npm run db:deploy                 # applica le migrazioni
 npm run seed                      # 96 ombrelloni, dati realistici
-npm test                          # 214 test
+npm test                          # 237 test
 npm run dev                       # mappa su http://localhost:3000/map
 npm run e2e                       # scenario A, conta le interazioni
 # `npm run seed` stampa in fondo un link stagionale pronto da aprire
@@ -163,6 +168,7 @@ I test girano su `gestionelido_test`, mai sul database di sviluppo.
 | `domain/availability/` | Adiacenza e ricerca: pure, deterministiche, senza database |
 | `domain/seasonal/` | Cutoff, intervalli e calcolo del credito: pure |
 | `domain/pricing/engine.ts` | Listino: regole con priorità, mai un prezzo a zero |
+| `domain/map/grid.ts` | Generatore di griglia: l'anteprima è ciò che verrà scritto |
 | `server/use-cases/absences.ts` | Assenze: contiene una **correzione a `docs/08` §6.2** |
 | `server/auth/magic-link.ts` | Token stagionale: generato, hashato, revocabile |
 | `app/s/[token]/` | Area cliente: 3 tap, nessuna password |

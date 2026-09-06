@@ -15,7 +15,7 @@ export type AuditAction =
   | 'absence.declare' | 'absence.cancel.full' | 'absence.cancel.partial'
   | 'credit.earn' | 'credit.reverse' | 'credit.use' | 'credit.adjust'
   | 'contract.create' | 'contract.cancel' | 'token.regenerate' | 'token.revoke'
-  | 'umbrella.block' | 'umbrella.renumber'
+  | 'umbrella.block' | 'umbrella.renumber' | 'map.generate'
   | 'customer.anonymize' | 'customer.merge'
 
 /** Solo i campi effettivamente cambiati finiscono nel registro. */

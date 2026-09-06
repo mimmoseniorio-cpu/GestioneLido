@@ -411,3 +411,19 @@ svg.map .umb:focus-visible rect.body { stroke-width: 5; }
 .colonna-barra span { width: 100%; background: var(--accent); border-radius: 6px 6px 0 0; }
 .giorno .perc { font-weight: 700; font-variant-numeric: tabular-nums; }
 .giorno .disp { font-size: 12px; color: var(--ink-soft); }
+
+/* ── Configurazione della mappa ─────────────────────────────────────────── */
+.configura { max-width: 900px; margin: 0 auto; padding: 20px 16px 48px; display: grid; gap: 16px; }
+.configura h1 { margin: 0; font-size: 26px; }
+.campi { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.campi label { display: grid; gap: 4px; font-size: 15px; color: var(--ink-soft); }
+.scelte { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: grid; gap: 10px; }
+.scelte legend { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); font-weight: 700; padding: 0 6px; }
+.scelte label { display: flex; align-items: center; gap: 10px; color: var(--ink); }
+.scelte input[type="radio"] { width: 20px; height: 20px; min-height: 20px; }
+.riepilogo { font-size: 17px; }
+.riepilogo b { font-size: 22px; }
+.anteprima { overflow-x: auto; background: var(--bg); border-radius: 10px; padding: 10px; }
+.anteprima svg { width: 100%; height: auto; min-width: 420px; }
+.avviso-box { background: #fffbeb; border: 1px solid #fcd34d; color: #78350f; padding: 12px; border-radius: 10px; }
+button.azione-primaria.come-bottone { border: 0; min-height: 60px; }
