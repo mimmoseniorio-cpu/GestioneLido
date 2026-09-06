@@ -88,6 +88,10 @@ input {
   font-size: 12px; letter-spacing: .12em; text-transform: uppercase;
   color: var(--ink-soft); font-weight: 700; margin-bottom: 10px;
 }
+.chiuso-avviso {
+  margin-bottom: 10px; padding: 10px 14px; border-radius: 10px;
+  background: #e5e7eb; border: 1px solid #9ca3af; color: #374151;
+}
 .tiles { display: flex; flex-wrap: wrap; gap: 10px; }
 .tile {
   background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
@@ -212,6 +216,32 @@ svg.map .umb:focus-visible rect.body { stroke-width: 5; }
 .proposta .temporaneo { color: #78350f; font-size: 14px; }
 .azioni-proposta { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
 .azioni-proposta button { min-height: 44px; flex: 1; min-width: 130px; }
+
+/* ── Mappa / Elenco (F6-34) ─────────────────────────────────────────────── */
+.commuta { display: flex; gap: 8px; padding: 0 16px 10px; }
+.commuta button { flex: 1; max-width: 180px; }
+.commuta button.attivo {
+  background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600;
+}
+.elenco-ombrelloni { display: grid; gap: 8px; padding: 0 16px 20px; }
+.riga-ombrellone {
+  display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
+  min-height: 62px; padding: 10px 14px; background: var(--surface);
+  border: 1px solid var(--line); border-radius: 12px;
+}
+.riga-ombrellone:hover { background: #f3f4f6; }
+.riga-ombrellone .segno {
+  flex: none; width: 40px; height: 40px; border-radius: 10px; border: 2px solid;
+  display: grid; place-items: center; font-size: 15px;
+}
+.riga-ombrellone .corpo { display: grid; gap: 1px; flex: 1; min-width: 0; }
+.riga-ombrellone .numero { font-size: 19px; font-weight: 700; }
+.riga-ombrellone .stato { font-size: 14px; font-weight: 600; }
+.riga-ombrellone .chi {
+  font-size: 14px; color: var(--ink-soft);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.riga-ombrellone .dovuto { flex: none; font-variant-numeric: tabular-nums; }
 
 @media (max-width: 900px) {
   /* Rimpicciolire la mappa fino a renderla illeggibile è peggio che farla
@@ -451,3 +481,41 @@ input.mini { min-height: 40px; width: 92px; padding: 0 8px; }
 }
 .azioni-coda { display: flex; gap: 8px; }
 .azioni-coda button { min-height: 40px; }
+
+/* ── Calendario ─────────────────────────────────────────────────────────── */
+.calendario { padding: 16px 0 40px; display: grid; gap: 12px; }
+.barra-cal { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 0 16px; }
+.barra-cal .periodo { font-weight: 700; font-size: 18px; text-transform: capitalize; }
+.griglia-scorrevole { overflow: auto; max-height: 74vh; padding: 0 16px; }
+table.griglia { border-collapse: separate; border-spacing: 2px; }
+table.griglia th, table.griglia td { font-size: 13px; }
+table.griglia thead th {
+  position: sticky; top: 0; z-index: 2; background: var(--surface);
+  padding: 4px 2px; min-width: 34px; border-radius: 6px;
+}
+table.griglia thead th.festivo { background: #fef3c7; }
+table.griglia thead th.oggi { outline: 2px solid var(--accent); }
+table.griglia .gnome { color: var(--ink-soft); text-transform: uppercase; font-size: 10px; }
+table.griglia .gnum { font-weight: 700; font-variant-numeric: tabular-nums; }
+table.griglia tr.riepilogo th {
+  top: 42px; z-index: 2; color: var(--accent); font-variant-numeric: tabular-nums;
+  font-size: 12px; font-weight: 700;
+}
+table.griglia th.ang {
+  position: sticky; left: 0; z-index: 3; background: var(--surface);
+  min-width: 52px; text-align: left; padding-left: 6px;
+  font-size: 11px; color: var(--ink-soft); text-transform: uppercase;
+}
+table.griglia th.numero-omb {
+  position: sticky; left: 0; z-index: 1; background: var(--surface);
+  text-align: left; padding: 0 6px; font-variant-numeric: tabular-nums;
+  border-radius: 6px; min-width: 52px;
+}
+table.griglia td {
+  width: 34px; height: 28px; text-align: center; border: 1.5px solid; border-radius: 5px;
+}
+table.griglia td.oggi { outline: 2px solid var(--accent); outline-offset: -1px; }
+table.griglia th.chiuso, table.griglia td.chiuso { opacity: .3; }
+table.griglia thead th.chiuso { background: #e5e7eb; }
+.fuori-stagione { padding: 0 16px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }

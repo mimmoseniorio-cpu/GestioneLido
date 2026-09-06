@@ -47,6 +47,9 @@ export type MapUmbrella = {
 
 export type MapDay = {
   date: string
+  /** fuori dalla stagione attiva: gli ombrelloni risultano liberi ma non
+   *  sono vendibili, e mostrarli come disponibili sarebbe un numero falso */
+  fuoriStagione: boolean
   umbrellas: MapUmbrella[]
   zones: { id: string; name: string; color: string }[]
   features: { id: string; kind: string; label: string | null; posX: number; posY: number; width: number; height: number }[]
@@ -206,8 +209,12 @@ export async function getMapForDate(
   const recoveredSeasonCents = (recuperiStagione as any[])
     .reduce((s, i) => s + i.priceCents, 0)
 
+  const fuoriStagione = !stagione
+    || date < (stagione as any).startDate || date > (stagione as any).endDate
+
   return {
     date: iso(date),
+    fuoriStagione,
     umbrellas: rows,
     zones: (zones as any[]).map(z => ({ id: z.id, name: z.name, color: z.color })),
     features: (features as any[]).map(f => ({
@@ -222,7 +229,7 @@ export async function getMapForDate(
       seasonalPresent: conta('STAGIONALE_PRESENTE'),
       seasonalAbsent: conta('STAGIONALE_ASSENTE'),
       blocked: conta('BLOCCATO'),
-      sellable: rows.filter(r => r.sellable).length,
+      sellable: fuoriStagione ? 0 : rows.filter(r => r.sellable).length,
       occupancyPercent: total === 0 ? 0 : Math.round((occupied / total) * 100),
       recoveredToday: temporaneiOggi.length,
       recoveredTodayCents,

@@ -30,6 +30,10 @@ const OGGI = day(2030, 8, 12)
 /** Uno stabilimento con un ombrellone per ogni stato possibile. */
 async function scenario(label: string, quanti = 6) {
   const ctx = await makeClub(prisma, label)
+  // Senza stagione attiva non si vende nulla, e la mappa lo dice: i test
+  // devono partire da uno stabilimento aperto.
+  await prisma.season.update({ where: { id: ctx.season.id },
+    data: { status: 'ACTIVE', startDate: day(2030, 1, 1), endDate: day(2030, 12, 31) } })
   const umbrellas = [ctx.umbrella]
   for (let i = 1; i < quanti; i++) {
     umbrellas.push(await prisma.umbrella.create({
@@ -210,4 +214,20 @@ describe('nessun N+1', () => {
     expect(mappa.umbrellas).toHaveLength(96)
     expect(ms).toBeLessThan(500)
   }, 60_000)
+})
+
+describe('fuori stagione', () => {
+  it('non mostra come vendibile ciò che non si può vendere', async () => {
+    const { ctx } = await scenario('map-fuori', 3)
+    await prisma.season.update({ where: { id: ctx.season.id },
+      data: { startDate: day(2030, 5, 1), endDate: day(2030, 8, 31) } })
+
+    const dentro = await getMapForDate(ctxOf(ctx.club.id), day(2030, 8, 12), OGGI)
+    expect(dentro.fuoriStagione).toBe(false)
+    expect(dentro.counters.sellable).toBeGreaterThan(0)
+
+    const fuori = await getMapForDate(ctxOf(ctx.club.id), day(2030, 10, 12), OGGI)
+    expect(fuori.fuoriStagione).toBe(true)
+    expect(fuori.counters.sellable).toBe(0)
+  })
 })

@@ -35,6 +35,10 @@ export default function MapClient({ iniziale, clubName }:
   const [errore, setErrore] = useState<string | null>(null)
   const [cerca, setCerca] = useState('')
   const [inCoda, setInCoda] = useState<OperazioneInCoda[]>([])
+  // F6-34 · su schermo piccolo la mappa da 96 ombrelloni è illeggibile: la
+  // risposta è un elenco ordinato per ciò su cui si può agire, non una mappa
+  // rimpicciolita (docs/06 §2.1).
+  const [modo, setModo] = useState<'mappa' | 'elenco'>('mappa')
   // Arrivando dalla scheda cliente il pannello di ricerca si apre da solo.
   const [trovaAperto, setTrovaAperto] = useState(false)
   const [clienti, setClienti] = useState<ClienteTrovato[]>([])
@@ -62,6 +66,7 @@ export default function MapClient({ iniziale, clubName }:
 
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get('trova') === '1') setTrovaAperto(true)
+    if (window.matchMedia('(max-width: 700px)').matches) setModo('elenco')
   }, [])
 
   // NF-02 · lo stato della coda è sempre visibile: l'operatore non deve mai
@@ -205,9 +210,14 @@ export default function MapClient({ iniziale, clubName }:
       {/* Scenario F: la risposta è già qui, senza toccare nulla. */}
       <section className="oggi" aria-label="Situazione del giorno">
         <div className="oggi-testata">{oggi ? 'Oggi' : dataBreve(data)}</div>
+        {mappa.fuoriStagione && (
+          <div className="chiuso-avviso">
+            Fuori stagione: lo stabilimento è chiuso in questa data, non c&apos;è nulla da vendere.
+          </div>
+        )}
         <div className="tiles">
-          <div className="tile forte">
-            <b>{c.sellable}</b><span>disponibili<br />da vendere</span>
+          <div className={`tile ${mappa.fuoriStagione ? '' : 'forte'}`}>
+            <b>{mappa.fuoriStagione ? '—' : c.sellable}</b><span>disponibili<br />da vendere</span>
           </div>
           <div className="tile"><b>{c.occupied}</b><span>occupati</span></div>
           {/* Una casella a zero è rumore: si mostra solo se dice qualcosa. */}
@@ -244,7 +254,17 @@ export default function MapClient({ iniziale, clubName }:
           ))}
       </div>
 
-      <div className="mapwrap">
+      <div className="commuta">
+        <button className={modo === 'mappa' ? 'attivo' : ''} onClick={() => setModo('mappa')}>Mappa</button>
+        <button className={modo === 'elenco' ? 'attivo' : ''} onClick={() => setModo('elenco')}>Elenco</button>
+      </div>
+
+      {modo === 'elenco' && (
+        <Elenco umbrellas={trovati ? mappa.umbrellas.filter(u => trovati.has(u.id)) : mappa.umbrellas}
+                onScegli={setScelto} />
+      )}
+
+      <div className="mapwrap" hidden={modo !== 'mappa'}>
         <div className="mapcard">
           <div className="sea">～ ～ ～ mare ～ ～ ～</div>
           <svg className="map" viewBox={`0 0 ${larghezza} ${altezza}`} role="img"
@@ -284,6 +304,7 @@ export default function MapClient({ iniziale, clubName }:
         <button onClick={() => vaiA(oggiIso())} disabled={oggi}>Oggi</button>
         <button onClick={() => void rinfresca()}>Aggiorna</button>
         <Link href="/dashboard" className="bottone-link">Oggi in numeri</Link>
+        <Link href="/calendar" className="bottone-link">Calendario</Link>
         <Link href="/settings/pricing" className="bottone-link">Listino</Link>
         {evidenziati && <button onClick={() => setEvidenziati(null)}>Togli evidenza</button>}
       </div>
@@ -317,6 +338,56 @@ export default function MapClient({ iniziale, clubName }:
         </>
       )}
     </>
+  )
+}
+
+/**
+ * F6-34 · L'elenco per lo smartphone.
+ *
+ * L'ordine non è per numero ma per URGENZA: prima ciò che si può vendere, poi
+ * ciò da incassare, poi il resto. Su uno schermo piccolo si vedono sei righe
+ * per volta: devono essere le sei che contano.
+ */
+function Elenco({ umbrellas, onScegli }:
+  { umbrellas: MapUmbrella[]; onScegli: (id: string) => void }) {
+
+  const peso = (u: MapUmbrella) => {
+    if (u.state === 'STAGIONALE_ASSENTE') return 0        // vendibile e frutta credito
+    if (u.state === 'LIBERO') return 1
+    if ((u.amountDueCents ?? 0) > 0) return 2             // da incassare
+    if (u.state === 'BLOCCATO') return 5
+    return 3
+  }
+  const ordinati = [...umbrellas].sort((a, b) =>
+    peso(a) - peso(b) ||
+    a.visibleNumber.localeCompare(b.visibleNumber, 'it', { numeric: true }))
+
+  return (
+    <div className="elenco-ombrelloni">
+      {ordinati.map(u => {
+        const s = STATES[u.state]
+        const daPagare = (u.amountDueCents ?? 0) > 0
+        return (
+          <button key={u.id} className="riga-ombrellone" onClick={() => onScegli(u.id)}>
+            <span className="segno" style={{ background: s.fill, borderColor: s.line }}>
+              {s.symbol}
+            </span>
+            <span className="corpo">
+              <span className="numero">{u.visibleNumber}</span>
+              <span className="stato" style={{ color: s.line }}>{s.short}</span>
+              {/* Su un posto liberato il nome è già nella riga dell'assenza:
+                  ripeterlo ruba la riga a un'informazione utile. */}
+              {u.absence
+                ? <span className="chi">
+                    {u.absence.seasonalName}, assente fino al {dataBreve(u.absence.to)}
+                  </span>
+                : u.customerName && <span className="chi">{u.customerName}</span>}
+            </span>
+            {daPagare && <span className="dovuto">{euro(u.amountDueCents)}</span>}
+          </button>
+        )
+      })}
+    </div>
   )
 }
 
