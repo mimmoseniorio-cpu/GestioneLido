@@ -14,7 +14,8 @@ import { withDomainErrors } from '@/domain/errors'
 export type UseCaseDeps = { db: ScopedDb; tx: Tx; ctx: Ctx }
 
 export function useCase<I, O>(spec: {
-  permission: Permission
+  /** uno o più permessi in alternativa (vedi requirePermission) */
+  permission: Permission | Permission[]
   /** false solo per le sole letture che non toccano disponibilita'. */
   transactional?: boolean
   run: (deps: UseCaseDeps, input: I) => Promise<O>

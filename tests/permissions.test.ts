@@ -33,12 +33,16 @@ describe('matrice ruoli', () => {
     for (const p of Object.values(P)) expect(can('ADMIN', p)).toBe(true)
   })
 
-  it('il magic link ha una sola scrittura raggiungibile', () => {
-    // Il link finisce inoltrato su WhatsApp (C-06): la superficie deve
-    // restare minima anche se qualcun altro lo apre.
+  it('il magic link tocca solo la propria assenza, niente altro', () => {
+    // Il link finisce inoltrato su WhatsApp (C-06): la superficie deve restare
+    // minima anche se qualcun altro lo apre. Le sole scritture raggiungibili
+    // sono dichiarare e annullare la PROPRIA assenza (docs/04 ▲⁵); il vincolo
+    // "propria" lo applica il caso d'uso leggendo il contratto dalla sessione.
     expect(PERMISSIONS.SEASONAL_CUSTOMER).toEqual([
-      P.CONTRACT_READ_OWN, P.ABSENCE_DECLARE_OWN, P.CREDIT_READ_OWN,
+      P.CONTRACT_READ_OWN, P.ABSENCE_DECLARE_OWN, P.ABSENCE_CANCEL_OWN, P.CREDIT_READ_OWN,
     ])
+    const scritture = PERMISSIONS.SEASONAL_CUSTOMER.filter(p => !p.includes('read'))
+    expect(scritture).toEqual([P.ABSENCE_DECLARE_OWN, P.ABSENCE_CANCEL_OWN])
   })
 
   it('il cliente stagionale non raggiunge nulla dello staff', () => {

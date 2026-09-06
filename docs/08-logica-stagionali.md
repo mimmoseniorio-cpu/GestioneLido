@@ -247,7 +247,15 @@ non gira, lo stabilimento vende un posto occupato.
 Lo stagionale può annullare l'assenza sui giorni **non ancora rivenduti**. Sui
 giorni rivenduti si applica `D-01`.
 
-### 6.2 Annullamento parziale — spezzare l'intervallo
+### 6.2 Annullamento con giorni già venduti
+
+> **Correzione (F6-08).** Questa sezione prescriveva di annullare l'assenza e
+> **ricreare come attivi** i frammenti non venduti. Era sbagliato, e il test
+> T-12 lo ha dimostrato: un'assenza attiva significa «posto vendibile», quindi
+> ricreare i frammenti lascerebbe liberati proprio i giorni che il cliente sta
+> chiedendo di riprendersi. Il testo si contraddiceva da solo, perché il
+> risultato atteso diceva «10, 11, 13, 14, 15 → torna suo».
+
 Assenza `[10–15]`, il giorno 12 è stato venduto. Lo stagionale annulla.
 
 ```
@@ -257,8 +265,6 @@ PRIMA
 
 DOPO
   SeasonalAbsence #1  [10 ─────────────── 15]  CANCELLED   ← storico preservato
-  SeasonalAbsence #2  [10 ── 11]               ACTIVE      ← ricreata
-  SeasonalAbsence #3  [13 ─────── 15]          ACTIVE      ← ricreata
   ReservationItem     [      12      ]          intatto
 
 Risultato per il cliente:
@@ -266,13 +272,16 @@ Risultato per il cliente:
   12                 → resta venduto, credito già maturato, confermato
 ```
 
-L'assenza originale non si modifica: si annulla e si ricreano i frammenti. Così
-l'audit ricostruisce esattamente cosa è successo e quando, che è ciò che serve
-in una contestazione.
+**Perché basta annullare per intero.** La vendita del 12 regge da sé: la
+funzione di stato guarda prima le prenotazioni e poi il contratto stagionale
+(`RD-01`), quindi quel giorno resta occupato qualunque sia lo stato
+dell'assenza. Gli altri giorni tornano `STAGIONALE_PRESENTE` perché non li
+copre più nessuna assenza attiva. Il credito già maturato resta, perché la
+vendita è davvero avvenuta (`K-05`).
 
-**Attenzione:** i frammenti ricreati mantengono `declared_at` e `is_late`
-dell'originale. Diversamente, annullare parzialmente farebbe "ringiovanire"
-l'assenza e potrebbe farle riacquisire il diritto al credito.
+Lo spezzamento dell'intervallo (`sottraiGiorni`, in `domain/seasonal/intervals.ts`)
+resta implementato e testato, ma serve a un'operazione diversa: il cliente che
+vuole annullare **solo una parte** dell'assenza. Non è nell'MVP.
 
 ```ts
 async function cancelAbsence(ctx, absenceId: string, actor: 'CUSTOMER'|'STAFF') {

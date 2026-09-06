@@ -58,11 +58,19 @@ export function readSettings(raw: unknown): ClubSettings {
   return { ...DEFAULT_SETTINGS, ...o }
 }
 
-/** La UI nasconde, il server nega (docs/04 §3.4). */
-export function requirePermission(ctx: Ctx, permission: Permission): void {
-  if (!can(ctx.actor, permission)) {
+/**
+ * La UI nasconde, il server nega (docs/04 §3.4).
+ *
+ * Accetta più permessi in alternativa: alcune operazioni sono raggiungibili sia
+ * dallo staff sia dal cliente, ma con permessi diversi — lo staff può
+ * dichiarare l'assenza di chiunque, il cliente solo la propria. Il vincolo
+ * "solo la propria" lo applica il caso d'uso, che conosce il contesto.
+ */
+export function requirePermission(ctx: Ctx, permission: Permission | Permission[]): void {
+  const ammessi = Array.isArray(permission) ? permission : [permission]
+  if (!ammessi.some(p => can(ctx.actor, p))) {
     throw new DomainError('FORBIDDEN', 'Operazione non consentita per il tuo ruolo.',
-      { permission, actor: ctx.actor })
+      { permission: ammessi, actor: ctx.actor })
   }
 }
 

@@ -27,6 +27,7 @@ export const P = {
   ABSENCE_DECLARE:    'absence:declare',
   ABSENCE_CANCEL:     'absence:cancel',
   ABSENCE_DECLARE_OWN:'absence:declare_own',
+  ABSENCE_CANCEL_OWN: 'absence:cancel_own',
   CREDIT_READ:        'credit:read',
   CREDIT_READ_OWN:    'credit:read_own',
   CREDIT_USE:         'credit:use',
@@ -61,7 +62,7 @@ const OPERATOR: Permission[] = [
  * superficie e' deliberatamente minima.
  */
 const SEASONAL_CUSTOMER: Permission[] = [
-  P.CONTRACT_READ_OWN, P.ABSENCE_DECLARE_OWN, P.CREDIT_READ_OWN,
+  P.CONTRACT_READ_OWN, P.ABSENCE_DECLARE_OWN, P.ABSENCE_CANCEL_OWN, P.CREDIT_READ_OWN,
 ]
 
 export const PERMISSIONS: Record<Actor, readonly Permission[]> = {

@@ -3,9 +3,9 @@
 Aggiornato: 2026-09-06 · Branch: `main` · Repository: `mimmoseniorio-cpu/GestioneLido`
 
 ## Fase corrente
-**F6 — MVP: in corso.** Rifinita la mappa dopo la prova sul campo (gate `F5-11`
-superato, feedback dell'utente recepito) e collegata la ricerca disponibilità.
-113 test verdi.
+**F6 — MVP: in corso.** Mappa rifinita dopo la prova sul campo, ricerca
+disponibilità collegata, **assenze stagionali complete lato dominio**.
+138 test verdi, fra cui `T-12` — uno dei sei che decidono il rilascio.
 
 Aggiornato: 2026-09-06 · dopo il riscontro dell'utente sulla demo
 
@@ -67,6 +67,9 @@ Aggiornato: 2026-09-06
 - [riscontro] Contatori a caselle grandi al posto di "10% su 96"
 - [riscontro] Bersagli da 46 a 56 px; avviso arancione quando la data non è oggi
 - [riscontro] Form di prenotazione con dal/al, preventivo immediato e "incassato subito"
+- [F6-07] `declareAbsence()` con cutoff nel fuso dello stabilimento → `server/use-cases/absences.ts`
+- [F6-08] `cancelAbsence()` con giorni già venduti — **T-12 verde**
+- [F6-07 dominio] `domain/seasonal/cutoff.ts` e `domain/seasonal/intervals.ts`, funzioni pure
 
 ## In corso
 Nessun task in corso.
@@ -81,9 +84,13 @@ Mancano le sessioni, che richiedono la tabella `Session` (`D-18`) e le rotte
 Next.js. Si completa quando esiste l'app.
 
 ## Prossimi 3
-1. [F6-07] `declareAbsence()` con cutoff — il cuore del prodotto
-2. [F6-08] `cancelAbsence()` con spezzatura dell'intervallo (T-12)
-3. [F6-09/F6-10] Area cliente stagionale: "non sarò presente" in 3 tap
+1. [F6-06] Magic link: generazione, hash, revoca, scadenza
+2. [F6-09/F6-10] Area cliente stagionale: "non sarò presente" in 3 tap
+3. [F6-12] `sellTemporarySlot()` con maturazione del credito (T-07, T-08, T-14)
+
+**Nota**: `declareAbsence` e `cancelAbsence` funzionano e sono testati, ma il
+cliente non li può ancora raggiungere: manca il magic link (`F6-06`) e l'area
+cliente (`F6-09`, `F6-10`). Oggi l'assenza si registra solo dallo staff.
 
 **Nota su F6-23**: la ricerca è istantanea perché lavora sul giorno già
 caricato in memoria. Trova chi è sulla mappa oggi, non tutti i clienti dello
@@ -106,7 +113,7 @@ cp .env.example .env              # DATABASE_URL e TEST_DATABASE_URL
 npm install
 npm run db:deploy                 # applica le migrazioni
 npm run seed                      # 96 ombrelloni, dati realistici
-npm test                          # 113 test
+npm test                          # 138 test
 npm run dev                       # mappa su http://localhost:3000/map
 npm run e2e                       # scenario A, conta le interazioni
 npm run typecheck
@@ -133,5 +140,7 @@ I test girano su `gestionelido_test`, mai sul database di sviluppo.
 | `domain/umbrella/state.ts` | La funzione da cui dipende ogni schermata |
 | `server/queries/map.ts` | La mappa di un giorno, query costanti |
 | `domain/availability/` | Adiacenza e ricerca: pure, deterministiche, senza database |
+| `domain/seasonal/` | Cutoff e aritmetica degli intervalli, pure |
+| `server/use-cases/absences.ts` | Assenze: contiene una **correzione a `docs/08` §6.2** |
 | `app/map/MapClient.tsx` | La schermata principale del prodotto |
 | `server/dev-session.ts` | **Ponte temporaneo**: sparisce con `F4-01` |
