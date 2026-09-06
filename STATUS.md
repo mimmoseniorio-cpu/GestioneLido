@@ -3,6 +3,9 @@
 Aggiornato: 2026-09-06 · Branch: `main` · Repository: `mimmoseniorio-cpu/GestioneLido`
 
 ## Fase corrente
+**F6 — MVP: iniziata.** `F6-01` e `F6-02` fatti (adiacenza e ricerca
+disponibilità, 24 test). 113 test verdi in totale.
+
 **F5 — Prototipo: la mappa funziona.** 89 test verdi, typecheck pulito, build
 Next.js pulita. Scenario A verificato nel browser in **4 interazioni**,
 scenario F leggibile senza toccare nulla. Prossima: F6 — MVP.
@@ -50,6 +53,8 @@ Aggiornato: 2026-09-06
 - [F5-09] Selettore data con precaricamento di ieri e domani
 - [F5-10] Aggiornamento ottimistico + riconciliazione dal server
 - [F5 extra] API `/api/v1/map`, `/reservations`, `/customers` + script E2E scenario A
+- [F6-01] `punteggioProssimita()` — cosa vuol dire "vicini" (C-04) → `domain/availability/proximity.ts`
+- [F6-02] `cercaDisponibilita()` deterministica, con soluzioni parziali (C-20) → `domain/availability/search.ts`
 
 ## In corso
 Nessun task in corso.
@@ -64,9 +69,13 @@ Mancano le sessioni, che richiedono la tabella `Session` (`D-18`) e le rotte
 Next.js. Si completa quando esiste l'app.
 
 ## Prossimi 3
-1. [F6-01] `proximityScore()` — cosa vuol dire "ombrelloni vicini" (C-04)
-2. [F6-02] Algoritmo di ricerca disponibilità (scenario B)
-3. [F6-07] `declareAbsence()` con cutoff — l'inizio del cuore del prodotto
+1. [F6-07] `declareAbsence()` con cutoff — il cuore del prodotto
+2. [F6-08] `cancelAbsence()` con spezzatura dell'intervallo (T-12)
+3. [F6-03] Schermata di ricerca disponibilità (scenario B, ≤ 4 interazioni)
+
+**Nota**: `cercaDisponibilita()` è pura e testata ma non ancora collegata a una
+query: manca il caricamento dei candidati dal database (finestra contigua
+disponibile per ombrellone) e la schermata `F6-03`.
 
 ## Blocchi e decisioni aperte
 - ~~`D-01`~~ CHIUSA il 2026-09-06: chi ha pagato tiene il posto. Credito solo a rivendita avvenuta.
@@ -84,7 +93,7 @@ cp .env.example .env              # DATABASE_URL e TEST_DATABASE_URL
 npm install
 npm run db:deploy                 # applica le migrazioni
 npm run seed                      # 96 ombrelloni, dati realistici
-npm test                          # 89 test
+npm test                          # 113 test
 npm run dev                       # mappa su http://localhost:3000/map
 npm run e2e                       # scenario A, conta le interazioni
 npm run typecheck
@@ -110,5 +119,6 @@ I test girano su `gestionelido_test`, mai sul database di sviluppo.
 | `domain/errors.ts` | Traduzione dei vincoli in messaggi per l'operatore |
 | `domain/umbrella/state.ts` | La funzione da cui dipende ogni schermata |
 | `server/queries/map.ts` | La mappa di un giorno, query costanti |
+| `domain/availability/` | Adiacenza e ricerca: pure, deterministiche, senza database |
 | `app/map/MapClient.tsx` | La schermata principale del prodotto |
 | `server/dev-session.ts` | **Ponte temporaneo**: sparisce con `F4-01` |

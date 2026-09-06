@@ -64,8 +64,8 @@ tocca al massimo 5–6 file e ha un criterio di "fatto" verificabile.
 
 | ID | Task | Modello | Fatto quando |
 |---|---|---|---|
-| F6-01 | `proximityScore()` + test (`docs/03` §7) | 🔴 | Casi di corridoio e cambio fila coperti |
-| F6-02 | Algoritmo disponibilità (`docs/09` §4) | 🔴 | T-30…T-35 verdi |
+| ✅ F6-01 | `proximityScore()` + test (`docs/03` §7) | 🔴 | Casi di corridoio e cambio fila coperti |
+| ✅ F6-02 | Algoritmo disponibilità (`docs/09` §4) | 🔴 | T-30…T-35 verdi |
 | F6-03 | Schermata ricerca disponibilità (S-03) | 🟡 | Scenario B ≤ 4 interazioni |
 | F6-04 | Soluzioni parziali quando non c'è copertura completa | 🔴 | T-30 verde, mai "nessun risultato" |
 | F6-05 | CRUD contratti stagionali | 🟡 | T-27, T-28 verdi |
