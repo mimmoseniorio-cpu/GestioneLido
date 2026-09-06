@@ -26,7 +26,12 @@ const COGNOMI = ['Rossi','Bianchi','Verdi','Ferrari','Esposito','Russo','Romano'
   'Greco','Bruno','Gallo','Conti','De Luca','Costa','Giordano','Mancini','Rizzo','Lombardi',
   'Moretti','Barbieri','Fontana','Santoro','Mariani','Rinaldi','Caruso','Ferrara','Galli','Martini']
 
-async function main() {
+/**
+ * Esportata perché il seed di primo avvio (`db/deploy-seed.ts`) la richiama
+ * dopo aver verificato che il database sia vuoto. AZZERA TUTTO: non va mai
+ * eseguita su un database con dati veri.
+ */
+export async function seedDemo() {
   console.log('· azzeramento (TRUNCATE: DELETE su audit_log e vietato dal trigger)')
   await prisma.$executeRawUnsafe('TRUNCATE TABLE "beach_club" RESTART IDENTITY CASCADE')
 
@@ -349,9 +354,13 @@ async function main() {
   console.log(`  crediti maturati: ${(creditiTotali / 100).toFixed(2)} €`)
   console.log(`\n  accesso staff:  admin@lidoadriano.it / ${PASSWORD_DEMO}`)
   console.log(`                  reception@lidoadriano.it / ${PASSWORD_DEMO}  (operatore)`)
-  console.log(`\n  area cliente stagionale, da provare:\n  http://localhost:3000${linkDiProva}`)
+  const base = process.env.APP_URL ?? 'http://localhost:3000'
+  console.log(`\n  area cliente stagionale, da provare:\n  ${base}${linkDiProva}`)
 }
 
-main()
-  .catch(e => { console.error(e); process.exit(1) })
-  .finally(() => prisma.$disconnect())
+/** Eseguito solo quando si lancia questo file direttamente (`npm run seed`). */
+if (process.argv[1]?.endsWith('seed.ts')) {
+  seedDemo()
+    .catch(e => { console.error(e); process.exit(1) })
+    .finally(() => prisma.$disconnect())
+}

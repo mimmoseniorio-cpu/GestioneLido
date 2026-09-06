@@ -5,7 +5,7 @@ import { requirePermission } from '@/server/context'
 import { P } from '@/domain/auth/permissions'
 import { generaToken, urlPersonale, messaggioWhatsApp } from '@/server/auth/magic-link'
 import { prisma } from '@/server/repositories/scoped'
-import { ok, fail } from '@/server/http'
+import { ok, fail, baseUrl } from '@/server/http'
 
 export const dynamic = 'force-dynamic'
 
@@ -32,7 +32,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const { token, hash } = generaToken()
     await db.seasonalContract.updateById(id, { accessTokenHash: hash, tokenRevokedAt: null })
 
-    const base = req.nextUrl.origin
+    const base = baseUrl(req)
     const link = urlPersonale(base, token)
     const testo = messaggioWhatsApp(cliente.firstName, ombrellone.visibleNumber, link, club.name)
 

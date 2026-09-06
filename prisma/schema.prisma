@@ -12,6 +12,12 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  // Neon (e ogni Postgres dietro un pooler) espone due indirizzi: quello con
+  // il pool per l'applicazione, e quello diretto. Le migrazioni prendono un
+  // lock di sessione, che il pooler in modalita' transazione non conserva:
+  // senza questo, `migrate deploy` fallisce a caso. In locale i due valori
+  // coincidono.
+  directUrl = env("DIRECT_DATABASE_URL")
 }
 
 // ─── enum ────────────────────────────────────────────────────────────────────

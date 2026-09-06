@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { creaContratto } from '@/server/use-cases/contracts'
 import { richiediStaffApi } from '@/server/current-user'
-import { ok, fail, parseDay } from '@/server/http'
+import { ok, fail, parseDay, baseUrl } from '@/server/http'
 
 export const dynamic = 'force-dynamic'
 
@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
       customerId: b.customerId, umbrellaId: b.umbrellaId,
       dal: parseDay(b.dal), al: parseDay(b.al), prezzoCents: b.prezzoCents,
     })
-    return ok({ id: esito.id, link: `${req.nextUrl.origin}/s/${esito.token}` }, 201)
+    return ok({ id: esito.id, link: `${baseUrl(req)}/s/${esito.token}` }, 201)
   } catch (e) {
     return fail(e)
   }
