@@ -25,6 +25,9 @@ cambiarle ora costa poco, dopo F3 costa una migrazione.
 | `D-13` | Tetto al credito stagionale | DECISA — default da confermare |
 | `D-14` | Chiavi esterne composte | DECISA |
 | `D-15` | `visible_number` testuale | DECISA |
+| `D-16` | Dove vivono i vincoli: schema Prisma vs SQL grezzo | DECISA |
+| `D-17` | Regola di dipendenza verificata da test invece che da lint | DECISA |
+| `D-18` | Entità `Session` per le sessioni staff revocabili | **APERTA** |
 
 ---
 
@@ -167,3 +170,43 @@ più grave del sistema. Vedi `docs/03` §5.7.
 Esistono ombrelloni `63A`, `12bis`, numerazioni con lettera di fila. Un intero
 renderebbe impossibile rappresentare mappe reali e costringerebbe a una
 migrazione al primo stabilimento con numerazione irregolare. Vedi `C-07`.
+
+### D-16 — I vincoli che Prisma conosce vanno nello schema, non nella migrazione
+**Stato:** DECISA (2026-09-06) · scoperta durante F3
+
+Le chiavi esterne composte di `D-14` erano state scritte come SQL grezzo in
+coda alla migrazione. Prisma le ha rimosse al primo `migrate dev`: riconcilia
+il database sullo schema, e ciò che non è nello schema sparisce.
+
+Era un guasto silenzioso grave: la garanzia di isolamento tenant sarebbe
+evaporata al primo cambio di schema fatto mesi dopo, senza alcun errore.
+
+**Regola.** Ciò che Prisma modella (relazioni, unique, indici) sta nello
+schema. Ciò che non modella (`EXCLUDE`, trigger, indici GiST parziali,
+estensioni) resta in SQL in coda alla migrazione e sopravvive.
+
+**Conseguenza pratica.** Gli item di prenotazione non si creano annidati sotto
+`reservation`: `beachClubId` fa parte della relazione composta e Prisma lo
+esclude dal create annidato. Si crea prima la testata, poi gli item. Vedi
+`db/seed.ts`.
+
+### D-17 — La regola di dipendenza è verificata da un test, non da una lint rule
+**Stato:** DECISA (2026-09-06)
+
+`docs/02` prevedeva una lint rule ESLint per impedire l'import di Prisma fuori
+dal repository layer. Un test (`tests/architecture.test.ts`) dà la stessa
+garanzia, gira nella stessa pipeline e non richiede di configurare e mantenere
+un plugin ESLint dedicato. Se in futuro il progetto adotterà ESLint per altri
+motivi, la regola potrà essere aggiunta lì senza rimuovere il test.
+
+### D-18 — Manca l'entità `Session`
+**Stato:** APERTA · nata da F4 · blocca il completamento di `F4-01`
+
+`docs/02` §4.1 richiede sessioni staff **revocabili dall'admin**. Una sessione
+revocabile non può essere un token autoconsistente: serve una riga da
+cancellare. Il modello dati di `docs/03` non prevede `Session`.
+
+**Proposta:** tabella `Session` con `id`, `beachClubId`, `userId`, `tokenHash`,
+`expiresAt`, `lastSeenAt`, `revokedAt`, `userAgent`, `ip`. La migrazione si fa
+insieme al resto di `F4-01`, quando esisteranno le rotte Next.js che la usano:
+crearla ora significherebbe una tabella senza codice che la tocchi.

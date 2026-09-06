@@ -3,9 +3,10 @@
 Aggiornato: 2026-09-06 · Branch: `main` · Repository: `mimmoseniorio-cpu/GestioneLido`
 
 ## Fase corrente
-**F3 — Fondamenta: COMPLETA, gate superato.**
-Migrazione applicata, 17 test verdi (T-08, T-03, T-27 inclusi), seed demo
-funzionante. Prossima: F4 — Impalcatura.
+**F4 — Impalcatura: quasi completa.** 40 test verdi, typecheck pulito, CI
+configurata. Manca solo il completamento di `F4-01` (sessioni staff: serve
+`D-18`) e `F4-10` (ambienti di deploy: serve la scelta del fornitore, `D-09`).
+Prossima: F5 — Prototipo, la mappa.
 
 ## Fatto
 - [F0] Brief, protocollo, registro decisioni, prompt di avvio, repository
@@ -28,14 +29,27 @@ funzionante. Prossima: F4 — Impalcatura.
 - [F3-11] Chiavi esterne composte per l'isolamento tenant (D-14) — 9 vincoli attivi
 - [F3-12] Indici di `docs/03` §5.8
 - [F3-13] Seed demo deterministico: 96 ombrelloni, 28 stagionali, 12 assenze
+- [F4-02] `TenantContext` + repository layer con scoping forzato → `server/repositories/scoped.ts`
+- [F4-03] Regola di dipendenza verificata da test (D-17) → `tests/architecture.test.ts`
+- [F4-04] Permessi tipizzati + `useCase()` → `domain/auth/permissions.ts`, `server/use-case.ts`
+- [F4-05] Test di isolamento multi-tenant — T-60 e T-61 verdi
+- [F4-06] Errori di dominio tipizzati + traduzione dei vincoli → `domain/errors.ts`
+- [F4-07] Idempotenza — T-21 verde → `server/idempotency.ts`
+- [F4-08] Servizio audit con diff dei soli campi cambiati → `server/audit.ts`
+- [F4-09] CI su PostgreSQL 16 reale → `.github/workflows/ci.yml`
+- [F4-01] **parziale**: hash Argon2id fatto, sessioni da fare
 
 ## In corso
 Nessun task in corso.
 
+`F4-01` è a metà: `server/auth/password.ts` fa hash e verifica con Argon2id.
+Mancano le sessioni, che richiedono la tabella `Session` (`D-18`) e le rotte
+Next.js. Si completa quando esiste l'app.
+
 ## Prossimi 3
-1. [F4-01] Autenticazione staff (Argon2id, sessioni cookie)
-2. [F4-02] `TenantContext` + repository layer con scoping forzato
-3. [F4-06] Errori di dominio tipizzati + mappatura HTTP
+1. [F5-01] `umbrellaState()` puro + test esaustivi — la funzione di `docs/03` §6
+2. [F5-02] `GET /api/v1/map?date=` in tre query, mai una per ombrellone
+3. [F5-03] Mappa SVG con pan/zoom
 
 ## Blocchi e decisioni aperte
 - ~~`D-01`~~ CHIUSA il 2026-09-06: chi ha pagato tiene il posto. Credito solo a rivendita avvenuta.
@@ -53,7 +67,7 @@ cp .env.example .env              # DATABASE_URL e TEST_DATABASE_URL
 npm install
 npm run db:deploy                 # applica le migrazioni
 npm run seed                      # 96 ombrelloni, dati realistici
-npm test                          # 17 test sui vincoli
+npm test                          # 40 test
 npm run typecheck
 ```
 Il database di sviluppo e' usa-e-getta: `npm run db:reset` lo ricrea da zero.
@@ -72,3 +86,6 @@ I test girano su `gestionelido_test`, mai sul database di sviluppo.
 | `prisma/migrations/*/migration.sql` | In coda: i tre vincoli EXCLUDE e i trigger |
 | `db/seed.ts` | Stabilimento demo deterministico |
 | `tests/constraints.test.ts` | Il gate F3: 17 test sulle garanzie del database |
+| `server/repositories/scoped.ts` | Prima linea dell'isolamento tenant |
+| `server/use-case.ts` | Come si scrive ogni operazione: permesso + transazione |
+| `domain/errors.ts` | Traduzione dei vincoli in messaggi per l'operatore |

@@ -13,34 +13,34 @@ tocca al massimo 5–6 file e ha un criterio di "fatto" verificabile.
 
 | ID | Task | Modello | Fatto quando |
 |---|---|---|---|
-| F3-01 | Setup progetto Next.js + TypeScript + Prisma + Postgres locale | 🟡 | `npm run dev` parte, `prisma migrate` gira |
-| F3-02 | Migrazione `CREATE EXTENSION btree_gist` | 🟢 | Prima migrazione, applicata |
-| F3-03 | Schema: `BeachClub`, `Season`, `User` | 🟡 | Migrato, unique `(club, year)` attiva |
-| F3-04 | Schema: `BeachMap`, `Zone`, `MapFeature`, `Umbrella` | 🟡 | Migrato, unique `(club, visible_number)` attiva |
-| F3-05 | Schema: `Customer`, `CustomerPreference` | 🟡 | Migrato, unique telefono normalizzato attiva |
-| F3-06 | Schema: `Reservation`, `ReservationItem` | 🔴 | Migrato |
-| F3-07 | **Vincolo `EXCLUDE` su `reservation_item`** | 🔴 | T-08 verde: due insert concorrenti, uno solo passa |
-| F3-08 | Schema: `SeasonalContract`, `SeasonalAbsence` + i due `EXCLUDE` | 🔴 | T-03 e T-27 verdi |
-| F3-09 | Schema: `PriceRule`, `Payment`, `CreditTransaction` | 🟡 | Migrato |
-| F3-10 | Schema: `AuditLog` (append-only con trigger) + `IdempotencyKey` | 🟡 | `UPDATE`/`DELETE` su audit rifiutati dal database |
-| F3-11 | Chiavi esterne composte per l'integrità tenant (`docs/03` §5.7) | 🔴 | Impossibile collegare righe di tenant diversi |
-| F3-12 | Indici di `docs/03` §5.8 | 🟢 | Creati |
-| F3-13 | **Seed demo deterministico**: 96 ombrelloni, 28 stagionali, 12 assenze | 🟡 | `npm run seed` due volte produce dati identici |
+| ✅ F3-01 | Setup progetto Next.js + TypeScript + Prisma + Postgres locale | 🟡 | `npm run dev` parte, `prisma migrate` gira |
+| ✅ F3-02 | Migrazione `CREATE EXTENSION btree_gist` | 🟢 | Prima migrazione, applicata |
+| ✅ F3-03 | Schema: `BeachClub`, `Season`, `User` | 🟡 | Migrato, unique `(club, year)` attiva |
+| ✅ F3-04 | Schema: `BeachMap`, `Zone`, `MapFeature`, `Umbrella` | 🟡 | Migrato, unique `(club, visible_number)` attiva |
+| ✅ F3-05 | Schema: `Customer`, `CustomerPreference` | 🟡 | Migrato, unique telefono normalizzato attiva |
+| ✅ F3-06 | Schema: `Reservation`, `ReservationItem` | 🔴 | Migrato |
+| ✅ F3-07 | **Vincolo `EXCLUDE` su `reservation_item`** | 🔴 | T-08 verde: due insert concorrenti, uno solo passa |
+| ✅ F3-08 | Schema: `SeasonalContract`, `SeasonalAbsence` + i due `EXCLUDE` | 🔴 | T-03 e T-27 verdi |
+| ✅ F3-09 | Schema: `PriceRule`, `Payment`, `CreditTransaction` | 🟡 | Migrato |
+| ✅ F3-10 | Schema: `AuditLog` (append-only con trigger) + `IdempotencyKey` | 🟡 | `UPDATE`/`DELETE` su audit rifiutati dal database |
+| ✅ F3-11 | Chiavi esterne composte per l'integrità tenant (`docs/03` §5.7) | 🔴 | Impossibile collegare righe di tenant diversi |
+| ✅ F3-12 | Indici di `docs/03` §5.8 | 🟢 | Creati |
+| ✅ F3-13 | **Seed demo deterministico**: 96 ombrelloni, 28 stagionali, 12 assenze | 🟡 | `npm run seed` due volte produce dati identici |
 
 ## F4 — Impalcatura
 *Gate: build verde, T-60 e T-61 verdi, audit funzionante.*
 
 | ID | Task | Modello | Fatto quando |
 |---|---|---|---|
-| F4-01 | Autenticazione staff (email + password Argon2id, sessioni cookie) | 🔴 | Login e logout funzionano, sessione revocabile |
-| F4-02 | `TenantContext` + repository layer con scoping forzato | 🔴 | Nessuna query di dominio senza `beach_club_id` |
-| F4-03 | Lint rule: `prisma` non importabile fuori da `db/` e `server/repositories/` | 🟢 | La violazione fa fallire il lint |
-| F4-04 | Autorizzazione: permessi e `useCase()` (`docs/04` §4) | 🔴 | Matrice ruoli applicata |
-| F4-05 | Test di isolamento multi-tenant generati sulla matrice | 🔴 | T-60, T-61 verdi su ogni endpoint |
-| F4-06 | Errori di dominio tipizzati + mappatura HTTP | 🟡 | Violazione `EXCLUDE` → `UMBRELLA_NOT_AVAILABLE` |
-| F4-07 | Middleware idempotenza (`Idempotency-Key`) | 🔴 | T-21 verde |
-| F4-08 | Servizio audit log (before/after, solo campi cambiati) | 🟡 | Ogni operazione critica lascia traccia |
-| F4-09 | CI: typecheck, lint, unit, integration su Postgres effimero | 🟡 | Pipeline verde su push |
+| 🟡 F4-01 | Autenticazione staff — **parziale**: hash Argon2id fatto, sessioni da fare (serve `D-18`) | 🔴 | Login e logout funzionano, sessione revocabile |
+| ✅ F4-02 | `TenantContext` + repository layer con scoping forzato | 🔴 | Nessuna query di dominio senza `beach_club_id` |
+| ✅ F4-03 | Lint rule: `prisma` non importabile fuori da `db/` e `server/repositories/` | 🟢 | La violazione fa fallire il lint |
+| ✅ F4-04 | Autorizzazione: permessi e `useCase()` (`docs/04` §4) | 🔴 | Matrice ruoli applicata |
+| ✅ F4-05 | Test di isolamento multi-tenant generati sulla matrice | 🔴 | T-60, T-61 verdi su ogni endpoint |
+| ✅ F4-06 | Errori di dominio tipizzati + mappatura HTTP | 🟡 | Violazione `EXCLUDE` → `UMBRELLA_NOT_AVAILABLE` |
+| ✅ F4-07 | Middleware idempotenza (`Idempotency-Key`) | 🔴 | T-21 verde |
+| ✅ F4-08 | Servizio audit log (before/after, solo campi cambiati) | 🟡 | Ogni operazione critica lascia traccia |
+| ✅ F4-09 | CI: typecheck, lint, unit, integration su Postgres effimero | 🟡 | Pipeline verde su push |
 | F4-10 | Tre ambienti + backup automatici (`D-09`) | 🟡 | Deploy su staging funzionante |
 
 ## F5 — Prototipo
