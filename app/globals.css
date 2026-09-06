@@ -1,0 +1,127 @@
+/* Vincoli da docs/01 §2 e docs/06 §1: schermo al sole, mani bagnate, nessun
+   manuale. Contrasto alto, testo grande, target ≥ 44 px. */
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --ink: #111827;
+  --ink-soft: #4b5563;
+  --line: #d1d5db;
+  --accent: #0f766e;
+  --danger: #b91c1c;
+  --warn: #b45309;
+
+  --s-free-fill: #ffffff;      --s-free-line: #16a34a;
+  --s-busy-fill: #374151;      --s-busy-line: #111827;
+  --s-booked-fill: #e0e7ff;    --s-booked-line: #4338ca;
+  --s-seasonal-fill: #dbeafe;  --s-seasonal-line: #1d4ed8;
+  --s-sellable-fill: #fde68a;  --s-sellable-line: #b45309;
+  --s-blocked-fill: #e5e7eb;   --s-blocked-line: #6b7280;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-text-size-adjust: 100%;
+}
+button {
+  font: inherit; cursor: pointer; border-radius: 10px;
+  min-height: 44px; padding: 0 16px;      /* mani bagnate, dita imprecise */
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+}
+button:hover:not(:disabled) { background: #f3f4f6; }
+button:disabled { opacity: .5; cursor: not-allowed; }
+button.primary {
+  background: var(--accent); border-color: var(--accent); color: #fff;
+  font-weight: 600; width: 100%; min-height: 56px; font-size: 17px;
+}
+button.primary:hover:not(:disabled) { background: #0d5f59; }
+button.danger { color: var(--danger); border-color: #fca5a5; }
+input {
+  font: inherit; min-height: 44px; padding: 0 12px;
+  border: 1px solid var(--line); border-radius: 10px; width: 100%;
+  background: var(--surface); color: var(--ink);
+}
+
+.topbar {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 16px; background: var(--surface); border-bottom: 1px solid var(--line);
+}
+.brand { font-weight: 700; letter-spacing: -.01em; }
+.grow { flex: 1; }
+
+.sync { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: var(--ink-soft); }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: #16a34a; }
+.dot.pending { background: #d97706; }
+.dot.error { background: var(--danger); }
+
+.datebar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 16px; background: var(--surface); border-bottom: 1px solid var(--line);
+}
+.datebar .day { font-weight: 600; min-width: 200px; text-align: center; }
+
+/* Scenario F: la risposta è testo, non solo colori sulla mappa. */
+.counters { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 16px; }
+.chip {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 999px;
+  padding: 6px 14px; font-size: 15px; white-space: nowrap;
+}
+.chip b { font-size: 17px; }
+.chip.hi { background: var(--s-sellable-fill); border-color: var(--s-sellable-line); font-weight: 600; }
+
+.mapwrap { padding: 0 16px 16px; }
+.mapcard {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+  padding: 12px; overflow: hidden;
+}
+.sea {
+  text-align: center; letter-spacing: .35em; color: #0369a1;
+  font-size: 13px; padding-bottom: 6px; text-transform: uppercase;
+}
+svg.map { width: 100%; height: auto; display: block; touch-action: none; }
+svg.map .umb { cursor: pointer; }
+svg.map .umb:hover rect.body { filter: brightness(.95); }
+
+.legend { display: flex; flex-wrap: wrap; gap: 14px; padding: 10px 4px 0; font-size: 14px; color: var(--ink-soft); }
+.legend-top { padding: 0 16px 10px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.key { width: 16px; height: 16px; border-radius: 4px; border: 2px solid; display: inline-block; }
+
+.actions {
+  position: sticky; bottom: 0; display: flex; gap: 8px; flex-wrap: wrap;
+  padding: 12px 16px; background: var(--surface); border-top: 1px solid var(--line);
+}
+
+/* Il pannello non è una pagina: la mappa resta visibile dietro. */
+.scrim { position: fixed; inset: 0; background: rgba(17,24,39,.35); }
+.panel {
+  position: fixed; top: 0; right: 0; bottom: 0; width: min(400px, 100%);
+  background: var(--surface); border-left: 1px solid var(--line);
+  padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px;
+}
+.panel h2 { margin: 0; font-size: 26px; }
+.panel .sub { color: var(--ink-soft); margin-top: -8px; }
+.state-line { font-weight: 700; font-size: 18px; display: flex; align-items: center; gap: 8px; }
+.row { display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; }
+.row .k { color: var(--ink-soft); }
+.box { border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
+.box.warn { background: #fffbeb; border-color: var(--s-sellable-line); }
+.due { color: var(--danger); font-weight: 700; }
+.err { background: #fef2f2; border: 1px solid #fca5a5; color: #7f1d1d; padding: 12px; border-radius: 10px; }
+
+@media (max-width: 900px) {
+  /* Rimpicciolire la mappa fino a renderla illeggibile è peggio che farla
+     scorrere: 96 ombrelloni su 390 px sono 3 mm l'uno. La vera risposta per
+     lo smartphone è la modalità elenco (docs/06 §2.1), che è `F6-34`. */
+  .mapcard { overflow-x: auto; }
+  svg.map { min-width: 760px; }
+}
+
+@media (max-width: 640px) {
+  .panel { top: auto; width: 100%; border-left: 0; border-top: 1px solid var(--line);
+           border-radius: 16px 16px 0 0; max-height: 88vh; }
+  .datebar .day { min-width: 0; font-size: 15px; }
+}

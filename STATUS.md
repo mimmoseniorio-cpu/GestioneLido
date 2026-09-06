@@ -3,10 +3,11 @@
 Aggiornato: 2026-09-06 · Branch: `main` · Repository: `mimmoseniorio-cpu/GestioneLido`
 
 ## Fase corrente
-**F4 — Impalcatura: quasi completa.** 40 test verdi, typecheck pulito, CI
-configurata. Manca solo il completamento di `F4-01` (sessioni staff: serve
-`D-18`) e `F4-10` (ambienti di deploy: serve la scelta del fornitore, `D-09`).
-Prossima: F5 — Prototipo, la mappa.
+**F5 — Prototipo: la mappa funziona.** 89 test verdi, typecheck pulito, build
+Next.js pulita. Scenario A verificato nel browser in **4 interazioni**,
+scenario F leggibile senza toccare nulla. Prossima: F6 — MVP.
+
+Aggiornato: 2026-09-06
 
 ## Fatto
 - [F0] Brief, protocollo, registro decisioni, prompt di avvio, repository
@@ -38,18 +39,34 @@ Prossima: F5 — Prototipo, la mappa.
 - [F4-08] Servizio audit con diff dei soli campi cambiati → `server/audit.ts`
 - [F4-09] CI su PostgreSQL 16 reale → `.github/workflows/ci.yml`
 - [F4-01] **parziale**: hash Argon2id fatto, sessioni da fare
+- [F5-01] `umbrellaState()` puro, 30 test → `domain/umbrella/state.ts`
+- [F5-02] `getMapForDate()` con numero di query costante → `server/queries/map.ts`
+- [F5-03] Mappa SVG 96 ombrelloni, entra in un tablet senza zoom
+- [F5-04] Stati a tre segnali: colore + simbolo + trattamento del bordo
+- [F5-05] Riga contatori sopra la mappa (scenario F)
+- [F5-06] Pannello rapido con azione primaria variabile per stato
+- [F5-07] `createReservation` in transazione → `server/use-cases/reservations.ts`
+- [F5-08] `cancelReservation`, `moveReservationItem`, `blockUmbrella`
+- [F5-09] Selettore data con precaricamento di ieri e domani
+- [F5-10] Aggiornamento ottimistico + riconciliazione dal server
+- [F5 extra] API `/api/v1/map`, `/reservations`, `/customers` + script E2E scenario A
 
 ## In corso
 Nessun task in corso.
+
+**`F5-11` non posso farlo io**: il gate previsto è una prova su un tablet vero
+con una persona vera. Gli screenshot e lo script E2E dimostrano il flusso e
+contano le interazioni, ma non dicono se un bagnino al sole capisce la mappa in
+cinque secondi. Serve mezz'ora tua, o del gestore, prima di costruirci sopra F6.
 
 `F4-01` è a metà: `server/auth/password.ts` fa hash e verifica con Argon2id.
 Mancano le sessioni, che richiedono la tabella `Session` (`D-18`) e le rotte
 Next.js. Si completa quando esiste l'app.
 
 ## Prossimi 3
-1. [F5-01] `umbrellaState()` puro + test esaustivi — la funzione di `docs/03` §6
-2. [F5-02] `GET /api/v1/map?date=` in tre query, mai una per ombrellone
-3. [F5-03] Mappa SVG con pan/zoom
+1. [F6-01] `proximityScore()` — cosa vuol dire "ombrelloni vicini" (C-04)
+2. [F6-02] Algoritmo di ricerca disponibilità (scenario B)
+3. [F6-07] `declareAbsence()` con cutoff — l'inizio del cuore del prodotto
 
 ## Blocchi e decisioni aperte
 - ~~`D-01`~~ CHIUSA il 2026-09-06: chi ha pagato tiene il posto. Credito solo a rivendita avvenuta.
@@ -67,7 +84,9 @@ cp .env.example .env              # DATABASE_URL e TEST_DATABASE_URL
 npm install
 npm run db:deploy                 # applica le migrazioni
 npm run seed                      # 96 ombrelloni, dati realistici
-npm test                          # 40 test
+npm test                          # 89 test
+npm run dev                       # mappa su http://localhost:3000/map
+npm run e2e                       # scenario A, conta le interazioni
 npm run typecheck
 ```
 Il database di sviluppo e' usa-e-getta: `npm run db:reset` lo ricrea da zero.
@@ -89,3 +108,7 @@ I test girano su `gestionelido_test`, mai sul database di sviluppo.
 | `server/repositories/scoped.ts` | Prima linea dell'isolamento tenant |
 | `server/use-case.ts` | Come si scrive ogni operazione: permesso + transazione |
 | `domain/errors.ts` | Traduzione dei vincoli in messaggi per l'operatore |
+| `domain/umbrella/state.ts` | La funzione da cui dipende ogni schermata |
+| `server/queries/map.ts` | La mappa di un giorno, query costanti |
+| `app/map/MapClient.tsx` | La schermata principale del prodotto |
+| `server/dev-session.ts` | **Ponte temporaneo**: sparisce con `F4-01` |

@@ -65,7 +65,7 @@ async function main() {
 
   // ── mappa ─────────────────────────────────────────────────────────────────
   const map = await prisma.beachMap.create({
-    data: { beachClubId: club.id, seasonId: season.id, width: 18, height: 10 },
+    data: { beachClubId: club.id, seasonId: season.id, width: 18, height: 8 },
   })
 
   const zPrima = await prisma.zone.create({ data: { beachClubId: club.id, beachMapId: map.id, name: 'Prima fila', color: '#0ea5e9', sortOrder: 1 } })
@@ -75,12 +75,12 @@ async function main() {
   await prisma.mapFeature.createMany({
     data: [
       { beachClubId: club.id, beachMapId: map.id, kind: MapFeatureKind.WALKWAY,  label: 'Passerella centrale', posX: 0, posY: 4, width: 18, height: 1 },
-      { beachClubId: club.id, beachMapId: map.id, kind: MapFeatureKind.CORRIDOR, label: null, posX: 8, posY: 0, width: 1, height: 10 },
-      { beachClubId: club.id, beachMapId: map.id, kind: MapFeatureKind.CORRIDOR, label: null, posX: 14, posY: 0, width: 1, height: 10 },
-      { beachClubId: club.id, beachMapId: map.id, kind: MapFeatureKind.ENTRANCE, label: 'Ingresso', posX: 8, posY: 9, width: 2, height: 1 },
-      { beachClubId: club.id, beachMapId: map.id, kind: MapFeatureKind.SERVICE,  label: 'Bagni', posX: 2, posY: 9, width: 2, height: 1 },
-      { beachClubId: club.id, beachMapId: map.id, kind: MapFeatureKind.SERVICE,  label: 'Bar', posX: 13, posY: 9, width: 2, height: 1 },
-      { beachClubId: club.id, beachMapId: map.id, kind: MapFeatureKind.BLOCKED_AREA, label: 'Area giochi', posX: 16, posY: 6, width: 2, height: 3 },
+      { beachClubId: club.id, beachMapId: map.id, kind: MapFeatureKind.CORRIDOR, label: null, posX: 8, posY: 0, width: 1, height: 7 },
+      { beachClubId: club.id, beachMapId: map.id, kind: MapFeatureKind.CORRIDOR, label: null, posX: 14, posY: 0, width: 1, height: 7 },
+      { beachClubId: club.id, beachMapId: map.id, kind: MapFeatureKind.ENTRANCE, label: 'Ingresso', posX: 8, posY: 7, width: 2, height: 1 },
+      { beachClubId: club.id, beachMapId: map.id, kind: MapFeatureKind.SERVICE,  label: 'Bagni', posX: 1, posY: 7, width: 2, height: 1 },
+      { beachClubId: club.id, beachMapId: map.id, kind: MapFeatureKind.SERVICE,  label: 'Bar', posX: 12, posY: 7, width: 2, height: 1 },
+      { beachClubId: club.id, beachMapId: map.id, kind: MapFeatureKind.BLOCKED_AREA, label: 'Giochi', posX: 4, posY: 7, width: 2, height: 1 },
     ],
   })
 

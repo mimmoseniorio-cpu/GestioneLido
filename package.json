@@ -13,7 +13,8 @@
     "db:generate": "prisma generate",
     "seed": "tsx db/seed.ts",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "e2e": "node e2e/scenario-a.mjs"
   },
   "prisma": {
     "seed": "tsx db/seed.ts"
@@ -29,6 +30,7 @@
   "devDependencies": {
     "@types/node": "^22.10.0",
     "@types/react": "^19.0.0",
+    "playwright": "^1.63.0",
     "prisma": "^6.1.0",
     "tsx": "^4.19.0",
     "typescript": "^5.7.0",

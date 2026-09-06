@@ -48,17 +48,17 @@ tocca al massimo 5–6 file e ha un criterio di "fatto" verificabile.
 
 | ID | Task | Modello | Fatto quando |
 |---|---|---|---|
-| F5-01 | **`umbrellaState()` puro + test esaustivi** (`docs/03` §6) | 🔴 | 100% dei rami coperti |
-| F5-02 | `GET /api/v1/map?date=` in tre query | 🔴 | Nessuna query in ciclo, < 100 ms su 96 ombrelloni |
-| F5-03 | Mappa SVG con pan/zoom | 🟡 | 96 ombrelloni entrano in un tablet senza zoom |
-| F5-04 | Codifica degli stati a tre segnali (colore + icona + bordo) | 🟡 | Leggibile in simulazione daltonismo |
-| F5-05 | Riga contatori sopra la mappa | 🟢 | Scenario F: 6 domande in 5 s |
-| F5-06 | Pannello rapido con azione primaria variabile per stato | 🔴 | `docs/06` §3 rispettato |
-| F5-07 | Caso d'uso `createReservation` in transazione | 🔴 | T-01, T-23 verdi |
-| F5-08 | Caso d'uso `releaseUmbrella` | 🟡 | Torna `LIBERO` |
-| F5-09 | Selettore data con precaricamento dei giorni adiacenti | 🟡 | Cambio giorno percepito istantaneo |
-| F5-10 | Aggiornamento ottimistico + riconciliazione | 🔴 | Azione riflessa < 100 ms |
-| F5-11 | **Prova su tablet reale con una persona** | 🔴 | Gate F5 superato |
+| ✅ F5-01 | **`umbrellaState()` puro + test esaustivi** (`docs/03` §6) | 🔴 | 100% dei rami coperti |
+| ✅ F5-02 | `GET /api/v1/map?date=` in tre query | 🔴 | Nessuna query in ciclo, < 100 ms su 96 ombrelloni |
+| ✅ F5-03 | Mappa SVG con pan/zoom | 🟡 | 96 ombrelloni entrano in un tablet senza zoom |
+| ✅ F5-04 | Codifica degli stati a tre segnali (colore + icona + bordo) | 🟡 | Leggibile in simulazione daltonismo |
+| ✅ F5-05 | Riga contatori sopra la mappa | 🟢 | Scenario F: 6 domande in 5 s |
+| ✅ F5-06 | Pannello rapido con azione primaria variabile per stato | 🔴 | `docs/06` §3 rispettato |
+| ✅ F5-07 | Caso d'uso `createReservation` in transazione | 🔴 | T-01, T-23 verdi |
+| ✅ F5-08 | Caso d'uso `releaseUmbrella` | 🟡 | Torna `LIBERO` |
+| ✅ F5-09 | Selettore data con precaricamento dei giorni adiacenti | 🟡 | Cambio giorno percepito istantaneo |
+| ✅ F5-10 | Aggiornamento ottimistico + riconciliazione | 🔴 | Azione riflessa < 100 ms |
+| ⏸ F5-11 | **Prova su tablet reale con una persona** — non eseguibile da un agente | 🔴 | Gate F5 superato |
 
 ## F6 — MVP
 
