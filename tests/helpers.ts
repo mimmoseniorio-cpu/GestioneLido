@@ -19,11 +19,17 @@ export async function makeClub(db: PrismaClient, label = 'test') {
   const customer = await db.customer.create({
     data: { beachClubId: club.id, firstName: 'Test', lastName: 'Cliente' },
   })
+  // Un utente vero: `createdById` ha una chiave esterna, e un id inventato la
+  // violerebbe — come deve essere.
+  const user = await db.user.create({
+    data: { beachClubId: club.id, email: `staff-${slug}@test.it`, name: 'Staff',
+            role: 'ADMIN', passwordHash: 'x' },
+  })
   const umbrella = await db.umbrella.create({
     data: { beachClubId: club.id, beachMapId: map.id, visibleNumber: '63',
             rowLabel: 'A', posX: 1, posY: 1, basePriceCents: 2500 },
   })
-  return { club, season, map, customer, umbrella }
+  return { club, season, map, customer, umbrella, user }
 }
 
 export async function makeReservation(
