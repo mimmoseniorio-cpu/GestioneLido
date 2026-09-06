@@ -7,7 +7,7 @@ Aggiornato: 2026-09-06 · Branch: `main` · Repository: `mimmoseniorio-cpu/Gesti
 link su WhatsApp → assenza in 3 tap dal telefono → il posto compare fra i
 vendibili → il gestore lo rivende vedendo quanto gli costa → **il credito
 matura allo stagionale** → i contatori di capacità recuperata si muovono.
-258 test verdi, fra cui `T-12`, `T-14`, `T-15`, `T-16`, `T-40`, `T-44`, `T-81`,
+268 test verdi, fra cui `T-12`, `T-14`, `T-15`, `T-16`, `T-40`, `T-44`, `T-81`,
 `T-83` e il criterio 9 (la dashboard quadra con le prenotazioni).
 
 Aggiornato: 2026-09-06 · dopo il riscontro dell'utente sulla demo
@@ -94,6 +94,7 @@ Aggiornato: 2026-09-06
 - [F6-17] Editor del listino con **simulatore**: «questo ombrellone, questi giorni, quanto costa e per quale regola»
 - [F6-30] PWA installabile: manifest, service worker, icone — **criterio 7**
 - [F6-31] Coda di scritture con ritentativo e stato visibile — **criterio 10**
+- [F6-33] GDPR: anonimizzazione (non cancellazione) ed export dei dati cliente
 
 ## In corso
 Nessun task in corso.
@@ -108,9 +109,9 @@ Mancano le sessioni, che richiedono la tabella `Session` (`D-18`) e le rotte
 Next.js. Si completa quando esiste l'app.
 
 ## Prossimi 3
-1. [F6-33] GDPR: anonimizzazione ed export cliente (`NF-05`)
-2. [F6-25] Vista calendario (griglia ombrelloni × giorni)
-3. [F6-32] Blocco schermo con PIN per il tablet della reception
+1. [F6-25] Vista calendario (griglia ombrelloni × giorni)
+2. [F6-32] Blocco schermo con PIN per il tablet della reception
+3. [F6-34] Modalità elenco su smartphone (la mappa resta illeggibile sotto i 700 px)
 
 **Nota sul service worker**: mette in cache solo il guscio dell'applicazione,
 **mai le disponibilità**. Dati di occupazione serviti da cache sono peggio di
@@ -145,7 +146,7 @@ cp .env.example .env              # DATABASE_URL e TEST_DATABASE_URL
 npm install
 npm run db:deploy                 # applica le migrazioni
 npm run seed                      # 96 ombrelloni, dati realistici
-npm test                          # 258 test
+npm test                          # 268 test
 npm run dev                       # mappa su http://localhost:3000/map
 npm run e2e                       # scenario A, conta le interazioni
 # `npm run seed` stampa in fondo un link stagionale pronto da aprire

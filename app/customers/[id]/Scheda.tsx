@@ -1,5 +1,6 @@
 'use client'
 
+
 /**
  * Scenario E · Tutto sotto gli occhi mentre il cliente è al telefono:
  * preferenze, ombrelloni ricorrenti, storico. Senza scorrere, su tablet.
@@ -7,7 +8,9 @@
  * Le preferenze si MOSTRANO, non si applicano da sole (`R4`): è il 90% del
  * valore al 10% del costo, e l'operatore le legge al cliente.
  */
+import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import type { SchedaCliente } from '@/server/queries/customers'
 
 const euro = (c: number) =>
@@ -25,8 +28,22 @@ const ORIGINE: Record<string, string> = {
 }
 
 export default function Scheda({ dati }: { dati: SchedaCliente }) {
+  const router = useRouter()
   const preferenze = dati.preferenze
   const haPreferenze = preferenze && Object.values(preferenze).some(Boolean)
+  const [conferma, setConferma] = useState(false)
+  const [errore, setErrore] = useState<string | null>(null)
+  const [attesa, setAttesa] = useState(false)
+
+  async function anonimizza() {
+    setAttesa(true); setErrore(null)
+    try {
+      const r = await fetch(`/api/v1/customers/${dati.id}/anonymize`, { method: 'POST' })
+      if (!r.ok) throw await r.json()
+      router.refresh()
+    } catch (e: any) { setErrore(e?.message ?? 'Operazione non riuscita.') }
+    finally { setAttesa(false); setConferma(false) }
+  }
 
   return (
     <main className="scheda-cliente">
@@ -90,6 +107,8 @@ export default function Scheda({ dati }: { dati: SchedaCliente }) {
           agire farebbe perdere tempo invece di farne guadagnare. */}
       <Link className="azione-primaria" href="/map?trova=1">NUOVA PRENOTAZIONE</Link>
 
+      {errore && <div className="err">{errore}</div>}
+
       <div className="riquadro">
         <div className="etichetta">Storico</div>
         {dati.storico.length === 0
@@ -122,6 +141,31 @@ export default function Scheda({ dati }: { dati: SchedaCliente }) {
               </table>
             </div>
           )}
+      </div>
+
+      {/* NF-05 · i due obblighi concreti: consegnare i dati e cancellarli. */}
+      <div className="riquadro gdpr">
+        <div className="etichetta">Dati personali</div>
+        <div className="azioni-gdpr">
+          <a className="bottone-link" href={`/api/v1/customers/${dati.id}/export`}>
+            Scarica i suoi dati
+          </a>
+          {!conferma
+            ? <button onClick={() => setConferma(true)} disabled={attesa}>Anonimizza</button>
+            : (
+              <span className="azioni-gdpr">
+                <button className="danger" onClick={() => void anonimizza()} disabled={attesa}>
+                  {attesa ? 'Anonimizzo…' : 'Confermo: togli i dati personali'}
+                </button>
+                <button onClick={() => setConferma(false)} disabled={attesa}>Annulla</button>
+              </span>
+            )}
+        </div>
+        <p className="nota">
+          L&apos;anonimizzazione toglie nome, telefono, email, note e preferenze.
+          Prenotazioni e pagamenti restano, senza più il nome: servono a bilancio
+          e non si possono cancellare. L&apos;operazione non è reversibile.
+        </p>
       </div>
     </main>
   )

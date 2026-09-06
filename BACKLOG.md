@@ -96,7 +96,7 @@ tocca al massimo 5–6 file e ha un criterio di "fatto" verificabile.
 | ✅ F6-30 | PWA: manifest, service worker (shell, **non** dati) | 🟡 | Installabile, criterio 7 |
 | ✅ F6-31 | Stato di sincronizzazione + coda retry | 🔴 | T-70, T-71 verdi, criterio 10 |
 | F6-32 | Blocco schermo con PIN (S-16) | 🟢 | Il tablet incustodito non espone i clienti |
-| F6-33 | GDPR: anonimizzazione ed export cliente | 🟡 | T-82 verde |
+| ✅ F6-33 | GDPR: anonimizzazione ed export cliente | 🟡 | T-82 verde |
 | F6-34 | Layout responsive: tre varianti reali (`docs/06` §8) | 🟡 | Modalità elenco su smartphone |
 | F6-35 | Ripresa dell'operazione dopo sessione scaduta | 🟡 | T-73 verde, nessun dato perso |
 

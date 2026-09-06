@@ -351,6 +351,10 @@ svg.map .umb:focus-visible rect.body { stroke-width: 5; }
 .saldato { color: #047857; }
 
 /* Risultati della ricerca clienti nella barra superiore. */
+.riquadro.gdpr { border-style: dashed; }
+.azioni-gdpr { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.azioni-gdpr .danger { color: var(--danger); border-color: #fca5a5; }
+
 .azione-primaria {
   display: block; text-align: center; text-decoration: none;
   background: var(--accent); color: #fff; font-weight: 700; font-size: 17px;
