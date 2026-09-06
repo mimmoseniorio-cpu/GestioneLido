@@ -12,6 +12,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import type { MapDay, MapUmbrella } from '@/server/queries/map'
 import type { ClienteTrovato } from '@/server/queries/customers'
+import { coda, type OperazioneInCoda } from '@/app/lib/coda'
 import { STATES, euro, dataLunga, dataBreve, spostaGiorni, oggiIso } from './states'
 
 const CELLA = 56          // bersagli generosi: sole, mani bagnate, una mano sola
@@ -33,6 +34,7 @@ export default function MapClient({ iniziale, clubName }:
   const [sync, setSync] = useState<Sync>('ok')
   const [errore, setErrore] = useState<string | null>(null)
   const [cerca, setCerca] = useState('')
+  const [inCoda, setInCoda] = useState<OperazioneInCoda[]>([])
   // Arrivando dalla scheda cliente il pannello di ricerca si apre da solo.
   const [trovaAperto, setTrovaAperto] = useState(false)
   const [clienti, setClienti] = useState<ClienteTrovato[]>([])
@@ -61,6 +63,13 @@ export default function MapClient({ iniziale, clubName }:
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get('trova') === '1') setTrovaAperto(true)
   }, [])
+
+  // NF-02 · lo stato della coda è sempre visibile: l'operatore non deve mai
+  // restare nel dubbio se un'operazione sia stata salvata.
+  useEffect(() => coda.sottoscrivi(() => {
+    setInCoda(coda.operazioni)
+    setSync(coda.stato === 'ok' ? 'ok' : coda.stato === 'in-corso' ? 'pending' : 'error')
+  }), [])
 
   const vaiA = (giorno: string) => { setData(giorno); setScelto(null); void carica(giorno) }
 
@@ -126,7 +135,7 @@ export default function MapClient({ iniziale, clubName }:
         </div>
         <span className="sync" aria-live="polite">
           <span className={`dot ${sync === 'ok' ? '' : sync}`} />
-          {sync === 'ok' ? 'sincronizzato' : sync === 'pending' ? 'in corso…' : 'non salvato'}
+          {sync === 'ok' ? 'sincronizzato' : sync === 'pending' ? 'salvo…' : 'non salvato'}
         </span>
       </header>
 
@@ -142,6 +151,29 @@ export default function MapClient({ iniziale, clubName }:
           : <button className="torna-oggi" onClick={() => vaiA(oggiIso())}>← Torna a oggi</button>}
         {!oggi && <span className="avviso-giorno">Non stai guardando oggi</span>}
       </div>
+
+      {/* Criterio 10 · ciò che non è passato resta visibile e riprovabile. */}
+      {inCoda.length > 0 && (
+        <div className="coda">
+          {inCoda.map(o => (
+            <div key={o.id} className="voce-coda">
+              <span>
+                <b>{o.descrizione}</b>
+                {o.ultimoErrore ? ` — ${o.ultimoErrore}` : ' — salvataggio in corso…'}
+                {o.tentativi > 1 && ` (tentativo ${o.tentativi})`}
+              </span>
+              {o.tentativi >= 4 && (
+                <span className="azioni-coda">
+                  <button onClick={() => coda.riprova(o.id).then(() => void rinfresca()).catch(() => {})}>
+                    Riprova
+                  </button>
+                  <button onClick={() => coda.scarta(o.id)}>Scarta</button>
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
 
       {trovati && (
         <div className="risultati">
@@ -371,28 +403,23 @@ function Pannello({ u, data, errore, onChiudi, onErrore, onSync, onCambiato, onO
     setAttesa(true); onErrore(null); onSync('pending')
     onOttimistico({ state: 'OCCUPATO', customerName: `${nome} ${cognome}`.trim() })
     try {
-      const rc = await fetch('/api/v1/customers', {
-        method: 'POST', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ firstName: nome || 'Cliente', lastName: cognome, phone: tel || undefined }),
+      const cliente = await coda.esegui<any>({
+        url: '/api/v1/customers', metodo: 'POST',
+        corpo: { firstName: nome || 'Cliente', lastName: cognome, phone: tel || undefined },
+        descrizione: `Cliente ${cognome}`,
       })
-      if (!rc.ok) throw await rc.json()
-      const cliente = await rc.json()
-
-      const rr = await fetch('/api/v1/reservations', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json', 'idempotency-key': crypto.randomUUID() },
-        body: JSON.stringify({ umbrellaIds: [u.id], customerId: cliente.id,
-                               from: dal, to: al, peopleCount: persone, source: 'RECEPTION' }),
+      const prenotazione = await coda.esegui<any>({
+        url: '/api/v1/reservations', metodo: 'POST',
+        corpo: { umbrellaIds: [u.id], customerId: cliente.id,
+                 from: dal, to: al, peopleCount: persone, source: 'RECEPTION' },
+        descrizione: `Ombrellone ${u.visibleNumber} a ${cognome}`,
       })
-      if (!rr.ok) throw await rr.json()
-      const prenotazione = await rr.json()
-
       if (pagato) {
-        await fetch('/api/v1/payments', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json', 'idempotency-key': crypto.randomUUID() },
-          body: JSON.stringify({ reservationId: prenotazione.id,
-                                 amountCents: prenotazione.totalCents, method: 'CASH' }),
+        await coda.esegui({
+          url: '/api/v1/payments', metodo: 'POST',
+          corpo: { reservationId: prenotazione.id,
+                   amountCents: prenotazione.totalCents, method: 'CASH' },
+          descrizione: `Incasso ombrellone ${u.visibleNumber}`,
         })
       }
       onSync('ok'); await onCambiato()
@@ -407,13 +434,11 @@ function Pannello({ u, data, errore, onChiudi, onErrore, onSync, onCambiato, onO
     setAttesa(true); onErrore(null); onSync('pending')
     onOttimistico({ amountDueCents: 0 })
     try {
-      const r = await fetch('/api/v1/payments', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json', 'idempotency-key': crypto.randomUUID() },
-        body: JSON.stringify({ reservationId: u.reservationId,
-                               amountCents: u.amountDueCents, method: 'CASH' }),
+      await coda.esegui({
+        url: '/api/v1/payments', metodo: 'POST',
+        corpo: { reservationId: u.reservationId, amountCents: u.amountDueCents, method: 'CASH' },
+        descrizione: `Incasso ombrellone ${u.visibleNumber}`,
       })
-      if (!r.ok) throw await r.json()
       onSync('ok'); await onCambiato()
     } catch (e: any) {
       onSync('error'); onErrore(e?.message ?? 'Operazione non riuscita.'); await onCambiato()
@@ -425,8 +450,10 @@ function Pannello({ u, data, errore, onChiudi, onErrore, onSync, onCambiato, onO
     setAttesa(true); onErrore(null); onSync('pending')
     onOttimistico({ state: 'LIBERO', customerName: null, period: null, amountDueCents: null })
     try {
-      const r = await fetch(`/api/v1/reservations/${u.reservationId}/cancel`, { method: 'POST' })
-      if (!r.ok) throw await r.json()
+      await coda.esegui({
+        url: `/api/v1/reservations/${u.reservationId}/cancel`, metodo: 'POST',
+        descrizione: `Libera ombrellone ${u.visibleNumber}`,
+      })
       onSync('ok'); await onCambiato()
     } catch (e: any) {
       onSync('error'); onErrore(e?.message ?? 'Operazione non riuscita.'); await onCambiato()
@@ -646,20 +673,18 @@ function TrovaPosti({ data, onChiudi, onMostra, onPrenotato, onSync }: {
     if (!cognome.trim()) { setErrore('Serve almeno il cognome.'); return }
     setAttesa(true); setErrore(null); onSync('pending')
     try {
-      const rc = await fetch('/api/v1/customers', {
-        method: 'POST', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ firstName: 'Cliente', lastName: cognome, phone: tel || undefined }),
+      const cliente = await coda.esegui<any>({
+        url: '/api/v1/customers', metodo: 'POST',
+        corpo: { firstName: 'Cliente', lastName: cognome, phone: tel || undefined },
+        descrizione: `Cliente ${cognome}`,
       })
-      if (!rc.ok) throw await rc.json()
-      const cliente = await rc.json()
-      const rr = await fetch('/api/v1/reservations', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json', 'idempotency-key': crypto.randomUUID() },
-        body: JSON.stringify({ umbrellaIds: sol.ombrelloni.map((o: any) => o.id),
-                               customerId: cliente.id, from: sol.dal, to: sol.al,
-                               peopleCount: quanti * 2, source: 'PHONE' }),
+      await coda.esegui({
+        url: '/api/v1/reservations', metodo: 'POST',
+        corpo: { umbrellaIds: sol.ombrelloni.map((o: any) => o.id),
+                 customerId: cliente.id, from: sol.dal, to: sol.al,
+                 peopleCount: quanti * 2, source: 'PHONE' },
+        descrizione: `${sol.ombrelloni.map((o: any) => o.visibleNumber).join(' + ')} a ${cognome}`,
       })
-      if (!rr.ok) throw await rr.json()
       onSync('ok'); await onPrenotato()
     } catch (e: any) { onSync('error'); setErrore(e?.message ?? 'Prenotazione non riuscita.') }
     finally { setAttesa(false) }
