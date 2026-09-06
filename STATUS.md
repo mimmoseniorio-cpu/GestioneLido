@@ -7,7 +7,8 @@ Aggiornato: 2026-09-06 · Branch: `main` · Repository: `mimmoseniorio-cpu/Gesti
 link su WhatsApp → assenza in 3 tap dal telefono → il posto compare fra i
 vendibili → il gestore lo rivende vedendo quanto gli costa → **il credito
 matura allo stagionale** → i contatori di capacità recuperata si muovono.
-205 test verdi, fra cui `T-12`, `T-14`, `T-15`, `T-16`, `T-40`, `T-44`, `T-81`.
+214 test verdi, fra cui `T-12`, `T-14`, `T-15`, `T-16`, `T-40`, `T-44`, `T-81`
+e il criterio 9 (la dashboard quadra con le prenotazioni).
 
 Aggiornato: 2026-09-06 · dopo il riscontro dell'utente sulla demo
 
@@ -87,6 +88,7 @@ Aggiornato: 2026-09-06
 - [F6-21] Preferenze cliente mostrate (non applicate: è `R4`)
 - [F6-22] Scheda cliente con storico, ombrelloni ricorrenti, saldi — **scenario E in 3 interazioni**
 - [F6-23] Ricerca globale completa: mappa (istantanea) + anagrafica (server)
+- [F6-24] Dashboard: occupazione, incassi, capacità recuperata, prossimi 7 giorni
 
 ## In corso
 Nessun task in corso.
@@ -101,10 +103,10 @@ Mancano le sessioni, che richiedono la tabella `Session` (`D-18`) e le rotte
 Next.js. Si completa quando esiste l'app.
 
 ## Prossimi 3
-1. [F6-24] Dashboard giornaliera
-2. [F6-17] Editor del listino (le regole oggi si creano solo dal seed)
-3. [F6-26/F6-27] Generatore di griglia ed editor mappa — senza, un gestore non
-   può configurare il proprio stabilimento (`C-08`, rischio di adozione alto)
+1. [F6-26] **Generatore di griglia** — senza, un gestore non può configurare il
+   proprio stabilimento: è il rischio di adozione più alto (`C-08`)
+2. [F6-27] Editor mappa: sposta, rinumera, zone, passerelle
+3. [F6-17] Editor del listino (le regole oggi si creano solo dal seed)
 
 **Nota su F6-17**: il motore prezzi funziona e le regole sono nel database, ma
 **non c'è ancora una schermata per modificarle**: oggi arrivano dal seed. Finché
@@ -131,7 +133,7 @@ cp .env.example .env              # DATABASE_URL e TEST_DATABASE_URL
 npm install
 npm run db:deploy                 # applica le migrazioni
 npm run seed                      # 96 ombrelloni, dati realistici
-npm test                          # 205 test
+npm test                          # 214 test
 npm run dev                       # mappa su http://localhost:3000/map
 npm run e2e                       # scenario A, conta le interazioni
 # `npm run seed` stampa in fondo un link stagionale pronto da aprire

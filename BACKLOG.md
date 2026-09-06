@@ -87,7 +87,7 @@ tocca al massimo 5–6 file e ha un criterio di "fatto" verificabile.
 | ✅ F6-21 | Preferenze cliente (mostrate, non applicate) | 🟢 | Visibili in scheda e in prenotazione |
 | ✅ F6-22 | Scheda cliente con storico (S-09) | 🟡 | Scenario E ≤ 3 interazioni |
 | 🟡 F6-23 | Ricerca globale — **parziale**: istantanea sul giorno caricato; manca la ricerca su tutti i clienti | 🟡 | `63` trova l'ombrellone, T-86 verde |
-| F6-24 | Dashboard giornaliera (S-12) | 🟡 | Criterio 9: i numeri quadrano |
+| ✅ F6-24 | Dashboard giornaliera (S-12) | 🟡 | Criterio 9: i numeri quadrano |
 | F6-25 | Calendario: griglia ombrelloni × giorni | 🟡 | Sostituisce le tre viste |
 | F6-26 | **Generatore di griglia** (S-23) | 🔴 | 96 ombrelloni configurati in < 2 minuti |
 | F6-27 | Editor mappa: sposta, rinumera, zone, passerelle | 🟡 | T-83, T-84, T-85 verdi |

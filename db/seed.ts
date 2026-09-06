@@ -269,15 +269,19 @@ async function main() {
 
       // pagamenti in tutti e quattro gli stati
       const dado = rnd.next()
+      // Datare i pagamenti a "adesso" farebbe risultare incassato oggi tutto
+      // lo storico, e la dashboard mentirebbe.
+      const quandoPagato = from < oggi ? from : oggi
       if (passata || dado < 0.55) {
         await prisma.payment.create({ data: { beachClubId: club.id, reservationId: res.id,
           amountCents: prezzo, method: rnd.pick([PaymentMethod.CASH, PaymentMethod.CARD]),
-          collectedById: admin.id } })
+          paidAt: quandoPagato, collectedById: admin.id } })
         await prisma.reservation.update({ where: { id: res.id }, data: { paymentStatus: PaymentStatus.PAID } })
       } else if (dado < 0.75) {
         const acconto = Math.round(prezzo / 2)
         await prisma.payment.create({ data: { beachClubId: club.id, reservationId: res.id,
-          amountCents: acconto, method: PaymentMethod.CASH, collectedById: admin.id } })
+          amountCents: acconto, method: PaymentMethod.CASH,
+          paidAt: quandoPagato, collectedById: admin.id } })
         await prisma.reservation.update({ where: { id: res.id }, data: { paymentStatus: PaymentStatus.PARTIAL } })
       }
     }
@@ -310,7 +314,8 @@ async function main() {
       },
     })
     await prisma.payment.create({ data: { beachClubId: club.id, reservationId: res.id,
-      amountCents: prezzo, method: PaymentMethod.CASH, collectedById: admin.id } })
+      amountCents: prezzo, method: PaymentMethod.CASH,
+      paidAt: a.from < oggi ? a.from : oggi, collectedById: admin.id } })
     segna(a.umbrellaId, a.from, a.to); rivendite++
 
     // K-01: nessun credito se l'assenza e' tardiva. Il credito matura solo

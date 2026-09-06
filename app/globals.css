@@ -188,6 +188,12 @@ svg.map .umb:focus-visible rect.body { stroke-width: 5; }
 .pagato { display: flex; align-items: center; gap: 10px; font-size: 15px; }
 .pagato input { width: 22px; height: 22px; min-height: 22px; }
 
+.bottone-link {
+  display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px;
+  border: 1px solid var(--line); border-radius: 10px; background: var(--surface);
+  color: var(--ink); text-decoration: none;
+}
+.bottone-link:hover { background: #f3f4f6; }
 .actions .trova { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
 .actions .trova:hover:not(:disabled) { background: #0d5f59; }
 .panel.largo { width: min(460px, 100%); }
@@ -361,3 +367,47 @@ svg.map .umb:focus-visible rect.body { stroke-width: 5; }
 .clienti-trovati a:hover { background: #f3f4f6; }
 .clienti-trovati .chi { font-weight: 600; }
 .clienti-trovati .dove { color: var(--ink-soft); font-size: 14px; }
+
+/* ── Dashboard ──────────────────────────────────────────────────────────── */
+.cruscotto { max-width: 1100px; margin: 0 auto; padding: 20px 16px 48px; display: grid; gap: 16px; }
+.da-fare {
+  background: #fffbeb; border: 1px solid var(--s-sellable-line); border-radius: 14px;
+  padding: 16px; display: grid; gap: 10px;
+}
+.da-fare .etichetta { color: #78350f; }
+.da-fare .voci { display: flex; gap: 10px; flex-wrap: wrap; }
+.voce-da-fare {
+  display: flex; align-items: baseline; gap: 10px; text-decoration: none; color: #78350f;
+  background: var(--surface); border: 1px solid var(--s-sellable-line);
+  border-radius: 10px; padding: 10px 16px; min-height: 48px;
+}
+.voce-da-fare b { font-size: 24px; font-variant-numeric: tabular-nums; }
+.voce-da-fare:hover { background: #fef3c7; }
+
+.colonne { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+.cifrone { font-size: 44px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+.cifrone span { font-size: 17px; font-weight: 500; color: var(--ink-soft); }
+.riquadro .barra {
+  height: 10px; background: #e5e7eb; border-radius: 999px; overflow: hidden;
+}
+.riquadro .barra span { display: block; height: 100%; background: var(--accent); }
+.elenco { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.elenco li { color: var(--ink-soft); }
+.elenco b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.elenco.largo li { display: flex; justify-content: space-between; gap: 12px; font-size: 17px; }
+.elenco.largo li.aperto b { color: var(--danger); }
+.nota { margin: 0; font-size: 13px; color: var(--ink-soft); line-height: 1.4; }
+.riquadro.recuperato { border-color: var(--s-sellable-line); background: #fffbeb; }
+.riquadro.recuperato .cifrone, .riquadro.recuperato .soldi { color: #78350f; }
+.riquadro.recuperato .soldi { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.settimana { display: flex; gap: 10px; align-items: flex-end; overflow-x: auto; }
+.giorno { display: grid; gap: 6px; justify-items: center; min-width: 74px; }
+.giorno .nome { font-size: 13px; color: var(--ink-soft); }
+.colonna-barra {
+  width: 34px; height: 96px; background: #e5e7eb; border-radius: 6px;
+  display: flex; align-items: flex-end; overflow: hidden;
+}
+.colonna-barra span { width: 100%; background: var(--accent); border-radius: 6px 6px 0 0; }
+.giorno .perc { font-weight: 700; font-variant-numeric: tabular-nums; }
+.giorno .disp { font-size: 12px; color: var(--ink-soft); }
