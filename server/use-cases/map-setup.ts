@@ -124,3 +124,48 @@ export const rinumeraOmbrellone = useCase<{ umbrellaId: string; nuovoNumero: str
       { before: { visibleNumber: u.visibleNumber }, after: { visibleNumber: numero } })
   },
 })
+
+/**
+ * F6-27 · Spostare un ombrellone.
+ *
+ * Come rinumerare (`C-83`), lo spostamento NON tocca l'identità: cambia dove
+ * l'ombrellone è disegnato, non quale sia. Le prenotazioni e i contratti
+ * restano attaccati, e questo è il punto — un gestore che rifà la disposizione
+ * a metà stagione non deve perdere nulla.
+ */
+export const spostaOmbrellone = useCase<{
+  umbrellaId: string
+  posX: number
+  posY: number
+  /** la fila si aggiorna solo se richiesto: cambia anche il listino */
+  rowLabel?: string
+}, { visibleNumber: string; posX: number; posY: number; rowLabel: string }>({
+  permission: P.MAP_EDIT,
+  async run({ db, tx, ctx }, input) {
+    const u = await db.umbrella.byIdOrFail(input.umbrellaId)
+
+    if (!Number.isInteger(input.posX) || !Number.isInteger(input.posY) ||
+        input.posX < 0 || input.posY < 0)
+      throw new DomainError('INVALID_RANGE', 'Posizione non valida.')
+
+    // Chi occupa la casella si dice per NUMERO, non per identificativo: il
+    // gestore guarda la mappa, non il database.
+    const occupante = await db.umbrella.findFirst({
+      where: { beachMapId: u.beachMapId, posX: input.posX, posY: input.posY },
+    })
+    if (occupante && occupante.id !== u.id)
+      throw new DomainError('UMBRELLA_NOT_AVAILABLE',
+        `Lì c'è già l'ombrellone ${occupante.visibleNumber}. Spostalo prima, o scegli un'altra casella.`,
+        { occupante: occupante.visibleNumber })
+
+    const fila = input.rowLabel?.trim() || u.rowLabel
+    await db.umbrella.updateById(u.id, { posX: input.posX, posY: input.posY, rowLabel: fila })
+
+    await audit(tx, ctx, 'umbrella.move',
+      { type: 'umbrella', id: u.id },
+      { before: { posX: u.posX, posY: u.posY, rowLabel: u.rowLabel },
+        after: { posX: input.posX, posY: input.posY, rowLabel: fila } })
+
+    return { visibleNumber: u.visibleNumber, posX: input.posX, posY: input.posY, rowLabel: fila }
+  },
+})

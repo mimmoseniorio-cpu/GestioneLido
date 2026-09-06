@@ -15,7 +15,7 @@ export type AuditAction =
   | 'absence.declare' | 'absence.cancel.full' | 'absence.cancel.partial'
   | 'credit.earn' | 'credit.reverse' | 'credit.use' | 'credit.adjust'
   | 'contract.create' | 'contract.cancel' | 'token.regenerate' | 'token.revoke'
-  | 'umbrella.block' | 'umbrella.renumber' | 'map.generate'
+  | 'umbrella.block' | 'umbrella.renumber' | 'umbrella.move' | 'map.generate'
   | 'customer.anonymize' | 'customer.merge'
   /** F6-32 · il PIN non finisce mai nel registro: ci finisce che è cambiato */
   | 'user.pin.set' | 'user.pin.clear'

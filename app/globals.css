@@ -635,3 +635,20 @@ tr.assente-oggi { background: #fffbeb; }
   box-shadow: inset 0 0 0 1px var(--primario, #1d6b60);
   font-weight: 600;
 }
+
+/* ── F6-27 · editor della disposizione ─────────────────────────────────── */
+.tavolo { overflow-x: auto; margin: 10px 0; }
+svg.disposizione { min-width: 520px; width: 100%; height: auto; }
+svg.disposizione .feature { fill: #e8eef0; }
+svg.disposizione .feature.walkway, svg.disposizione .feature.corridor { fill: #f2f5f4; }
+
+svg.disposizione .vuota { fill: transparent; stroke: none; }
+/* Le caselle libere diventano bersagli visibili solo quando c'è qualcosa da
+   posare: prima sarebbero rumore su tutta la mappa. */
+svg.disposizione .vuota.attiva {
+  fill: #eefaf5; stroke: #9fd3c2; stroke-dasharray: 3 3; cursor: pointer;
+}
+svg.disposizione .omb rect { fill: #fff; stroke: #9aa8a6; cursor: pointer; }
+svg.disposizione .omb text { font-size: 13px; fill: #22312f; pointer-events: none; }
+svg.disposizione .omb.scelto rect { fill: #1d6b60; stroke: #14513f; stroke-width: 2; }
+svg.disposizione .omb.scelto text { fill: #fff; font-weight: 700; }

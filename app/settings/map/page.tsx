@@ -2,14 +2,17 @@ import Link from 'next/link'
 import { scoped } from '@/server/repositories/scoped'
 import { richiediStaff } from '@/server/current-user'
 import Generatore from './Generatore'
+import Disposizione from './Disposizione'
+import { disposizione } from '@/server/queries/layout'
 
 export const dynamic = 'force-dynamic'
 
 export default async function ConfiguraMappa() {
   const ctx = await richiediStaff()
   const db = scoped(ctx)
-  const [ombrelloni, prenotazioni, contratti] = await Promise.all([
+  const [ombrelloni, prenotazioni, contratti, disposta] = await Promise.all([
     db.umbrella.count(), db.reservationItem.count(), db.seasonalContract.count(),
+    disposizione(ctx),
   ])
   return (
     <>
@@ -17,6 +20,9 @@ export default async function ConfiguraMappa() {
         <Link href="/map" className="indietro">← Mappa</Link>
         <span className="brand">Configura la mappa</span>
       </header>
+      <main className="configura">
+        <Disposizione dati={disposta} />
+      </main>
       <Generatore
         ombrelloniEsistenti={ombrelloni}
         bloccato={prenotazioni > 0 || contratti > 0}

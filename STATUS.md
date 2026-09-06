@@ -7,7 +7,7 @@ Aggiornato: 2026-09-06 · Branch: `main` · Repository: `mimmoseniorio-cpu/Gesti
 link su WhatsApp → assenza in 3 tap dal telefono → il posto compare fra i
 vendibili → il gestore lo rivende vedendo quanto gli costa → **il credito
 matura allo stagionale** → i contatori di capacità recuperata si muovono.
-367 test verdi, fra cui `T-12`, `T-14`, `T-15`, `T-16`, `T-27`, `T-28`, `T-40`,
+382 test verdi, fra cui `T-12`, `T-14`, `T-15`, `T-16`, `T-27`, `T-28`, `T-40`,
 `T-44`, `T-81`, `T-83` e il criterio 9 (la dashboard quadra con le prenotazioni).
 Da questo checkpoint gli stagionali **non arrivano più solo dal seed**: il
 gestore li crea, li chiude e registra le assenze di chi telefona.
@@ -92,7 +92,7 @@ Aggiornato: 2026-09-06
 - [F6-23] Ricerca globale completa: mappa (istantanea) + anagrafica (server)
 - [F6-24] Dashboard: occupazione, incassi, capacità recuperata, prossimi 7 giorni
 - [F6-26] **Generatore di griglia**: «6 file da 16» crea 96 ombrelloni, zone e passerelle
-- [F6-27 parziale] Rinumerazione con traccia; lo spostamento manuale manca
+- [F6-27] Editor della disposizione: **tocca e posa**, rinumerazione, vincolo unico sulla casella
 - [F6-17] Editor del listino con **simulatore**: «questo ombrellone, questi giorni, quanto costa e per quale regola»
 - [F6-30] PWA installabile: manifest, service worker, icone — **criterio 7**
 - [F6-31] Coda di scritture con ritentativo e stato visibile — **criterio 10**
@@ -143,9 +143,9 @@ cinque secondi. Serve mezz'ora tua, o del gestore, prima di costruirci sopra F6.
 tale, e ora ogni pagina e ogni API passano dalla sessione reale.
 
 ## Prossimi 3
-1. [F6-27] Spostamento manuale degli ombrelloni nell'editor della mappa
-2. [F7] Suite end-to-end sui sei scenari di `docs/07`
-3. [F4-10] Ambienti separati e backup automatici (la produzione c'è, il resto no)
+1. [F7] Suite end-to-end sui sei scenari di `docs/07`
+2. [F4-10] Ambienti separati e backup automatici (la produzione c'è, il resto no)
+3. [F6-28] WhatsApp anche per la conferma di prenotazione (oggi solo per il link stagionale)
 
 **Il pezzo più grosso che manca non è codice**: è `F4-10`, il deploy, che
 richiede la scelta del fornitore — con il vincolo che supporti `btree_gist`.
@@ -184,13 +184,14 @@ cp .env.example .env              # DATABASE_URL e TEST_DATABASE_URL
 npm install
 npm run db:deploy                 # applica le migrazioni
 npm run seed                      # 96 ombrelloni, dati realistici
-npm test                          # 367 test
+npm test                          # 382 test
 npm run dev                       # mappa su http://localhost:3000/map
 npm run e2e                       # scenario A, conta le interazioni
 npm run e2e:seasonal              # contratto → link → assenza → posto vendibile
 npm run e2e:rapida                # telefono in inglese: date e chiusura del pannello
 npm run e2e:blocco                # blocco schermo: il server risponde 423, non 200
 npm run e2e:rimborso              # incasso con metodo, rimborso parziale, soglie
+npm run e2e:disposizione          # sposta e rinumera, e la mappa di lavoro lo segue
 # `npm run seed` stampa in fondo le credenziali e un link stagionale
 #   admin@lidoadriano.it / lido2026
 npm run typecheck
@@ -226,6 +227,7 @@ I test girano su `gestionelido_test`, mai sul database di sviluppo.
 | `app/map/MapClient.tsx` | La schermata principale del prodotto |
 | `server/use-cases/contracts.ts` | Contratti stagionali; il conflitto dice quali prenotazioni |
 | `server/use-cases/customers.ts` | Trova-o-crea il cliente: usato dalla rotta e dalla prenotazione |
-| `server/use-cases/payments.ts` | Incasso: lo stato si ricalcola dalla somma, non si incrementa |
+| `server/use-cases/payments.ts` | Incasso e rimborso: lo stato si ricalcola dalla somma |
+| `server/queries/layout.ts` | La disposizione per l'editor: dove stanno le cose, non lo stato del giorno |
 | `app/seasonal/` | Elenco stagionali: in cima chi è assente oggi |
 | `server/auth/session.ts` | Sessioni staff revocabili; `server/current-user.ts` le legge |

@@ -296,6 +296,11 @@ model Umbrella {
 
   @@unique([beachClubId, visibleNumber])
   @@unique([beachClubId, id])
+  /// F6-27 · due ombrelloni nella stessa casella sarebbero una mappa che mente.
+  /// Il controllo sta anche nel caso d'uso, ma la garanzia è qui: uno
+  /// spostamento è una scrittura come un'altra, e due tablet possono farla
+  /// nello stesso istante.
+  @@unique([beachClubId, beachMapId, posX, posY])
   @@index([beachClubId, beachMapId])
   @@index([beachClubId, rowLabel])
   @@map("umbrella")
