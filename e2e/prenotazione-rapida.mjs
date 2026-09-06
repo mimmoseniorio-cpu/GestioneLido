@@ -18,6 +18,14 @@ const p = await b.newPage({ viewport: { width: 412, height: 915 }, locale: 'en-U
 const esiti = []
 const verifica = (nome, cond) => { esiti.push([nome, cond]); if (!cond) process.exitCode = 1 }
 
+// Ogni scrittura verso il server viene contata: il punto della modifica è
+// che «prenotato e pagato» costi UNA chiamata, non tre.
+const scritture = []
+p.on('request', r => {
+  if (r.method() === 'POST' && r.url().includes('/api/v1/'))
+    scritture.push(r.url().replace(/.*\/api\/v1/, ''))
+})
+
 await accedi(p, URL)
 await p.goto(`${URL}/map`, { waitUntil: 'networkidle' })
 // Sotto i 700 px la mappa è un elenco: si prende il primo libero da lì.
@@ -47,9 +55,14 @@ verifica(`il pannello si chiude in ${chiuso} ms, senza aspettare la rete`, chius
 verifica('il posto risulta già occupato sulla mappa',
   (await p.locator('button', { hasText: 'Verifica' }).count()) > 0)
 
+// ── una chiamata sola ─────────────────────────────────────────────────────
+await p.waitForTimeout(5500)
+const dellaPrenotazione = scritture.filter(u => !u.includes('/auth/'))
+verifica(`la prenotazione costa una sola chiamata (${dellaPrenotazione.join(', ') || 'nessuna'})`,
+  dellaPrenotazione.length === 1 && dellaPrenotazione[0].startsWith('/reservations'))
+
 // ── e se la scrittura fallisce, si vede ───────────────────────────────────
 await p.unroute('**/api/v1/reservations')
-await p.waitForTimeout(5000)
 await p.route('**/api/v1/reservations', r =>
   r.fulfill({ status: 409, contentType: 'application/json',
               body: JSON.stringify({ error: 'UMBRELLA_NOT_AVAILABLE',

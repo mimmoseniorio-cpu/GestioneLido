@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { scoped } from '@/server/repositories/scoped'
 import { richiediStaffApi } from '@/server/current-user'
 import { withIdempotency } from '@/server/idempotency'
+import { registraIncasso } from '@/server/use-cases/payments'
 import { ok, fail } from '@/server/http'
 
 export const dynamic = 'force-dynamic'
@@ -23,20 +24,7 @@ export async function POST(req: NextRequest) {
     const res = await withIdempotency(
       { key: req.headers.get('idempotency-key') ?? undefined,
         beachClubId: ctx.beachClubId, endpoint: 'POST /payments', body },
-      async () => {
-        const prenotazione = await db.reservation.byIdOrFail(body.reservationId)
-        await db.payment.create({
-          data: { reservationId: prenotazione.id, amountCents: body.amountCents,
-                  method: body.method,
-                  collectedById: ctx.kind === 'STAFF' ? ctx.userId : null },
-        })
-        const pagamenti = await db.payment.findMany({ where: { reservationId: prenotazione.id } })
-        const pagato = (pagamenti as any[]).reduce((s, p) => s + p.amountCents, 0)
-        const stato = pagato <= 0 ? 'UNPAID'
-          : pagato >= prenotazione.totalCents ? 'PAID' : 'PARTIAL'
-        await db.reservation.updateById(prenotazione.id, { paymentStatus: stato })
-        return { status: 201, body: { pagatoCents: pagato, stato } }
-      },
+      async () => ({ status: 201, body: await registraIncasso(db, ctx, body) }),
     )
     return ok(res.body, res.status)
   } catch (e) {

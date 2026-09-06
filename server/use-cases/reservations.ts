@@ -14,6 +14,8 @@ import { audit } from '@/server/audit'
 import { covers } from '@/domain/umbrella/state'
 import { calcolaCredito, descrizioneCredito } from '@/domain/seasonal/credit'
 import { calcolaPrezzo, verificaOverride, type RegolaPrezzo } from '@/domain/pricing/engine'
+import { trovaOCreaCliente, type ClienteInput } from '@/server/use-cases/customers'
+import { registraIncasso } from '@/server/use-cases/payments'
 
 const iso = (d: Date) => d.toISOString().slice(0, 10)
 
@@ -22,7 +24,18 @@ const giorni = (from: Date, to: Date) =>
 
 export type CreateReservationInput = {
   umbrellaIds: string[]
-  customerId: string
+  /** cliente già in anagrafica; in alternativa `cliente` per crearlo al volo */
+  customerId?: string
+  /**
+   * Il cliente nuovo al banco, creato nella STESSA transazione (C-05).
+   * Al banco è il caso normale: chi arriva in spiaggia non è già in
+   * anagrafica, e farne prima una chiamata a sé significa tre andate e
+   * ritorni sulla rete di uno stabilimento — e un cliente orfano ogni volta
+   * che la seconda fallisce.
+   */
+  cliente?: ClienteInput
+  /** «prenotato e pagato» è un gesto solo: l'incasso entra nella transazione */
+  incassa?: { method?: 'CASH' | 'CARD' | 'TRANSFER' | 'ONLINE' | 'OTHER' }
   from: Date
   to: Date
   peopleCount?: number
@@ -39,6 +52,11 @@ export type EsitoPrenotazione = {
   creditoMaturatoCents: number
   /** quanto avrebbe detto il listino, se è stato applicato uno scostamento */
   totaleListinoCents: number
+  /** il cliente usato: creato ora o ritrovato dal telefono */
+  customerId: string
+  customerName: string
+  /** presente solo se si è incassato contestualmente */
+  incasso?: { pagatoCents: number; stato: 'UNPAID' | 'PARTIAL' | 'PAID' }
 }
 
 export const createReservation = useCase<CreateReservationInput, EsitoPrenotazione>({
@@ -49,7 +67,12 @@ export const createReservation = useCase<CreateReservationInput, EsitoPrenotazio
     if (input.from.getTime() > input.to.getTime())
       throw new DomainError('INVALID_RANGE', 'La data di fine precede quella di inizio.')
 
-    const cliente = await db.customer.byIdOrFail(input.customerId)
+    if (!input.customerId && !input.cliente)
+      throw new DomainError('NOT_FOUND', 'Manca il cliente della prenotazione.')
+
+    const cliente = input.customerId
+      ? await db.customer.byIdOrFail(input.customerId)
+      : (await trovaOCreaCliente(db, input.cliente!)).cliente
 
     const stagione = await db.season.findFirst({ where: { status: 'ACTIVE' } })
     if (!stagione)
@@ -229,8 +252,19 @@ export const createReservation = useCase<CreateReservationInput, EsitoPrenotazio
           after: { totaleCents: totale, motivo: input.override.motivo } })
     }
 
+    // L'incasso chiude la transazione: o esistono entrambi, o nessuno dei due.
+    const incasso = input.incassa
+      ? await registraIncasso(db, ctx, {
+          reservationId: prenotazione.id, amountCents: totale,
+          method: input.incassa.method,
+        })
+      : undefined
+
     return { id: prenotazione.id, totalCents: totale, creditoMaturatoCents,
-             totaleListinoCents: totaleListino }
+             totaleListinoCents: totaleListino,
+             customerId: cliente.id,
+             customerName: `${cliente.firstName} ${cliente.lastName}`.trim(),
+             ...(incasso ? { incasso } : {}) }
   },
 })
 

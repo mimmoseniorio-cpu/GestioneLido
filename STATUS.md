@@ -7,7 +7,7 @@ Aggiornato: 2026-09-06 · Branch: `main` · Repository: `mimmoseniorio-cpu/Gesti
 link su WhatsApp → assenza in 3 tap dal telefono → il posto compare fra i
 vendibili → il gestore lo rivende vedendo quanto gli costa → **il credito
 matura allo stagionale** → i contatori di capacità recuperata si muovono.
-318 test verdi, fra cui `T-12`, `T-14`, `T-15`, `T-16`, `T-27`, `T-28`, `T-40`,
+326 test verdi, fra cui `T-12`, `T-14`, `T-15`, `T-16`, `T-27`, `T-28`, `T-40`,
 `T-44`, `T-81`, `T-83` e il criterio 9 (la dashboard quadra con le prenotazioni).
 Da questo checkpoint gli stagionali **non arrivano più solo dal seed**: il
 gestore li crea, li chiude e registra le assenze di chi telefona.
@@ -107,6 +107,9 @@ Aggiornato: 2026-09-06
 - [riscontro tel.] La data scritta a parole sotto il selettore: «09/06/2026» su un telefono
   inglese è il 6 settembre, e su quella schermata l'ambiguità costa soldi
 - [riscontro tel.] Fascia d'errore sopra la mappa: a pannello chiuso il rifiuto non sparisce
+- [riscontro tel.] **Prenotazione in una chiamata sola**: cliente, prenotazione e incasso
+  nella stessa transazione. Non era solo lentezza: con tre chiamate, un guasto in mezzo
+  lasciava un cliente orfano in anagrafica o un incasso già preso e mai registrato
 - [F6-05] **Contratti stagionali dalla UI** (`/seasonal`): creazione con link personale, chiusura
 - [F6-05 · C-16] Il conflitto dice **quali** prenotazioni bloccano il contratto, con cliente e date
 - [F6-11] L'operatore registra l'assenza di chi telefona: scorciatoia **DOMANI**, 2 interazioni
@@ -178,7 +181,7 @@ cp .env.example .env              # DATABASE_URL e TEST_DATABASE_URL
 npm install
 npm run db:deploy                 # applica le migrazioni
 npm run seed                      # 96 ombrelloni, dati realistici
-npm test                          # 318 test
+npm test                          # 326 test
 npm run dev                       # mappa su http://localhost:3000/map
 npm run e2e                       # scenario A, conta le interazioni
 npm run e2e:seasonal              # contratto → link → assenza → posto vendibile
@@ -217,5 +220,7 @@ I test girano su `gestionelido_test`, mai sul database di sviluppo.
 | `app/s/[token]/` | Area cliente: 3 tap, nessuna password |
 | `app/map/MapClient.tsx` | La schermata principale del prodotto |
 | `server/use-cases/contracts.ts` | Contratti stagionali; il conflitto dice quali prenotazioni |
+| `server/use-cases/customers.ts` | Trova-o-crea il cliente: usato dalla rotta e dalla prenotazione |
+| `server/use-cases/payments.ts` | Incasso: lo stato si ricalcola dalla somma, non si incrementa |
 | `app/seasonal/` | Elenco stagionali: in cima chi è assente oggi |
 | `server/auth/session.ts` | Sessioni staff revocabili; `server/current-user.ts` le legge |

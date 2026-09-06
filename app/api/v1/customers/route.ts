@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { scoped } from '@/server/repositories/scoped'
 import { richiediStaffApi } from '@/server/current-user'
 import { cercaClienti } from '@/server/queries/customers'
-import { normalizzaTelefono } from '@/domain/customers/phone'
+import { trovaOCreaCliente } from '@/server/use-cases/customers'
 import { ok, fail } from '@/server/http'
 import { DomainError } from '@/domain/errors'
 
@@ -29,22 +29,8 @@ export async function POST(req: NextRequest) {
   try {
     const ctx = await richiediStaffApi()
     const body = Body.parse(await req.json())
-    const db = scoped(ctx)
-
-    const esito = body.phone ? normalizzaTelefono(body.phone) : null
-    const phoneNormalized = esito?.ok ? esito.e164 : null
-
-    if (phoneNormalized) {
-      // C-80 · un duplicato non è un errore secco: è il cliente che esiste già.
-      const esistente = await db.customer.findFirst({ where: { phoneNormalized } })
-      if (esistente) return ok(esistente, 200)
-    }
-
-    const creato = await db.customer.create({
-      data: { firstName: body.firstName, lastName: body.lastName,
-              phoneRaw: body.phone ?? null, phoneNormalized },
-    })
-    return ok(creato, 201)
+    const { cliente, creato } = await trovaOCreaCliente(scoped(ctx), body)
+    return ok(cliente, creato ? 201 : 200)
   } catch (e) {
     if (e instanceof z.ZodError)
       return fail(new DomainError('INVALID_RANGE', 'Nome e cognome sono obbligatori.'))

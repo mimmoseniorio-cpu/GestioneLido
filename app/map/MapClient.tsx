@@ -494,25 +494,20 @@ function Pannello({ u, data, errore, onChiudi, onErrore, onSync, onCambiato, onO
     // scrittura resta in coda con Riprova/Scarta.
     onChiudi()
     try {
-      const cliente = await coda.esegui<any>({
-        url: '/api/v1/customers', metodo: 'POST',
-        corpo: { firstName: nome || 'Cliente', lastName: cognome, phone: tel || undefined },
-        descrizione: `Cliente ${cognome}`,
-      })
-      const prenotazione = await coda.esegui<any>({
+      // Una chiamata sola, non tre: cliente, prenotazione e incasso stanno
+      // nella stessa transazione. Non è solo velocità — con tre andate e
+      // ritorni, un guasto in mezzo lasciava un cliente senza prenotazione
+      // o una prenotazione senza l'incasso che l'operatore aveva già preso.
+      await coda.esegui({
         url: '/api/v1/reservations', metodo: 'POST',
-        corpo: { umbrellaIds: [u.id], customerId: cliente.id,
-                 from: dal, to: al, peopleCount: persone, source: 'RECEPTION' },
+        corpo: {
+          umbrellaIds: [u.id],
+          cliente: { firstName: nome || undefined, lastName: cognome, phone: tel || undefined },
+          from: dal, to: al, peopleCount: persone, source: 'RECEPTION',
+          ...(pagato ? { incassa: { method: 'CASH' } } : {}),
+        },
         descrizione: `Ombrellone ${u.visibleNumber} a ${cognome}`,
       })
-      if (pagato) {
-        await coda.esegui({
-          url: '/api/v1/payments', metodo: 'POST',
-          corpo: { reservationId: prenotazione.id,
-                   amountCents: prenotazione.totalCents, method: 'CASH' },
-          descrizione: `Incasso ombrellone ${u.visibleNumber}`,
-        })
-      }
       onSync('ok'); await onCambiato()
     } catch (e: any) {
       onSync('error'); onErrore(e?.message ?? 'Operazione non riuscita. Riprova.')
@@ -770,15 +765,11 @@ function TrovaPosti({ data, onChiudi, onMostra, onPrenotato, onSync }: {
     if (!cognome.trim()) { setErrore('Serve almeno il cognome.'); return }
     setAttesa(true); setErrore(null); onSync('pending')
     try {
-      const cliente = await coda.esegui<any>({
-        url: '/api/v1/customers', metodo: 'POST',
-        corpo: { firstName: 'Cliente', lastName: cognome, phone: tel || undefined },
-        descrizione: `Cliente ${cognome}`,
-      })
       await coda.esegui({
         url: '/api/v1/reservations', metodo: 'POST',
         corpo: { umbrellaIds: sol.ombrelloni.map((o: any) => o.id),
-                 customerId: cliente.id, from: sol.dal, to: sol.al,
+                 cliente: { lastName: cognome, phone: tel || undefined },
+                 from: sol.dal, to: sol.al,
                  peopleCount: quanti * 2, source: 'PHONE' },
         descrizione: `${sol.ombrelloni.map((o: any) => o.visibleNumber).join(' + ')} a ${cognome}`,
       })
