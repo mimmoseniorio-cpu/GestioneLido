@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { dashboard } from '@/server/queries/dashboard'
-import { devContext } from '@/server/dev-session'
+import { richiediStaff } from '@/server/current-user'
 
 export const dynamic = 'force-dynamic'
 
@@ -10,7 +10,7 @@ const giornoBreve = (iso: string) =>
     { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' })
 
 export default async function PaginaDashboard() {
-  const d = await dashboard(await devContext())
+  const d = await dashboard(await richiediStaff())
   const o = d.occupazione
 
   return (

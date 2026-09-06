@@ -149,6 +149,30 @@ model Season {
   @@map("season")
 }
 
+/// D-18 · Sessione staff.
+///
+/// `docs/02` §4.1 richiede sessioni REVOCABILI dall'admin, e una sessione
+/// revocabile non può essere un token autoconsistente: serve una riga da
+/// cancellare. Il token viaggia nel cookie, qui se ne conserva solo l'hash.
+model Session {
+  id           String   @id @default(uuid())
+  beachClubId  String   @map("beach_club_id")
+  userId       String   @map("user_id")
+  tokenHash    String   @unique @map("token_hash")
+  expiresAt    DateTime @map("expires_at")
+  lastSeenAt   DateTime @default(now()) @map("last_seen_at")
+  revokedAt    DateTime? @map("revoked_at")
+  userAgent    String?  @map("user_agent")
+  ip           String?
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [beachClubId, userId], references: [beachClubId, id], onDelete: Cascade)
+
+  @@index([beachClubId, userId])
+  @@index([expiresAt])
+  @@map("session")
+}
+
 model User {
   id           String    @id @default(uuid())
   beachClubId  String    @map("beach_club_id")
@@ -164,6 +188,7 @@ model User {
   reservations Reservation[]
   payments     Payment[]
   credits      CreditTransaction[]
+  sessions     Session[]
 
   @@unique([beachClubId, email])
   @@unique([beachClubId, id])

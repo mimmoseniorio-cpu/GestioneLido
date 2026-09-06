@@ -32,7 +32,7 @@ tocca al massimo 5–6 file e ha un criterio di "fatto" verificabile.
 
 | ID | Task | Modello | Fatto quando |
 |---|---|---|---|
-| 🟡 F4-01 | Autenticazione staff — **parziale**: hash Argon2id fatto, sessioni da fare (serve `D-18`) | 🔴 | Login e logout funzionano, sessione revocabile |
+| ✅ F4-01 | Autenticazione staff con sessioni revocabili | 🔴 | Login e logout funzionano, sessione revocabile |
 | ✅ F4-02 | `TenantContext` + repository layer con scoping forzato | 🔴 | Nessuna query di dominio senza `beach_club_id` |
 | ✅ F4-03 | Lint rule: `prisma` non importabile fuori da `db/` e `server/repositories/` | 🟢 | La violazione fa fallire il lint |
 | ✅ F4-04 | Autorizzazione: permessi e `useCase()` (`docs/04` §4) | 🔴 | Matrice ruoli applicata |
@@ -98,7 +98,7 @@ tocca al massimo 5–6 file e ha un criterio di "fatto" verificabile.
 | F6-32 | Blocco schermo con PIN (S-16) | 🟢 | Il tablet incustodito non espone i clienti |
 | ✅ F6-33 | GDPR: anonimizzazione ed export cliente | 🟡 | T-82 verde |
 | ✅ F6-34 | Layout responsive: tre varianti reali (`docs/06` §8) | 🟡 | Modalità elenco su smartphone |
-| F6-35 | Ripresa dell'operazione dopo sessione scaduta | 🟡 | T-73 verde, nessun dato perso |
+| ✅ F6-35 | Ripresa dell'operazione dopo sessione scaduta | 🟡 | T-73 verde, nessun dato perso |
 
 ## F7 — Test e prova sul campo
 

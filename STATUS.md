@@ -7,7 +7,7 @@ Aggiornato: 2026-09-06 · Branch: `main` · Repository: `mimmoseniorio-cpu/Gesti
 link su WhatsApp → assenza in 3 tap dal telefono → il posto compare fra i
 vendibili → il gestore lo rivende vedendo quanto gli costa → **il credito
 matura allo stagionale** → i contatori di capacità recuperata si muovono.
-276 test verdi, fra cui `T-12`, `T-14`, `T-15`, `T-16`, `T-40`, `T-44`, `T-81`,
+290 test verdi, fra cui `T-12`, `T-14`, `T-15`, `T-16`, `T-40`, `T-44`, `T-81`,
 `T-83` e il criterio 9 (la dashboard quadra con le prenotazioni).
 
 Aggiornato: 2026-09-06 · dopo il riscontro dell'utente sulla demo
@@ -98,6 +98,8 @@ Aggiornato: 2026-09-06
 - [F6-25] Calendario: una griglia ombrelloni × giorni al posto delle tre viste
 - [F6-34] Modalità elenco su smartphone, ordinata per urgenza — attiva da sola sotto i 700 px
 - [correzione] I giorni fuori stagione non contano più come «vendibili»: mappa e calendario lo dicono
+- [F4-01] **Autenticazione staff completa**: login, logout, sessioni revocabili (`D-18`)
+- [F6-35] Sessione scaduta: l'operazione resta in coda e si ritenta dopo il rientro
 
 ## In corso
 Nessun task in corso.
@@ -107,14 +109,13 @@ con una persona vera. Gli screenshot e lo script E2E dimostrano il flusso e
 contano le interazioni, ma non dicono se un bagnino al sole capisce la mappa in
 cinque secondi. Serve mezz'ora tua, o del gestore, prima di costruirci sopra F6.
 
-`F4-01` è a metà: `server/auth/password.ts` fa hash e verifica con Argon2id.
-Mancano le sessioni, che richiedono la tabella `Session` (`D-18`) e le rotte
-Next.js. Si completa quando esiste l'app.
+`server/dev-session.ts` **non esiste più**: era un ponte temporaneo dichiarato
+tale, e ora ogni pagina e ogni API passano dalla sessione reale.
 
 ## Prossimi 3
 1. [F6-32] Blocco schermo con PIN per il tablet della reception
-2. [F6-35] Ripresa dell'operazione dopo sessione scaduta
-3. [F4-01] Completare l'autenticazione staff (serve `D-18`, tabella `Session`)
+2. [F6-05] CRUD contratti stagionali dalla UI (oggi si creano solo dal seed)
+3. [F6-11] Registrazione assenza dall'operatore per il cliente che telefona
 
 **Il pezzo più grosso che manca non è codice**: è `F4-10`, il deploy, che
 richiede la scelta del fornitore — con il vincolo che supporti `btree_gist`.
@@ -153,10 +154,11 @@ cp .env.example .env              # DATABASE_URL e TEST_DATABASE_URL
 npm install
 npm run db:deploy                 # applica le migrazioni
 npm run seed                      # 96 ombrelloni, dati realistici
-npm test                          # 276 test
+npm test                          # 290 test
 npm run dev                       # mappa su http://localhost:3000/map
 npm run e2e                       # scenario A, conta le interazioni
-# `npm run seed` stampa in fondo un link stagionale pronto da aprire
+# `npm run seed` stampa in fondo le credenziali e un link stagionale
+#   admin@lidoadriano.it / lido2026
 npm run typecheck
 ```
 Il database di sviluppo e' usa-e-getta: `npm run db:reset` lo ricrea da zero.
@@ -188,4 +190,4 @@ I test girano su `gestionelido_test`, mai sul database di sviluppo.
 | `server/auth/magic-link.ts` | Token stagionale: generato, hashato, revocabile |
 | `app/s/[token]/` | Area cliente: 3 tap, nessuna password |
 | `app/map/MapClient.tsx` | La schermata principale del prodotto |
-| `server/dev-session.ts` | **Ponte temporaneo**: sparisce con `F4-01` |
+| `server/auth/session.ts` | Sessioni staff revocabili; `server/current-user.ts` le legge |

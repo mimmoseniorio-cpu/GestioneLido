@@ -13,6 +13,7 @@ import { PrismaClient, Role, SeasonStatus, ReservationSource, ReservationStatus,
          CreditKind, ContractStatus } from '@prisma/client'
 import { makeRandom } from './prng'
 import { generaToken } from '../server/auth/magic-link'
+import { hashPassword } from '../server/auth/password'
 import { day, addDays, nightsInclusive, fmt, overlaps } from './dates'
 
 const prisma = new PrismaClient()
@@ -54,12 +55,16 @@ async function main() {
             endDate: day(year, 9, 15), status: SeasonStatus.ACTIVE },
   })
 
+  // Password uguale per i due utenti demo: serve a provare l'app, e viene
+  // stampata in fondo al seed. In produzione la sceglie l'admin.
+  const PASSWORD_DEMO = 'lido2026'
+  const hash = await hashPassword(PASSWORD_DEMO)
   await prisma.user.createMany({
     data: [
       { beachClubId: club.id, email: 'admin@lidoadriano.it', name: 'Titolare',
-        role: Role.ADMIN, passwordHash: 'placeholder-argon2id-F4-01' },
+        role: Role.ADMIN, passwordHash: hash },
       { beachClubId: club.id, email: 'reception@lidoadriano.it', name: 'Reception',
-        role: Role.OPERATOR, passwordHash: 'placeholder-argon2id-F4-01' },
+        role: Role.OPERATOR, passwordHash: hash },
     ],
   })
   const admin = await prisma.user.findFirstOrThrow({ where: { role: Role.ADMIN } })
@@ -342,6 +347,8 @@ async function main() {
   console.log(`  96 ombrelloni (3 bloccati) · 28 stagionali · 120 clienti`)
   console.log(`  ${prenotazioni} prenotazioni · ${assenze.length} assenze · ${rivendite} rivendite`)
   console.log(`  crediti maturati: ${(creditiTotali / 100).toFixed(2)} €`)
+  console.log(`\n  accesso staff:  admin@lidoadriano.it / ${PASSWORD_DEMO}`)
+  console.log(`                  reception@lidoadriano.it / ${PASSWORD_DEMO}  (operatore)`)
   console.log(`\n  area cliente stagionale, da provare:\n  http://localhost:3000${linkDiProva}`)
 }
 

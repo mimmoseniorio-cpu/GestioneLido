@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { createReservation } from '@/server/use-cases/reservations'
-import { devContext } from '@/server/dev-session'
+import { richiediStaffApi } from '@/server/current-user'
 import { withIdempotency } from '@/server/idempotency'
 import { ok, fail, parseDay } from '@/server/http'
 
@@ -20,7 +20,7 @@ const Body = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-    const ctx = await devContext()
+    const ctx = await richiediStaffApi()
     const body = Body.parse(await req.json())
 
     // Il doppio tap su rete lenta non deve creare due prenotazioni (C-05).

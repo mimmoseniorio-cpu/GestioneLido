@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server'
 import { scoped } from '@/server/repositories/scoped'
-import { devContext } from '@/server/dev-session'
+import { richiediStaffApi } from '@/server/current-user'
 import { requirePermission } from '@/server/context'
 import { P } from '@/domain/auth/permissions'
 import { generaToken, urlPersonale, messaggioWhatsApp } from '@/server/auth/magic-link'
@@ -20,7 +20,7 @@ export const dynamic = 'force-dynamic'
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
-    const ctx = await devContext()
+    const ctx = await richiediStaffApi()
     requirePermission(ctx, P.TOKEN_REGENERATE)
 
     const db = scoped(ctx)

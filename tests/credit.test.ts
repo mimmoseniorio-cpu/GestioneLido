@@ -13,9 +13,21 @@ import { DEFAULT_SETTINGS, type Ctx } from '@/server/context'
 import { makeClub } from './helpers'
 
 const GIORNO = 86_400_000
+/**
+ * Le assenze si dichiarano da DOPODOMANI in poi.
+ *
+ * Il taglio è alle 20:00 del giorno prima (D-12): un test che dichiara
+ * un'assenza «per domani» passerebbe di mattina e fallirebbe di sera. Con due
+ * giorni di margine il taglio è sempre nel futuro, a qualunque ora si eseguano
+ * i test. La logica del taglio è verificata a parte, con un orologio fisso.
+ */
+const MARGINE = 1
+
 const fraGiorni = (n: number) => {
   const o = new Date()
-  return new Date(Date.UTC(o.getUTCFullYear(), o.getUTCMonth(), o.getUTCDate()) + n * GIORNO)
+  const base = Date.UTC(o.getUTCFullYear(), o.getUTCMonth(), o.getUTCDate())
+  // Gli offset futuri scalano di MARGINE; quelli passati (stagione) restano.
+  return new Date(base + (n > 0 ? n + MARGINE : n) * GIORNO)
 }
 const regole = { creditPercent: 30, creditCapCentsPerSeason: 30_000 }
 

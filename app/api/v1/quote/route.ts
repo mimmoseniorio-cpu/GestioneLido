@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server'
 import { scoped } from '@/server/repositories/scoped'
-import { devContext } from '@/server/dev-session'
+import { richiediStaffApi } from '@/server/current-user'
 import { calcolaPrezzo, type RegolaPrezzo } from '@/domain/pricing/engine'
 import { ok, fail, parseDay } from '@/server/http'
 import { DomainError } from '@/domain/errors'
@@ -14,7 +14,7 @@ export const dynamic = 'force-dynamic'
  */
 export async function GET(req: NextRequest) {
   try {
-    const ctx = await devContext()
+    const ctx = await richiediStaffApi()
     const q = req.nextUrl.searchParams
     const db = scoped(ctx)
 

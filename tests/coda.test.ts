@@ -152,3 +152,38 @@ describe('lo stato è sempre visibile', () => {
     await scorri(p)
   })
 })
+
+describe('F6-35 · sessione scaduta', () => {
+  it('l’operazione NON si perde: resta in coda per essere ritentata dopo il login', async () => {
+    // Perdere i dati di una prenotazione perché la sessione è scaduta è il
+    // modo più sicuro per far tornare l'operatore al quaderno.
+    vi.stubGlobal('fetch', vi.fn(async () => risposta(401, { message: 'Sessione scaduta.' })))
+    await expect(scorri(coda.esegui(richiesta))).rejects.toThrow('Sessione scaduta')
+
+    expect(coda.operazioni).toHaveLength(1)
+    expect(coda.operazioni[0]!.descrizione).toBe('Ombrellone 63 a Bianchi')
+    expect(coda.stato).toBe('da-riprovare')
+  })
+
+  it('non ritenta da sola su 401: sarebbe inutile finché non si rientra', async () => {
+    const chiamate = vi.fn(async () => risposta(401, { message: 'Sessione scaduta.' }))
+    vi.stubGlobal('fetch', chiamate)
+    await expect(scorri(coda.esegui(richiesta))).rejects.toThrow()
+    expect(chiamate).toHaveBeenCalledTimes(1)
+  })
+
+  it('dopo il rientro il ritentativo usa la STESSA chiave di idempotenza', async () => {
+    const chiavi: string[] = []
+    let autenticato = false
+    vi.stubGlobal('fetch', vi.fn(async (_u: string, opz: any) => {
+      chiavi.push(opz.headers['idempotency-key'])
+      return autenticato ? risposta(201, { id: 'ok' }) : risposta(401, { message: 'Sessione scaduta.' })
+    }))
+    await expect(scorri(coda.esegui(richiesta))).rejects.toThrow()
+
+    autenticato = true
+    const esito = await scorri(coda.riprova<{ id: string }>(coda.operazioni[0]!.id))
+    expect(esito.id).toBe('ok')
+    expect(new Set(chiavi).size).toBe(1)
+  })
+})

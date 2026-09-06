@@ -138,6 +138,10 @@ export default function MapClient({ iniziale, clubName }:
                  aria-label="Cerca" inputMode="search" />
           {cerca && <button className="clear" onClick={() => setCerca('')} aria-label="Pulisci">✕</button>}
         </div>
+        <button className="esci" onClick={async () => {
+          await fetch('/api/v1/auth/logout', { method: 'POST' })
+          window.location.href = '/login'
+        }}>Esci</button>
         <span className="sync" aria-live="polite">
           <span className={`dot ${sync === 'ok' ? '' : sync}`} />
           {sync === 'ok' ? 'sincronizzato' : sync === 'pending' ? 'salvo…' : 'non salvato'}

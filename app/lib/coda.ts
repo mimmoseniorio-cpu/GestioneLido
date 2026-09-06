@@ -91,6 +91,17 @@ export class CodaScritture {
 
         if (r.ok) { this.inCoda.delete(id); this.avvisa(); return dati as T }
 
+        // F6-35 · sessione scaduta: l'operazione NON si butta via. Resta in
+        // coda, l'operatore rientra e la ritenta con la stessa chiave di
+        // idempotenza. Perdere i dati di una prenotazione perché la sessione è
+        // scaduta è il modo più sicuro per farlo tornare al quaderno.
+        if (r.status === 401) {
+          voce.op.ultimoErrore = 'Sessione scaduta: rientra e riprova'
+          voce.op.tentativi = ATTESE_MS.length      // niente ritentativi automatici
+          this.avvisa()
+          throw Object.assign(new Error(voce.op.ultimoErrore), { inCoda: id, scaduta: true })
+        }
+
         // Un rifiuto del server (posto occupato, sconto oltre soglia) NON è un
         // problema di rete: ritentarlo darebbe lo stesso esito e nasconderebbe
         // il motivo vero. Esce subito e toglie l'operazione dalla coda.
@@ -100,7 +111,9 @@ export class CodaScritture {
         }
         voce.op.ultimoErrore = dati.message ?? `Errore ${r.status}`
       } catch (e: any) {
-        if (e?.dominio) throw e                      // rifiuto di dominio: risale
+        // Rifiuto di dominio o sessione scaduta: risalgono, non sono problemi
+        // di rete e ritentarli non cambierebbe nulla.
+        if (e?.dominio || e?.scaduta) throw e
         voce.op.ultimoErrore = 'Connessione assente'
       }
       this.avvisa()

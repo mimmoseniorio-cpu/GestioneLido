@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { generaMappa } from '@/server/use-cases/map-setup'
-import { devContext } from '@/server/dev-session'
+import { richiediStaffApi } from '@/server/current-user'
 import { ok, fail } from '@/server/http'
 
 export const dynamic = 'force-dynamic'
@@ -19,7 +19,7 @@ const Body = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-    const ctx = await devContext()
+    const ctx = await richiediStaffApi()
     return ok(await generaMappa(ctx, Body.parse(await req.json())), 201)
   } catch (e) {
     return fail(e)

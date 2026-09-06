@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { modificaRegola, disattivaRegola } from '@/server/use-cases/price-rules'
-import { devContext } from '@/server/dev-session'
+import { richiediStaffApi } from '@/server/current-user'
 import { ok, fail } from '@/server/http'
 
 export const dynamic = 'force-dynamic'
@@ -16,7 +16,7 @@ const Body = z.object({
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
-    await modificaRegola(await devContext(), { id, ...Body.parse(await req.json()) })
+    await modificaRegola(await richiediStaffApi(), { id, ...Body.parse(await req.json()) })
     return ok({ ok: true })
   } catch (e) {
     return fail(e)
@@ -26,7 +26,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
-    await disattivaRegola(await devContext(), { id })
+    await disattivaRegola(await richiediStaffApi(), { id })
     return ok({ ok: true })
   } catch (e) {
     return fail(e)

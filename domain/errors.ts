@@ -22,6 +22,9 @@ export type DomainErrorCode =
   | 'REFUND_ABOVE_LIMIT'
   | 'NOT_FOUND'
   | 'FORBIDDEN'
+  /** sessione assente o scaduta: il client deve poter distinguere «rientra»
+   *  da «non ti è permesso», altrimenti non sa se riproporre il login */
+  | 'UNAUTHENTICATED'
   | 'IDEMPOTENCY_MISMATCH'
 
 const HTTP_STATUS: Record<DomainErrorCode, number> = {
@@ -41,6 +44,7 @@ const HTTP_STATUS: Record<DomainErrorCode, number> = {
   REFUND_ABOVE_LIMIT: 403,
   NOT_FOUND: 404,
   FORBIDDEN: 403,
+  UNAUTHENTICATED: 401,
   IDEMPOTENCY_MISMATCH: 422,
 }
 

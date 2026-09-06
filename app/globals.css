@@ -65,6 +65,7 @@ input {
 .brand { font-weight: 700; letter-spacing: -.01em; }
 .grow { flex: 1; }
 
+.topbar .esci { min-height: 40px; padding: 0 12px; font-size: 14px; }
 .sync { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: var(--ink-soft); }
 .dot { width: 9px; height: 9px; border-radius: 50%; background: #16a34a; }
 .dot.pending { background: #d97706; }
@@ -519,3 +520,9 @@ table.griglia th.chiuso, table.griglia td.chiuso { opacity: .3; }
 table.griglia thead th.chiuso { background: #e5e7eb; }
 .fuori-stagione { padding: 0 16px; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+/* ── Accesso ────────────────────────────────────────────────────────────── */
+.accesso { min-height: 100vh; display: grid; place-items: center; padding: 20px; }
+.accesso .riquadro { width: min(400px, 100%); }
+.accesso h1 { margin: 0; font-size: 28px; }
+.accesso label { display: grid; gap: 5px; font-size: 15px; color: var(--ink-soft); }

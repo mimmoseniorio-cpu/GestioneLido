@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { calendario } from '@/server/queries/calendar'
-import { devContext } from '@/server/dev-session'
+import { richiediStaff } from '@/server/current-user'
 import Griglia from './Griglia'
 
 export const dynamic = 'force-dynamic'
@@ -13,7 +13,7 @@ export default async function PaginaCalendario({ searchParams }:
     ? new Date(dal + 'T00:00:00Z')
     : new Date(Date.UTC(o.getUTCFullYear(), o.getUTCMonth(), o.getUTCDate()))
 
-  const dati = await calendario(await devContext(), partenza, 14)
+  const dati = await calendario(await richiediStaff(), partenza, 14)
   return (
     <>
       <header className="topbar">

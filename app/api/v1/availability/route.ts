@@ -1,13 +1,13 @@
 import type { NextRequest } from 'next/server'
 import { cercaPosti } from '@/server/queries/availability'
-import { devContext } from '@/server/dev-session'
+import { richiediStaffApi } from '@/server/current-user'
 import { ok, fail, parseDay } from '@/server/http'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(req: NextRequest) {
   try {
-    const ctx = await devContext()
+    const ctx = await richiediStaffApi()
     const q = req.nextUrl.searchParams
     const from = parseDay(q.get('from'))
     const to = parseDay(q.get('to') ?? q.get('from'))

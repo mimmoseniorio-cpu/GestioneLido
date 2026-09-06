@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { scoped } from '@/server/repositories/scoped'
-import { devContext } from '@/server/dev-session'
+import { richiediStaffApi } from '@/server/current-user'
 import { creaRegola } from '@/server/use-cases/price-rules'
 import { ok, fail } from '@/server/http'
 
@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic'
 
 export async function GET() {
   try {
-    const ctx = await devContext()
+    const ctx = await richiediStaffApi()
     const db = scoped(ctx)
     const stagione = await db.season.findFirst({ where: { status: 'ACTIVE' } })
     if (!stagione) return ok([])
@@ -40,7 +40,7 @@ const Body = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-    const ctx = await devContext()
+    const ctx = await richiediStaffApi()
     const b = Body.parse(await req.json())
     return ok(await creaRegola(ctx, {
       ...b,

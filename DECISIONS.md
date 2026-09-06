@@ -27,7 +27,7 @@ cambiarle ora costa poco, dopo F3 costa una migrazione.
 | `D-15` | `visible_number` testuale | DECISA |
 | `D-16` | Dove vivono i vincoli: schema Prisma vs SQL grezzo | DECISA |
 | `D-17` | Regola di dipendenza verificata da test invece che da lint | DECISA |
-| `D-18` | Entità `Session` per le sessioni staff revocabili | **APERTA** |
+| `D-18` | Entità `Session` per le sessioni staff revocabili | DECISA |
 
 ---
 
@@ -199,14 +199,18 @@ garanzia, gira nella stessa pipeline e non richiede di configurare e mantenere
 un plugin ESLint dedicato. Se in futuro il progetto adotterà ESLint per altri
 motivi, la regola potrà essere aggiunta lì senza rimuovere il test.
 
-### D-18 — Manca l'entità `Session`
-**Stato:** APERTA · nata da F4 · blocca il completamento di `F4-01`
+### D-18 — Entità `Session`
+**Stato:** DECISA (2026-09-06) · implementata con `F4-01`
 
 `docs/02` §4.1 richiede sessioni staff **revocabili dall'admin**. Una sessione
 revocabile non può essere un token autoconsistente: serve una riga da
 cancellare. Il modello dati di `docs/03` non prevede `Session`.
 
-**Proposta:** tabella `Session` con `id`, `beachClubId`, `userId`, `tokenHash`,
-`expiresAt`, `lastSeenAt`, `revokedAt`, `userAgent`, `ip`. La migrazione si fa
-insieme al resto di `F4-01`, quando esisteranno le rotte Next.js che la usano:
-crearla ora significherebbe una tabella senza codice che la tocchi.
+**Scelta:** tabella `Session` con `id`, `beachClubId`, `userId`, `tokenHash`,
+`expiresAt`, `lastSeenAt`, `revokedAt`, `userAgent`, `ip`. Del token si
+conserva solo l'hash, come per il magic link.
+
+**Conseguenza pratica.** La scadenza è lunga (30 giorni) di proposito:
+l'operatore non vuole rifare il login ogni mattina, e una sessione corta gli
+farebbe perdere dati a metà prenotazione. La protezione contro il tablet
+lasciato incustodito è il blocco con PIN (`F6-32`), non una sessione breve.

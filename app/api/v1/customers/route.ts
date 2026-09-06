@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { scoped } from '@/server/repositories/scoped'
-import { devContext } from '@/server/dev-session'
+import { richiediStaffApi } from '@/server/current-user'
 import { cercaClienti } from '@/server/queries/customers'
 import { normalizzaTelefono } from '@/domain/customers/phone'
 import { ok, fail } from '@/server/http'
@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic'
 /** Scenario E: si cerca per cognome, nome o le ultime cifre del telefono. */
 export async function GET(req: NextRequest) {
   try {
-    const ctx = await devContext()
+    const ctx = await richiediStaffApi()
     return ok(await cercaClienti(ctx, req.nextUrl.searchParams.get('q') ?? ''))
   } catch (e) {
     return fail(e)
@@ -27,7 +27,7 @@ const Body = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-    const ctx = await devContext()
+    const ctx = await richiediStaffApi()
     const body = Body.parse(await req.json())
     const db = scoped(ctx)
 
