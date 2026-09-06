@@ -14,7 +14,8 @@
     "seed": "tsx db/seed.ts",
     "test": "vitest run",
     "test:watch": "vitest",
-    "e2e": "node e2e/scenario-a.mjs"
+    "e2e": "node e2e/scenario-a.mjs",
+    "e2e:seasonal": "node e2e/seasonal.mjs"
   },
   "prisma": {
     "seed": "tsx db/seed.ts"

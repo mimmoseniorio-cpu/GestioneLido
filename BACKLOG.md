@@ -68,13 +68,13 @@ tocca al massimo 5–6 file e ha un criterio di "fatto" verificabile.
 | ✅ F6-02 | Algoritmo disponibilità (`docs/09` §4) | 🔴 | T-30…T-35 verdi |
 | ✅ F6-03 | Schermata ricerca disponibilità (S-03) | 🟡 | Scenario B ≤ 4 interazioni |
 | ✅ F6-04 | Soluzioni parziali quando non c'è copertura completa | 🔴 | T-30 verde, mai "nessun risultato" |
-| F6-05 | CRUD contratti stagionali | 🟡 | T-27, T-28 verdi |
+| ✅ F6-05 | CRUD contratti stagionali | 🟡 | T-27, T-28 verdi · C-16: il conflitto dice QUALI prenotazioni |
 | ✅ F6-06 | Magic link: generazione, hash, revoca, scadenza | 🔴 | T-19, T-62, T-63 verdi |
 | ✅ F6-07 | **`declareAbsence()`** con cutoff (`docs/08` §4) | 🔴 | T-01…T-06, T-17 verdi |
 | ✅ F6-08 | **`cancelAbsence()`** con spezzatura dell'intervallo | 🔴 | **T-12** verde |
 | ✅ F6-09 | Area cliente C-01: la mia postazione | 🟡 | Leggibile senza istruzioni |
 | ✅ F6-10 | Area cliente C-02: assenza in 3 tap | 🔴 | Scenario C ≤ 3 tap |
-| F6-11 | Registrazione assenza da parte dell'operatore | 🟡 | ≤ 4 interazioni |
+| ✅ F6-11 | Registrazione assenza da parte dell'operatore | 🟡 | 2 interazioni con la scorciatoia DOMANI |
 | ✅ F6-12 | **`sellTemporarySlot()`** con credito in transazione | 🔴 | T-07, **T-08**, T-09 verdi |
 | ✅ F6-13 | Pannello stagionale assente con credito visibile prima della vendita | 🟡 | `docs/06` §3.3 |
 | ✅ F6-14 | Registro crediti + storno (`docs/08` §7) | 🔴 | T-14, T-15, **T-16** verdi |

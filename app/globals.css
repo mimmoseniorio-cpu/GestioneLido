@@ -526,3 +526,17 @@ table.griglia thead th.chiuso { background: #e5e7eb; }
 .accesso .riquadro { width: min(400px, 100%); }
 .accesso h1 { margin: 0; font-size: 28px; }
 .accesso label { display: grid; gap: 5px; font-size: 15px; color: var(--ink-soft); }
+
+/* ── Stagionali ─────────────────────────────────────────────────────────── */
+tr.assente-oggi { background: #fffbeb; }
+.pastiglia-assente {
+  display: inline-block; padding: 4px 10px; border-radius: 999px;
+  background: var(--s-sellable-fill); border: 1px solid var(--s-sellable-line);
+  color: #78350f; font-size: 14px; font-weight: 600;
+}
+.azioni-riga { display: flex; gap: 6px; flex-wrap: wrap; }
+.azioni-riga button { min-height: 40px; padding: 0 10px; font-size: 14px; }
+.clienti-trovati button {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  width: 100%; text-align: left; min-height: 48px;
+}
