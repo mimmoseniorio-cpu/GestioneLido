@@ -15,6 +15,7 @@ import { makeRandom } from './prng'
 import { generaToken } from '../server/auth/magic-link'
 import { hashPassword } from '../server/auth/password'
 import { day, addDays, nightsInclusive, fmt, overlaps } from './dates'
+import { eseguitoDirettamente } from './entrypoint'
 
 const prisma = new PrismaClient()
 const rnd = makeRandom(20260906)
@@ -359,7 +360,7 @@ export async function seedDemo() {
 }
 
 /** Eseguito solo quando si lancia questo file direttamente (`npm run seed`). */
-if (process.argv[1]?.endsWith('seed.ts')) {
+if (eseguitoDirettamente('seed.ts')) {
   seedDemo()
     .catch(e => { console.error(e); process.exit(1) })
     .finally(() => prisma.$disconnect())
