@@ -92,7 +92,7 @@ describe('incasso contestuale', () => {
       umbrellaIds: [s.umbrella.id], cliente: { lastName: 'Verdi' },
       from: day(2030, 8, 10), to: day(2030, 8, 12), incassa: { method: 'CASH' },
     })
-    expect(r.incasso).toEqual({ pagatoCents: r.totalCents, stato: 'PAID' })
+    expect(r.incasso).toEqual({ pagatoCents: r.totalCents, stato: 'PAID', eccedenzaCents: 0 })
     const pren = await prisma.reservation.findUniqueOrThrow({ where: { id: r.id } })
     expect(pren.paymentStatus).toBe('PAID')
     const pagamenti = await prisma.payment.findMany({ where: { reservationId: r.id } })

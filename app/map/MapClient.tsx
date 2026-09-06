@@ -464,6 +464,17 @@ function Pannello({ u, data, errore, onChiudi, onErrore, onSync, onCambiato, onO
   const [al, setAl] = useState(data)
   const [persone, setPersone] = useState(2)
   const [pagato, setPagato] = useState(false)
+  // Il metodo serve alla cassa della sera: contanti e carta non stanno nello
+  // stesso cassetto, e un rimborso in contanti non storna un pagamento POS.
+  //
+  // Parte da come il cliente ha già pagato, quando risulta: riaprendo il
+  // pannello ripartiva da «Contanti», e un rimborso su una carta finiva
+  // registrato come contante senza che nessuno se ne accorgesse.
+  const [metodo, setMetodo] = useState<'CASH' | 'CARD' | 'TRANSFER'>(
+    u.ultimoMetodo === 'CARD' || u.ultimoMetodo === 'TRANSFER' ? u.ultimoMetodo : 'CASH')
+  const [rimborso, setRimborso] = useState(false)
+  const [importoRimborso, setImportoRimborso] = useState('')
+  const [motivoRimborso, setMotivoRimborso] = useState('')
   const [attesa, setAttesa] = useState(false)
   const [link, setLink] = useState<{ link: string; whatsapp: string | null } | null>(null)
 
@@ -512,7 +523,7 @@ function Pannello({ u, data, errore, onChiudi, onErrore, onSync, onCambiato, onO
           umbrellaIds: [u.id],
           cliente: { firstName: nome || undefined, lastName: cognome, phone: tel || undefined },
           from: dal, to: al, peopleCount: persone, source: 'RECEPTION',
-          ...(pagato ? { incassa: { method: 'CASH' } } : {}),
+          ...(pagato ? { incassa: { method: metodo } } : {}),
         },
         descrizione: `Ombrellone ${u.visibleNumber} a ${cognome}`,
       })
@@ -530,12 +541,44 @@ function Pannello({ u, data, errore, onChiudi, onErrore, onSync, onCambiato, onO
     try {
       await coda.esegui({
         url: '/api/v1/payments', metodo: 'POST',
-        corpo: { reservationId: u.reservationId, amountCents: u.amountDueCents, method: 'CASH' },
+        corpo: { reservationId: u.reservationId, amountCents: u.amountDueCents, method: metodo },
         descrizione: `Incasso ombrellone ${u.visibleNumber}`,
       })
       onSync('ok'); await onCambiato()
     } catch (e: any) {
       onSync('error'); onErrore(e?.message ?? 'Operazione non riuscita.'); await onCambiato()
+    } finally { setAttesa(false) }
+  }
+
+  /**
+   * F6-19 · Rimborsare.
+   *
+   * Non passa dall'aggiornamento ottimistico come le altre azioni: qui escono
+   * soldi veri dalla cassa, e mostrare l'esito prima che il server l'abbia
+   * accettato significherebbe far contare all'operatore un rimborso che
+   * potrebbe essere stato rifiutato per la soglia del suo ruolo.
+   */
+  async function rimborsa() {
+    if (!u.reservationId) return
+    const centesimi = Math.round(parseFloat(importoRimborso.replace(',', '.')) * 100)
+    if (!Number.isFinite(centesimi) || centesimi <= 0) {
+      onErrore('Importo del rimborso non valido.'); return
+    }
+    if (!motivoRimborso.trim()) {
+      onErrore('Serve il motivo: è ciò che spiega la cassa a fine giornata.'); return
+    }
+    setAttesa(true); onErrore(null); onSync('pending')
+    try {
+      await coda.esegui({
+        url: '/api/v1/payments/refund', metodo: 'POST',
+        corpo: { reservationId: u.reservationId, amountCents: centesimi,
+                 method: metodo, motivo: motivoRimborso.trim() },
+        descrizione: `Rimborso ombrellone ${u.visibleNumber}`,
+      })
+      setRimborso(false); setImportoRimborso(''); setMotivoRimborso('')
+      onSync('ok'); await onCambiato()
+    } catch (e: any) {
+      onSync('error'); onErrore(e?.message ?? 'Rimborso non riuscito.')
     } finally { setAttesa(false) }
   }
 
@@ -632,10 +675,51 @@ function Pannello({ u, data, errore, onChiudi, onErrore, onSync, onCambiato, onO
         </div>
       )}
 
+      {/* Il metodo vale sia per l'incasso sia per il rimborso: chi restituisce
+          contanti e chi storna una carta fanno due gesti diversi in cassa. */}
+      {(daIncassare || (u.pagatoCents ?? 0) > 0) && (
+        <div className="metodi" role="group" aria-label="Metodo di pagamento">
+          {([['CASH', 'Contanti'], ['CARD', 'Carta'], ['TRANSFER', 'Bonifico']] as const)
+            .map(([v, etichetta]) => (
+              <button key={v} className={metodo === v ? 'attivo' : ''}
+                      onClick={() => setMetodo(v)} disabled={attesa}>{etichetta}</button>
+            ))}
+        </div>
+      )}
+
       {daIncassare && (
         <button className="primary" onClick={() => void incassa()} disabled={attesa}>
           INCASSA {euro(u.amountDueCents)}
         </button>
+      )}
+
+      {/* F6-19 · si rimborsa solo ciò che è entrato (C-46), quindi il pulsante
+          esiste solo se qualcosa è stato incassato. */}
+      {(u.pagatoCents ?? 0) > 0 && !rimborso && (
+        <button onClick={() => { setRimborso(true); setImportoRimborso(
+                  ((u.pagatoCents ?? 0) / 100).toFixed(2).replace('.', ',')) }}
+                disabled={attesa}>
+          Rimborsa…
+        </button>
+      )}
+
+      {rimborso && (
+        <div className="box form">
+          <div className="row"><span className="k">Incassato</span>
+            <b>{euro(u.pagatoCents)}</b></div>
+          <label>Quanto rimborsare
+            <input value={importoRimborso} inputMode="decimal"
+                   onChange={e => setImportoRimborso(e.target.value)} />
+          </label>
+          <label>Perché
+            <input value={motivoRimborso} placeholder="Es. disdetta, giornata di pioggia"
+                   onChange={e => setMotivoRimborso(e.target.value)} />
+          </label>
+          <button className="danger" onClick={() => void rimborsa()} disabled={attesa}>
+            {attesa ? 'Registro…' : 'REGISTRA RIMBORSO'}
+          </button>
+          <button onClick={() => setRimborso(false)} disabled={attesa}>Annulla</button>
+        </div>
       )}
 
       {!form && u.sellable && (

@@ -10,8 +10,11 @@ export const dynamic = 'force-dynamic'
 
 const Body = z.object({
   reservationId: z.string().uuid(),
-  amountCents: z.number().int(),
+  // Positivo: un rimborso non passa da qui, ha una rotta sua con la soglia
+  // per ruolo e il motivo obbligatorio.
+  amountCents: z.number().int().positive(),
   method: z.enum(['CASH', 'CARD', 'TRANSFER', 'ONLINE', 'OTHER']).default('CASH'),
+  notes: z.string().max(300).optional(),
 })
 
 export async function POST(req: NextRequest) {

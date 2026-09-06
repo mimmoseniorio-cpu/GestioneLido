@@ -61,6 +61,12 @@ export default async function PaginaDashboard() {
             <ul className="elenco largo">
               <li><span>Previsto oggi</span><b>{euro(d.incassi.previstoOggiCents)}</b></li>
               <li><span>Incassato oggi</span><b>{euro(d.incassi.incassatoOggiCents)}</b></li>
+              {/* Un totale più basso del previsto senza spiegazione si legge
+                  come un ammanco: qui si vede subito che sono uscite. */}
+              {d.incassi.rimborsatoOggiCents > 0 && (
+                <li><span>di cui rimborsati</span>
+                  <b>− {euro(d.incassi.rimborsatoOggiCents)}</b></li>
+              )}
               <li className={d.incassi.daIncassareCents > 0 ? 'aperto' : ''}>
                 <span>Ancora da incassare</span><b>{euro(d.incassi.daIncassareCents)}</b>
               </li>

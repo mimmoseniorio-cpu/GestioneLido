@@ -27,7 +27,10 @@ export type Dashboard = {
   }
   incassi: {
     previstoOggiCents: number
+    /** netto: i rimborsi del giorno sono già sottratti */
     incassatoOggiCents: number
+    /** quanto è uscito oggi: senza, «incassato» cala e non si capisce perché */
+    rimborsatoOggiCents: number
     daIncassareCents: number
     quantiDaIncassare: number
   }
@@ -144,6 +147,12 @@ export async function dashboard(ctx: Ctx, giorno = new Date()): Promise<Dashboar
     incassi: {
       previstoOggiCents,
       incassatoOggiCents: (pagamentiOggi as any[]).reduce((s, p) => s + p.amountCents, 0),
+      // I rimborsi sono movimenti negativi, quindi «incassato» è già netto.
+      // Mostrarli a parte serve a spiegare un totale più basso del previsto:
+      // altrimenti il gestore lo legge come un ammanco.
+      rimborsatoOggiCents: (pagamentiOggi as any[])
+        .filter(p => p.amountCents < 0)
+        .reduce((s, p) => s - p.amountCents, 0),
       daIncassareCents,
       quantiDaIncassare: saldi.filter(x => x > 0).length,
     },

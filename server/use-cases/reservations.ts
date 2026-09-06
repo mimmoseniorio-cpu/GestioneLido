@@ -15,7 +15,8 @@ import { covers } from '@/domain/umbrella/state'
 import { calcolaCredito, descrizioneCredito } from '@/domain/seasonal/credit'
 import { calcolaPrezzo, verificaOverride, type RegolaPrezzo } from '@/domain/pricing/engine'
 import { trovaOCreaCliente, type ClienteInput } from '@/server/use-cases/customers'
-import { registraIncasso } from '@/server/use-cases/payments'
+import { registraIncasso, type EsitoIncasso, type MetodoPagamento }
+  from '@/server/use-cases/payments'
 
 const iso = (d: Date) => d.toISOString().slice(0, 10)
 
@@ -35,7 +36,7 @@ export type CreateReservationInput = {
    */
   cliente?: ClienteInput
   /** «prenotato e pagato» è un gesto solo: l'incasso entra nella transazione */
-  incassa?: { method?: 'CASH' | 'CARD' | 'TRANSFER' | 'ONLINE' | 'OTHER' }
+  incassa?: { method?: MetodoPagamento }
   from: Date
   to: Date
   peopleCount?: number
@@ -56,7 +57,7 @@ export type EsitoPrenotazione = {
   customerId: string
   customerName: string
   /** presente solo se si è incassato contestualmente */
-  incasso?: { pagatoCents: number; stato: 'UNPAID' | 'PARTIAL' | 'PAID' }
+  incasso?: EsitoIncasso
 }
 
 export const createReservation = useCase<CreateReservationInput, EsitoPrenotazione>({

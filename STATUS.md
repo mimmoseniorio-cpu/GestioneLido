@@ -7,7 +7,7 @@ Aggiornato: 2026-09-06 · Branch: `main` · Repository: `mimmoseniorio-cpu/Gesti
 link su WhatsApp → assenza in 3 tap dal telefono → il posto compare fra i
 vendibili → il gestore lo rivende vedendo quanto gli costa → **il credito
 matura allo stagionale** → i contatori di capacità recuperata si muovono.
-326 test verdi, fra cui `T-12`, `T-14`, `T-15`, `T-16`, `T-27`, `T-28`, `T-40`,
+367 test verdi, fra cui `T-12`, `T-14`, `T-15`, `T-16`, `T-27`, `T-28`, `T-40`,
 `T-44`, `T-81`, `T-83` e il criterio 9 (la dashboard quadra con le prenotazioni).
 Da questo checkpoint gli stagionali **non arrivano più solo dal seed**: il
 gestore li crea, li chiude e registra le assenze di chi telefona.
@@ -64,7 +64,7 @@ Aggiornato: 2026-09-06
 - [F6-01] `punteggioProssimita()` — cosa vuol dire "vicini" (C-04) → `domain/availability/proximity.ts`
 - [F6-02] `cercaDisponibilita()` deterministica, con soluzioni parziali (C-20) → `domain/availability/search.ts`
 - [F6-03/F6-04] "Trova il posto migliore": query + schermata, 3 interazioni alle proposte
-- [F6-19 parziale] Incasso dal pannello e alla conferma → `app/api/v1/payments`
+- [F6-19] Incasso, **metodi** (contanti/carta/bonifico) e **rimborsi** con soglia per ruolo
 - [F6-23 parziale] Ricerca istantanea su nome, telefono, numero — client-side, zero latenza
 - [riscontro] Tesi di prodotto precisata nel brief: **capacità vendibile**, non prenotazione
 - [riscontro] `RF-DSH-05` capacità recuperata: posti e incasso, oggi e in stagione
@@ -102,6 +102,9 @@ Aggiornato: 2026-09-06
 - [correzione] I giorni fuori stagione non contano più come «vendibili»: mappa e calendario lo dicono
 - [F4-01] **Autenticazione staff completa**: login, logout, sessioni revocabili (`D-18`)
 - [F6-35] Sessione scaduta: l'operazione resta in coda e si ritenta dopo il rientro
+- [F6-32] **Blocco schermo con PIN**, applicato dal server: pagine reindirizzate, API a 423
+- [F6-19] Rimborsi: movimento negativo con motivo obbligatorio, soglia per ruolo (▲³),
+  metodo che riparte da come il cliente ha pagato, dashboard che li mostra a parte
 - [F4-10 parziale] Rilascio su Vercel + Neon, dati dimostrativi al primo avvio → `DEPLOY.md`
 - [riscontro tel.] Il pannello di prenotazione si chiude in **66 ms**, non dopo la rete (era 8 s)
 - [riscontro tel.] La data scritta a parole sotto il selettore: «09/06/2026» su un telefono
@@ -140,9 +143,9 @@ cinque secondi. Serve mezz'ora tua, o del gestore, prima di costruirci sopra F6.
 tale, e ora ogni pagina e ogni API passano dalla sessione reale.
 
 ## Prossimi 3
-1. [F6-32] Blocco schermo con PIN per il tablet della reception
-2. [F6-19] Rimborsi e metodi di pagamento (l'incasso c'è, il rimborso no)
-3. [F6-27] Spostamento manuale degli ombrelloni nell'editor della mappa
+1. [F6-27] Spostamento manuale degli ombrelloni nell'editor della mappa
+2. [F7] Suite end-to-end sui sei scenari di `docs/07`
+3. [F4-10] Ambienti separati e backup automatici (la produzione c'è, il resto no)
 
 **Il pezzo più grosso che manca non è codice**: è `F4-10`, il deploy, che
 richiede la scelta del fornitore — con il vincolo che supporti `btree_gist`.
@@ -181,11 +184,13 @@ cp .env.example .env              # DATABASE_URL e TEST_DATABASE_URL
 npm install
 npm run db:deploy                 # applica le migrazioni
 npm run seed                      # 96 ombrelloni, dati realistici
-npm test                          # 326 test
+npm test                          # 367 test
 npm run dev                       # mappa su http://localhost:3000/map
 npm run e2e                       # scenario A, conta le interazioni
 npm run e2e:seasonal              # contratto → link → assenza → posto vendibile
 npm run e2e:rapida                # telefono in inglese: date e chiusura del pannello
+npm run e2e:blocco                # blocco schermo: il server risponde 423, non 200
+npm run e2e:rimborso              # incasso con metodo, rimborso parziale, soglie
 # `npm run seed` stampa in fondo le credenziali e un link stagionale
 #   admin@lidoadriano.it / lido2026
 npm run typecheck

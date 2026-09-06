@@ -42,6 +42,10 @@ export type MapUmbrella = {
   reservationId: string | null
   isTemporarySlot: boolean
   amountDueCents: number | null
+  /** già incassato al netto dei rimborsi: sotto c'è il pulsante «Rimborsa» */
+  pagatoCents: number | null
+  /** con che cosa ha pagato: un incasso su carta si storna su carta */
+  ultimoMetodo: 'CASH' | 'CARD' | 'TRANSFER' | 'ONLINE' | 'OTHER' | null
   blockedReason: string | null
 }
 
@@ -144,8 +148,14 @@ export async function getMapForDate(
     const titolare  = contract?.customer ?? null
     const persona   = occupante ?? titolare
 
-    const pagato = (item?.reservation?.payments ?? [])
-      .reduce((s: number, p: any) => s + p.amountCents, 0)
+    const movimenti = (item?.reservation?.payments ?? []) as any[]
+    const pagato = movimenti.reduce((s: number, p: any) => s + p.amountCents, 0)
+    // L'ultimo incasso, non l'ultimo movimento: il metodo di un rimborso
+    // precedente non è quello con cui il cliente ha pagato.
+    const ultimoIncasso = movimenti
+      .filter(p => p.amountCents > 0)
+      .sort((a, b) => a.paidAt.getTime() - b.paidAt.getTime())
+      .at(-1) ?? null
 
     return {
       id: u.id,
@@ -181,6 +191,8 @@ export async function getMapForDate(
       reservationId: item?.reservationId ?? null,
       isTemporarySlot: item?.isTemporarySlot ?? false,
       amountDueCents: item ? Math.max(0, item.reservation.totalCents - pagato) : null,
+      pagatoCents: item ? pagato : null,
+      ultimoMetodo: ultimoIncasso?.method ?? null,
       blockedReason: u.blocked ? u.blockedReason : null,
     }
   })

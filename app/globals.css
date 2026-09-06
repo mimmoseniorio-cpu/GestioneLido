@@ -618,3 +618,20 @@ tr.assente-oggi { background: #fffbeb; }
   background: #eefaf5;
   color: #14513f;
 }
+
+/* Metodo di pagamento: tre scelte, sempre visibili, mai un menù a tendina —
+   al banco un menù costa due tocchi e un'attesa. */
+.panel .metodi { display: flex; gap: 8px; margin: 10px 0; }
+.panel .metodi button {
+  flex: 1;
+  min-height: 48px;
+  border-radius: 10px;
+  border: 1px solid var(--linea, #c8d5d3);
+  background: #fff;
+  font-size: 15px;
+}
+.panel .metodi button.attivo {
+  border-color: var(--primario, #1d6b60);
+  box-shadow: inset 0 0 0 1px var(--primario, #1d6b60);
+  font-weight: 600;
+}

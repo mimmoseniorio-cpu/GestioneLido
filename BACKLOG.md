@@ -82,7 +82,7 @@ tocca al massimo 5–6 file e ha un criterio di "fatto" verificabile.
 | ✅ F6-16 | Motore prezzi `computePrice()` puro | 🔴 | T-40…T-44 verdi, mai zero |
 | ✅ F6-17 | Editor listino (S-24) | 🟡 | Regole con priorità, ordine visibile |
 | ✅ F6-18 | Override prezzo con soglia per ruolo | 🟡 | T-65 verde |
-| 🟡 F6-19 | Pagamenti — **parziale**: incasso e stato fatti; mancano rimborsi e metodi | 🟡 | T-45…T-48 verdi |
+| ✅ F6-19 | Pagamenti: incasso, metodi, rimborsi con soglia per ruolo | 🟡 | T-45…T-48 verdi |
 | ✅ F6-20 | Anagrafica clienti + normalizzazione telefono E.164 | 🟡 | T-80, T-81 verdi |
 | ✅ F6-21 | Preferenze cliente (mostrate, non applicate) | 🟢 | Visibili in scheda e in prenotazione |
 | ✅ F6-22 | Scheda cliente con storico (S-09) | 🟡 | Scenario E ≤ 3 interazioni |

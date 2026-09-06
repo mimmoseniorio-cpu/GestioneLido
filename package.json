@@ -19,7 +19,8 @@
     "e2e": "node e2e/scenario-a.mjs",
     "e2e:seasonal": "node e2e/seasonal.mjs",
     "e2e:rapida": "node e2e/prenotazione-rapida.mjs",
-    "e2e:blocco": "node e2e/blocco.mjs"
+    "e2e:blocco": "node e2e/blocco.mjs",
+    "e2e:rimborso": "node e2e/rimborso.mjs"
   },
   "prisma": {
     "seed": "tsx db/seed.ts",
