@@ -179,9 +179,11 @@ svg.map .umb:focus-visible rect.body { stroke-width: 5; }
 .due-campi { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .due-campi label, .persone { display: grid; gap: 4px; font-size: 14px; color: var(--ink-soft); }
 .preventivo {
-  display: flex; justify-content: space-between; align-items: baseline;
+  display: flex; justify-content: space-between; align-items: flex-end; gap: 12px;
   padding: 10px 12px; background: #f0fdfa; border: 1px solid #99f6e4; border-radius: 10px;
 }
+.preventivo .voci { display: grid; gap: 3px; font-size: 14px; color: var(--ink-soft); }
+.preventivo .voce { display: flex; gap: 10px; justify-content: space-between; }
 .preventivo b { font-size: 22px; color: var(--accent); font-variant-numeric: tabular-nums; }
 .pagato { display: flex; align-items: center; gap: 10px; font-size: 15px; }
 .pagato input { width: 22px; height: 22px; min-height: 22px; }

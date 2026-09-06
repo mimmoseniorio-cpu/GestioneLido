@@ -4,10 +4,8 @@
  * Ogni funzione qui gira in transazione e passa da `useCase()`, che verifica
  * il permesso e traduce i vincoli del database in errori leggibili.
  *
- * Il prezzo è provvisorio: tariffa base × giorni. Il motore di listino vero è
- * `F6-16`; quando arriva, cambia solo `prezzoProvvisorio()`. Il prezzo resta
- * comunque CONGELATO sulla riga (RF-RES-04), quindi le prenotazioni create ora
- * non si alterano quando il listino esisterà.
+ * Il prezzo viene dal listino (`F6-16`) e resta CONGELATO sulla riga
+ * (RF-RES-04): modifiche successive al listino non lo alterano.
  */
 import { useCase } from '@/server/use-case'
 import { P } from '@/domain/auth/permissions'
@@ -15,14 +13,12 @@ import { DomainError } from '@/domain/errors'
 import { audit } from '@/server/audit'
 import { covers } from '@/domain/umbrella/state'
 import { calcolaCredito, descrizioneCredito } from '@/domain/seasonal/credit'
+import { calcolaPrezzo, verificaOverride, type RegolaPrezzo } from '@/domain/pricing/engine'
 
 const iso = (d: Date) => d.toISOString().slice(0, 10)
 
 const giorni = (from: Date, to: Date) =>
   Math.round((to.getTime() - from.getTime()) / 86_400_000) + 1
-
-const prezzoProvvisorio = (basePriceCents: number | null, from: Date, to: Date) =>
-  (basePriceCents ?? 0) * giorni(from, to)
 
 export type CreateReservationInput = {
   umbrellaIds: string[]
@@ -32,6 +28,8 @@ export type CreateReservationInput = {
   peopleCount?: number
   source?: 'PHONE' | 'WHATSAPP' | 'RECEPTION' | 'WEB' | 'OTHER'
   notes?: string
+  /** F6-18 · scostamento manuale dal listino, con il motivo */
+  override?: { totaleCents: number; motivo: string }
 }
 
 export type EsitoPrenotazione = {
@@ -39,6 +37,8 @@ export type EsitoPrenotazione = {
   totalCents: number
   /** credito maturato allo stagionale, quando si è venduto un posto liberato */
   creditoMaturatoCents: number
+  /** quanto avrebbe detto il listino, se è stato applicato uno scostamento */
+  totaleListinoCents: number
 }
 
 export const createReservation = useCase<CreateReservationInput, EsitoPrenotazione>({
@@ -95,8 +95,40 @@ export const createReservation = useCase<CreateReservationInput, EsitoPrenotazio
       contrattoPerOmbrellone.set(c.umbrellaId, c)
     }
 
-    const totale = (umbrellas as any[])
-      .reduce((s, u) => s + prezzoProvvisorio(u.basePriceCents, input.from, input.to), 0)
+    // ── prezzo dal listino, giorno per giorno ──────────────────────────────
+    const regole = await db.priceRule.findMany({
+      where: { seasonId: stagione.id, active: true },
+    })
+    const preventivi = new Map<string, ReturnType<typeof calcolaPrezzo>>()
+    for (const u of umbrellas as any[]) {
+      preventivi.set(u.id, calcolaPrezzo({
+        ombrellone: {
+          id: u.id, visibleNumber: u.visibleNumber, zoneId: u.zoneId,
+          rowLabel: u.rowLabel, category: u.category, basePriceCents: u.basePriceCents,
+        },
+        dal: input.from, al: input.to,
+        regole: regole as unknown as RegolaPrezzo[],
+      }))
+    }
+    const totaleListino = [...preventivi.values()].reduce((s, p) => s + p.totaleCents, 0)
+
+    // F6-18 · lo scostamento passa dalla soglia del ruolo (docs/04 ▲³).
+    let totale = totaleListino
+    if (input.override) {
+      const esito = verificaOverride({
+        prezzoListinoCents: totaleListino,
+        prezzoApplicatoCents: input.override.totaleCents,
+        ruolo: ctx.kind === 'STAFF' ? ctx.actor : 'OPERATOR',
+        scontoMassimoPercento: ctx.settings.operatorDiscountPercent,
+      })
+      if (!esito.ammesso)
+        throw new DomainError('DISCOUNT_ABOVE_LIMIT',
+          `Puoi scendere al massimo a ${(esito.limiteCents / 100).toFixed(2)} €. Per meno serve un amministratore.`,
+          { limiteCents: esito.limiteCents, listinoCents: totaleListino })
+      totale = input.override.totaleCents
+    }
+    /** Lo scostamento si distribuisce in proporzione sulle righe. */
+    const quota = totaleListino > 0 ? totale / totaleListino : 1
 
     const prenotazione = await db.reservation.create({
       data: {
@@ -117,7 +149,8 @@ export const createReservation = useCase<CreateReservationInput, EsitoPrenotazio
 
     for (const u of umbrellas as any[]) {
       const assenza = assenzaPerOmbrellone.get(u.id) ?? null
-      const prezzoRiga = prezzoProvvisorio(u.basePriceCents, input.from, input.to)
+      const preventivo = preventivi.get(u.id)!
+      const prezzoRiga = Math.round(preventivo.totaleCents * quota)
 
       await db.reservationItem.create({
         data: {
@@ -127,7 +160,13 @@ export const createReservation = useCase<CreateReservationInput, EsitoPrenotazio
           endDate: input.to,
           status: 'CONFIRMED',
           priceCents: prezzoRiga,
-          priceBreakdown: [{ giorni: giorni(input.from, input.to), tariffaCents: u.basePriceCents ?? 0 }],
+          // Il dettaglio serve a giustificare il prezzo al cliente che chiede
+          // "perché costa così": senza, resta la parola dell'operatore.
+          priceBreakdown: {
+            righe: preventivo.righe,
+            listinoCents: preventivo.totaleCents,
+            ...(input.override ? { scostamento: input.override.motivo } : {}),
+          } as never,
           isTemporarySlot: assenza !== null,
           seasonalAbsenceId: assenza?.id ?? null,
         },
@@ -179,9 +218,19 @@ export const createReservation = useCase<CreateReservationInput, EsitoPrenotazio
       assenzaPerOmbrellone.size > 0 ? 'reservation.create.temporary' : 'reservation.create',
       { type: 'reservation', id: prenotazione.id },
       { after: { umbrelle: (umbrellas as any[]).map(u => u.visibleNumber),
-                 dal: input.from, al: input.to, totaleCents: totale } })
+                 dal: iso(input.from), al: iso(input.to), totaleCents: totale } })
 
-    return { id: prenotazione.id, totalCents: totale, creditoMaturatoCents }
+    // Ogni scostamento lascia traccia con il motivo: serve a ricostruire
+    // perché quel giorno si è pagato meno (docs/04 ▲³).
+    if (input.override) {
+      await audit(tx, ctx, 'price.override',
+        { type: 'reservation', id: prenotazione.id },
+        { before: { totaleCents: totaleListino },
+          after: { totaleCents: totale, motivo: input.override.motivo } })
+    }
+
+    return { id: prenotazione.id, totalCents: totale, creditoMaturatoCents,
+             totaleListinoCents: totaleListino }
   },
 })
 

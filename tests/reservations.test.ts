@@ -277,3 +277,107 @@ describe('bloccare un ombrellone', () => {
     })).resolves.toBeUndefined()
   })
 })
+
+describe('F6-16/F6-18 · listino applicato alla prenotazione', () => {
+  async function conListino(label: string) {
+    const s = await stabilimento(label)
+    const zona = await prisma.zone.create({
+      data: { beachClubId: s.club.id, beachMapId: s.map.id, name: 'Prima fila' },
+    })
+    await prisma.umbrella.update({ where: { id: s.umbrella.id }, data: { zoneId: zona.id } })
+    return { ...s, zona }
+  }
+
+  it('applica la regola di listino invece della tariffa base', async () => {
+    const s = await conListino('prc-rule')
+    await prisma.priceRule.create({
+      data: { beachClubId: s.club.id, seasonId: s.season.id, name: 'Alta stagione',
+              priority: 100, zoneId: s.zona.id, priceCents: 4500 },
+    })
+    const r = await createReservation(s.ctx, {
+      umbrellaIds: [s.umbrella.id], customerId: s.customer.id,
+      from: day(2030, 8, 10), to: day(2030, 8, 12),
+    })
+    expect(r.totalCents).toBe(4500 * 3)
+    expect(r.totaleListinoCents).toBe(4500 * 3)
+  })
+
+  it('il dettaglio salvato giustifica il prezzo al cliente', async () => {
+    const s = await conListino('prc-breakdown')
+    await prisma.priceRule.create({
+      data: { beachClubId: s.club.id, seasonId: s.season.id, name: 'Weekend',
+              priority: 120, weekdays: [6, 7], priceCents: 5000 },
+    })
+    const r = await createReservation(s.ctx, {
+      umbrellaIds: [s.umbrella.id], customerId: s.customer.id,
+      from: day(2030, 8, 9), to: day(2030, 8, 12),   // ven → lun
+    })
+    const item = await prisma.reservationItem.findFirstOrThrow({ where: { reservationId: r.id } })
+    const dettaglio = item.priceBreakdown as any
+    expect(dettaglio.righe.length).toBeGreaterThan(1)
+    expect(dettaglio.righe.reduce((s: number, x: any) => s + x.importoCents, 0)).toBe(r.totalCents)
+    expect(dettaglio.righe.some((x: any) => x.regola === 'Weekend')).toBe(true)
+  })
+
+  it('T-40 · cambiare il listino DOPO non altera la prenotazione', async () => {
+    const s = await conListino('prc-frozen')
+    const regola = await prisma.priceRule.create({
+      data: { beachClubId: s.club.id, seasonId: s.season.id, name: 'Base',
+              priority: 50, priceCents: 3000 },
+    })
+    const r = await createReservation(s.ctx, {
+      umbrellaIds: [s.umbrella.id], customerId: s.customer.id,
+      from: day(2030, 8, 10), to: day(2030, 8, 11),
+    })
+    expect(r.totalCents).toBe(6000)
+
+    await prisma.priceRule.update({ where: { id: regola.id }, data: { priceCents: 9900 } })
+
+    const item = await prisma.reservationItem.findFirstOrThrow({ where: { reservationId: r.id } })
+    expect(item.priceCents).toBe(6000)
+  })
+
+  it('F6-18 · l’operatore può scontare entro la soglia, con traccia', async () => {
+    const s = await stabilimento('prc-override')
+    const operatore = ctxOf(s.club.id, s.user.id, 'OPERATOR')
+    const r = await createReservation(operatore, {
+      umbrellaIds: [s.umbrella.id], customerId: s.customer.id,
+      from: day(2030, 8, 10), to: day(2030, 8, 13),           // listino 4 × 25 = 100 €
+      override: { totaleCents: 8500, motivo: 'Cliente storico' },
+    })
+    expect(r.totaleListinoCents).toBe(10_000)
+    expect(r.totalCents).toBe(8500)
+
+    const audit = await prisma.auditLog.findFirst({
+      where: { entityId: r.id, action: 'price.override' } })
+    expect(audit).not.toBeNull()
+    expect((audit!.after as any).motivo).toBe('Cliente storico')
+  })
+
+  it('F6-18 · oltre la soglia l’operatore viene fermato, l’admin no', async () => {
+    const s = await stabilimento('prc-override-limit')
+    const operatore = ctxOf(s.club.id, s.user.id, 'OPERATOR')
+    await expect(createReservation(operatore, {
+      umbrellaIds: [s.umbrella.id], customerId: s.customer.id,
+      from: day(2030, 8, 10), to: day(2030, 8, 13),
+      override: { totaleCents: 3000, motivo: 'Amico' },
+    })).rejects.toMatchObject({ code: 'DISCOUNT_ABOVE_LIMIT' })
+
+    await expect(createReservation(s.ctx, {
+      umbrellaIds: [s.umbrella.id], customerId: s.customer.id,
+      from: day(2030, 8, 10), to: day(2030, 8, 13),
+      override: { totaleCents: 3000, motivo: 'Deciso dal titolare' },
+    })).resolves.toMatchObject({ totalCents: 3000 })
+  })
+
+  it('lo sconto si distribuisce sulle righe di più ombrelloni', async () => {
+    const s = await stabilimento('prc-override-multi')
+    const r = await createReservation(s.ctx, {
+      umbrellaIds: [s.umbrella.id, s.secondo.id], customerId: s.customer.id,
+      from: day(2030, 8, 10), to: day(2030, 8, 11),           // listino 2 × 2 × 25 = 100 €
+      override: { totaleCents: 8000, motivo: 'Pacchetto famiglia' },
+    })
+    const items = await prisma.reservationItem.findMany({ where: { reservationId: r.id } })
+    expect(items.reduce((x, i) => x + i.priceCents, 0)).toBe(8000)
+  })
+})

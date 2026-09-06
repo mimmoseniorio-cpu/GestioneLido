@@ -7,7 +7,7 @@ Aggiornato: 2026-09-06 · Branch: `main` · Repository: `mimmoseniorio-cpu/Gesti
 link su WhatsApp → assenza in 3 tap dal telefono → il posto compare fra i
 vendibili → il gestore lo rivende vedendo quanto gli costa → **il credito
 matura allo stagionale** → i contatori di capacità recuperata si muovono.
-166 test verdi, fra cui `T-12`, `T-14`, `T-15`, `T-16`.
+193 test verdi, fra cui `T-12`, `T-14`, `T-15`, `T-16`, `T-40`, `T-44`.
 
 Aggiornato: 2026-09-06 · dopo il riscontro dell'utente sulla demo
 
@@ -80,6 +80,9 @@ Aggiornato: 2026-09-06
 - [F6-13] Il costo in credito visibile nel pannello **prima** di vendere
 - [F6-14] Storno del credito se la rivendita viene annullata (T-14), tetto stagionale (T-15)
 - [F6-15] Credito e storico visibili nell'area cliente
+- [F6-16] Motore prezzi: regole con priorità, valutate giorno per giorno → `domain/pricing/engine.ts`
+- [F6-18] Scostamento manuale con soglia per ruolo e traccia nell'audit
+- [F6-16 extra] `GET /api/v1/quote`: preventivo dal server, stesso motore della conferma
 
 ## In corso
 Nessun task in corso.
@@ -94,13 +97,13 @@ Mancano le sessioni, che richiedono la tabella `Session` (`D-18`) e le rotte
 Next.js. Si completa quando esiste l'app.
 
 ## Prossimi 3
-1. [F6-16/F6-17] Motore prezzi vero + editor listino (oggi: tariffa base × giorni)
-2. [F6-20/F6-22] Anagrafica clienti e scheda con storico (scenario E)
-3. [F6-24] Dashboard giornaliera
+1. [F6-20/F6-22] Anagrafica clienti e scheda con storico (scenario E)
+2. [F6-24] Dashboard giornaliera
+3. [F6-17] Editor del listino (le regole oggi si creano solo dal seed)
 
-**Nota**: il prezzo è ancora `tariffa base × giorni`. È già **congelato** sulla
-riga, quindi le prenotazioni fatte oggi non si altereranno quando arriverà il
-listino: cambia solo `prezzoProvvisorio()` in `server/use-cases/reservations.ts`.
+**Nota su F6-17**: il motore prezzi funziona e le regole sono nel database, ma
+**non c'è ancora una schermata per modificarle**: oggi arrivano dal seed. Finché
+manca, un gestore non può cambiare i propri prezzi da solo.
 
 **Nota su F6-23**: la ricerca è istantanea perché lavora sul giorno già
 caricato in memoria. Trova chi è sulla mappa oggi, non tutti i clienti dello
@@ -123,7 +126,7 @@ cp .env.example .env              # DATABASE_URL e TEST_DATABASE_URL
 npm install
 npm run db:deploy                 # applica le migrazioni
 npm run seed                      # 96 ombrelloni, dati realistici
-npm test                          # 166 test
+npm test                          # 193 test
 npm run dev                       # mappa su http://localhost:3000/map
 npm run e2e                       # scenario A, conta le interazioni
 # `npm run seed` stampa in fondo un link stagionale pronto da aprire
@@ -152,6 +155,7 @@ I test girano su `gestionelido_test`, mai sul database di sviluppo.
 | `server/queries/map.ts` | La mappa di un giorno, query costanti |
 | `domain/availability/` | Adiacenza e ricerca: pure, deterministiche, senza database |
 | `domain/seasonal/` | Cutoff, intervalli e calcolo del credito: pure |
+| `domain/pricing/engine.ts` | Listino: regole con priorità, mai un prezzo a zero |
 | `server/use-cases/absences.ts` | Assenze: contiene una **correzione a `docs/08` §6.2** |
 | `server/auth/magic-link.ts` | Token stagionale: generato, hashato, revocabile |
 | `app/s/[token]/` | Area cliente: 3 tap, nessuna password |

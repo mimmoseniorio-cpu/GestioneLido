@@ -299,10 +299,27 @@ function Pannello({ u, data, errore, onChiudi, onErrore, onSync, onCambiato, onO
   const [attesa, setAttesa] = useState(false)
   const [link, setLink] = useState<{ link: string; whatsapp: string | null } | null>(null)
 
-  // Preventivo immediato: l'operatore deve poter dire il prezzo al telefono
-  // mentre compila. Il server ricalcola e resta l'unica verità.
+  // Preventivo dal SERVER, con lo stesso motore che userà la conferma: se il
+  // client stimasse a occhio, il numero detto al telefono non coinciderebbe
+  // con quello incassato.
   const giorni = Math.max(1, giorniTra(dal, al))
-  const stima = (u.basePriceCents ?? 0) * giorni
+  const [preventivo, setPreventivo] = useState<{ totaleCents: number; righe: any[] } | null>(null)
+
+  useEffect(() => {
+    if (!form) return
+    let annullato = false
+    void (async () => {
+      try {
+        const r = await fetch(`/api/v1/quote?umbrellaId=${u.id}&from=${dal}&to=${al}`)
+        if (!r.ok) return
+        const p = await r.json()
+        if (!annullato) setPreventivo(p)
+      } catch { /* il preventivo è un aiuto, non blocca la prenotazione */ }
+    })()
+    return () => { annullato = true }
+  }, [form, u.id, dal, al])
+
+  const stima = preventivo?.totaleCents ?? (u.basePriceCents ?? 0) * giorni
   const oltreAssenza = u.absence && (dal < u.absence.from || al > u.absence.to)
 
   async function prenota() {
@@ -489,7 +506,16 @@ function Pannello({ u, data, errore, onChiudi, onErrore, onSync, onCambiato, onO
           )}
 
           <div className="preventivo">
-            <span>{giorni} {giorni === 1 ? 'giorno' : 'giorni'} × {euro(u.basePriceCents)}</span>
+            <div className="voci">
+              {preventivo
+                ? preventivo.righe.map((r: any, i: number) => (
+                    <div key={i} className="voce">
+                      <span>{r.giorni} {r.giorni === 1 ? 'giorno' : 'giorni'} · {r.regola}</span>
+                      <span>{euro(r.importoCents)}</span>
+                    </div>
+                  ))
+                : <div className="voce"><span>{giorni} {giorni === 1 ? 'giorno' : 'giorni'}</span></div>}
+            </div>
             <b>{euro(stima)}</b>
           </div>
 
