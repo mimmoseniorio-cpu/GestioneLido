@@ -66,8 +66,8 @@ tocca al massimo 5–6 file e ha un criterio di "fatto" verificabile.
 |---|---|---|---|
 | ✅ F6-01 | `proximityScore()` + test (`docs/03` §7) | 🔴 | Casi di corridoio e cambio fila coperti |
 | ✅ F6-02 | Algoritmo disponibilità (`docs/09` §4) | 🔴 | T-30…T-35 verdi |
-| F6-03 | Schermata ricerca disponibilità (S-03) | 🟡 | Scenario B ≤ 4 interazioni |
-| F6-04 | Soluzioni parziali quando non c'è copertura completa | 🔴 | T-30 verde, mai "nessun risultato" |
+| ✅ F6-03 | Schermata ricerca disponibilità (S-03) | 🟡 | Scenario B ≤ 4 interazioni |
+| ✅ F6-04 | Soluzioni parziali quando non c'è copertura completa | 🔴 | T-30 verde, mai "nessun risultato" |
 | F6-05 | CRUD contratti stagionali | 🟡 | T-27, T-28 verdi |
 | F6-06 | Magic link: generazione, hash, revoca, scadenza | 🔴 | T-19, T-62, T-63 verdi |
 | F6-07 | **`declareAbsence()`** con cutoff (`docs/08` §4) | 🔴 | T-01…T-06, T-17 verdi |
@@ -82,11 +82,11 @@ tocca al massimo 5–6 file e ha un criterio di "fatto" verificabile.
 | F6-16 | Motore prezzi `computePrice()` puro | 🔴 | T-40…T-44 verdi, mai zero |
 | F6-17 | Editor listino (S-24) | 🟡 | Regole con priorità, ordine visibile |
 | F6-18 | Override prezzo con soglia per ruolo | 🟡 | T-65 verde |
-| F6-19 | Pagamenti: registrazione, stati, rimborsi | 🟡 | T-45…T-48 verdi |
+| 🟡 F6-19 | Pagamenti — **parziale**: incasso e stato fatti; mancano rimborsi e metodi | 🟡 | T-45…T-48 verdi |
 | F6-20 | Anagrafica clienti + normalizzazione telefono E.164 | 🟡 | T-80, T-81 verdi |
 | F6-21 | Preferenze cliente (mostrate, non applicate) | 🟢 | Visibili in scheda e in prenotazione |
 | F6-22 | Scheda cliente con storico (S-09) | 🟡 | Scenario E ≤ 3 interazioni |
-| F6-23 | Ricerca globale (S-06) | 🟡 | `63` trova l'ombrellone, T-86 verde |
+| 🟡 F6-23 | Ricerca globale — **parziale**: istantanea sul giorno caricato; manca la ricerca su tutti i clienti | 🟡 | `63` trova l'ombrellone, T-86 verde |
 | F6-24 | Dashboard giornaliera (S-12) | 🟡 | Criterio 9: i numeri quadrano |
 | F6-25 | Calendario: griglia ombrelloni × giorni | 🟡 | Sostituisce le tre viste |
 | F6-26 | **Generatore di griglia** (S-23) | 🔴 | 96 ombrelloni configurati in < 2 minuti |

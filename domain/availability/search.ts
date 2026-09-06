@@ -35,6 +35,9 @@ export type Preferenze = {
   zonaPreferita?: string | null
   prezzoMassimoCents?: number | null
   vicinoA?: Punto | null
+  /** "vogliamo stare il più vicino possibile al mare": il mare è in alto,
+   *  quindi penalizza la distanza dalla prima fila. */
+  vicinoAlMare?: boolean
 }
 
 export type RichiestaDisponibilita = {
@@ -66,6 +69,7 @@ const PENALITA = {
   oltrePrezzo: 6,
   temporaneo: 0.5,      // a parità, meglio un posto davvero libero
   giornoMancante: 8,    // una copertura parziale è peggio di una completa
+  filaDalMare: 1.2,     // per ogni fila di distanza dal mare
 }
 
 /** Sovrapposizione fra le finestre di più candidati. */
@@ -83,6 +87,7 @@ function penalitaPreferenze(c: Candidato, p: Preferenze | undefined,
   if (p.zonaPreferita && c.zoneId !== p.zonaPreferita) s += PENALITA.zonaDiversa
   if (p.prezzoMassimoCents != null && c.prezzoGiornoCents > p.prezzoMassimoCents) s += PENALITA.oltrePrezzo
   if (p.vicinoA) s += punteggioGruppo([c, p.vicinoA], ostacoli, pesi) * 0.5
+  if (p.vicinoAlMare) s += c.posY * PENALITA.filaDalMare
   return s
 }
 

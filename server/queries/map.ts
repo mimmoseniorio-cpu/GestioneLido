@@ -21,6 +21,7 @@ export type MapUmbrella = {
   posX: number
   posY: number
   capacity: number
+  basePriceCents: number | null
   state: UmbrellaViewState
   sellable: boolean
   /** chi c'è, o di chi è il posto: serve al pannello rapido senza un'altra query */
@@ -51,6 +52,12 @@ export type MapDay = {
     blocked: number
     sellable: number
     occupancyPercent: number
+    /** RF-DSH-05 · capacità recuperata: la metrica che vende il prodotto.
+     *  Posti di stagionali assenti effettivamente rivenduti, e il loro valore. */
+    recoveredToday: number
+    recoveredTodayCents: number
+    recoveredSeason: number
+    recoveredSeasonCents: number
   }
 }
 
@@ -125,6 +132,7 @@ export async function getMapForDate(
       posX: u.posX,
       posY: u.posY,
       capacity: u.capacity,
+      basePriceCents: u.basePriceCents,
       state: view,
       sellable: isSellable(logical),
       customerName: persona ? `${persona.firstName} ${persona.lastName}` : null,
@@ -145,6 +153,26 @@ export async function getMapForDate(
   const occupied = conta('OCCUPATO')
   const total = rows.length
 
+  // Quota giornaliera degli item temporanei che coprono questa data: il prezzo
+  // è per l'intero periodo, ma il gestore vuole sapere quanto ha recuperato OGGI.
+  const giorniDi = (i: any) =>
+    Math.round((i.endDate.getTime() - i.startDate.getTime()) / 86_400_000) + 1
+  const temporaneiOggi = (items as any[]).filter(i => i.isTemporarySlot)
+  const recoveredTodayCents = temporaneiOggi
+    .reduce((s, i) => s + Math.round(i.priceCents / giorniDi(i)), 0)
+
+  // Totale di stagione: è il numero che il gestore userà per decidere se il
+  // software si è ripagato. Una query aggregata, non una per riga.
+  const stagione = await db.season.findFirst({ where: { status: 'ACTIVE' } })
+  const recuperiStagione = stagione
+    ? await db.reservationItem.findMany({
+        where: { isTemporarySlot: true, status: { in: ['CONFIRMED', 'CHECKED_IN'] },
+                 startDate: { gte: stagione.startDate }, endDate: { lte: stagione.endDate } },
+      })
+    : []
+  const recoveredSeasonCents = (recuperiStagione as any[])
+    .reduce((s, i) => s + i.priceCents, 0)
+
   return {
     date: iso(date),
     umbrellas: rows,
@@ -163,6 +191,10 @@ export async function getMapForDate(
       blocked: conta('BLOCCATO'),
       sellable: rows.filter(r => r.sellable).length,
       occupancyPercent: total === 0 ? 0 : Math.round((occupied / total) * 100),
+      recoveredToday: temporaneiOggi.length,
+      recoveredTodayCents,
+      recoveredSeason: recuperiStagione.length,
+      recoveredSeasonCents,
     },
   }
 }

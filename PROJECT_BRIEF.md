@@ -34,9 +34,31 @@ applicati a memoria, incassi non tracciati, discussioni con i clienti.
 **Non stiamo costruendo un portale di prenotazione spiagge.** Stiamo costruendo
 lo strumento operativo interno del gestore.
 
+### La tesi del prodotto
+*(precisata dopo la prova sul campo della FASE 5)*
+
+> Il prodotto non è la prenotazione dell'ombrellone.
+> È **sapere in ogni momento quale capacità dello stabilimento può essere venduta.**
+
+La prenotazione è il gesto finale, e la sa fare anche un quaderno. Ciò che il
+quaderno non sa fare è dirti, alle 10:37 con una famiglia davanti al banco,
+quanti posti hai davvero — inclusi quelli degli stagionali che oggi non
+verranno. Il numero **«58 disponibili ora»** e il posto liberato da uno
+stagionale sono il cuore dell'idea; tutto il resto esiste per renderli veri.
+
+Conseguenza sulle priorità: davanti a due funzioni, vince sempre quella che
+rende più accurata o più leggibile la capacità vendibile.
+
 ### Metrica di successo del prodotto
 Il gestore, a stagione iniziata, smette di usare il quaderno. Se continua a
 tenere il quaderno accanto al tablet, abbiamo fallito.
+
+### La metrica che vende il prodotto
+Il gestore non deve pensare *«questo software mi costa 300 €»* ma *«questo
+coso mi ha fatto recuperare 1.480 € questa stagione»*. Per questo la
+**capacità recuperata** — posti di stagionali assenti effettivamente rivenduti,
+e il loro incasso — non è una statistica da fase avanzata: è un contatore di
+prima schermata (`RF-DSH-05`).
 
 ---
 
@@ -111,8 +133,19 @@ funzioni social · gateway di pagamento online.
   posizione, corridoi, passerelle, zone, ingressi, servizi, aree non prenotabili.
 - `RF-MAP-02` Ogni ombrellone ha: id interno, numero visibile, fila, zona,
   coordinate, categoria, tariffa base, contratto stagionale eventuale.
-- `RF-MAP-03` Stati visualizzati: `LIBERO`, `OCCUPATO`, `PRENOTATO`,
-  `STAGIONALE_PRESENTE`, `STAGIONALE_ASSENTE`, `TEMP_DISPONIBILE`, `BLOCCATO`.
+- `RF-MAP-03` Stati visualizzati, con le etichette che legge il gestore:
+  | Stato | Etichetta | Significato |
+  |---|---|---|
+  | `LIBERO` | Libero | Posto normalmente disponibile |
+  | `OCCUPATO` | Occupato | Oggi utilizzato |
+  | `PRENOTATO` | Prenotato | Prenotazione futura, non ancora occupato |
+  | `STAGIONALE_PRESENTE` | Stagionale | Assegnato a un contratto stagionale |
+  | `TEMP_DISPONIBILE` | **Liberato da stagionale** | Temporaneamente rivendibile |
+  | `BLOCCATO` | Fuori servizio | Manutenzione, non utilizzabile |
+
+  «Libero» e «Vendibile» erano quasi sinonimi e costringevano a pensare.
+  L'etichetta del posto liberato dev'essere **esplicita**: è la casella
+  economicamente più interessante dell'applicazione.
 - `RF-MAP-04` La mappa ha un selettore di data. Default: oggi.
 - `RF-MAP-05` Tap su ombrellone → pannello rapido con numero, stato, cliente,
   periodo, telefono, note, pagamento, azioni.
@@ -188,6 +221,9 @@ funzioni social · gateway di pagamento online.
   disponibili, prenotazioni del giorno, incasso previsto, incassato, da incassare.
 - `RF-DSH-02` Percentuale occupazione e disponibilità dei prossimi 7 giorni.
 - `RF-DSH-03` Nessun grafico che non guidi una decisione operativa.
+- `RF-DSH-05` **Capacità recuperata**: posti di stagionali assenti rivenduti
+  oggi e nella stagione, con il relativo incasso. Visibile sulla mappa, non
+  sepolto in un report.
 - `RF-DSH-04` Vista calendario giorno / settimana / mese con occupazione,
   prenotazioni, assenze stagionali.
 

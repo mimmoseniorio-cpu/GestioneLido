@@ -40,20 +40,20 @@ export const STATES: Record<UmbrellaViewState, StateStyle> = {
     fill: 'var(--s-seasonal-fill)', line: 'var(--s-seasonal-line)', ink: '#1e3a8a',
     symbol: '★', border: 'solid',
   },
-  // Il più evidente della legenda: è l'informazione che genera ricavo, e il
-  // gestore deve notarla per prima (docs/07 scenario F).
+  // La casella economicamente più interessante dell'applicazione: l'etichetta
+  // dev'essere ESPLICITA, non un sinonimo di "libero" che costringe a pensare.
   STAGIONALE_ASSENTE: {
-    label: 'Vendibile oggi — stagionale assente', short: 'Vendibile',
+    label: 'Liberato da stagionale — rivendibile oggi', short: 'Liberato da stagionale',
     fill: 'var(--s-sellable-fill)', line: 'var(--s-sellable-line)', ink: '#78350f',
     symbol: '☆', border: 'double',
   },
   TEMP_DISPONIBILE: {
-    label: 'Vendibile oggi', short: 'Vendibile',
+    label: 'Disponibile temporaneamente', short: 'Liberato da stagionale',
     fill: 'var(--s-sellable-fill)', line: 'var(--s-sellable-line)', ink: '#78350f',
     symbol: '☆', border: 'double',
   },
   BLOCCATO: {
-    label: 'Non utilizzabile', short: 'Bloccato',
+    label: 'Fuori servizio', short: 'Fuori servizio',
     fill: 'var(--s-blocked-fill)', line: 'var(--s-blocked-line)', ink: '#374151',
     symbol: '⊘', border: 'hatch',
   },

@@ -1,19 +1,26 @@
 'use client'
 
 /**
- * F5-03 · Mappa SVG · F5-05 contatori · F5-06 pannello rapido
- * F5-09 selettore data · F5-10 aggiornamento ottimistico
+ * La schermata principale del prodotto.
  *
- * MAPPA FIRST: si apre qui, e da qui si fa tutto. Nessun menu prima del lavoro.
+ * Tesi (PROJECT_BRIEF §1): non è la prenotazione, è sapere in ogni momento
+ * quale capacità può essere venduta. Per questo i contatori vengono prima
+ * della mappa, e la capacità recuperata dagli stagionali assenti ha una riga
+ * tutta sua.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { MapDay, MapUmbrella } from '@/server/queries/map'
 import { STATES, euro, dataLunga, dataBreve, spostaGiorni, oggiIso } from './states'
 
-const CELLA = 46          // ≥ 44 px: target touch con dita bagnate
+const CELLA = 56          // bersagli generosi: sole, mani bagnate, una mano sola
 const PADDING = 10
 
 type Sync = 'ok' | 'pending' | 'error'
+
+const giorniTra = (a: string, b: string) =>
+  Math.round((new Date(b + 'T00:00:00Z').getTime() - new Date(a + 'T00:00:00Z').getTime()) / 86_400_000) + 1
+
+const soloCifre = (s: string) => s.replace(/\D/g, '')
 
 export default function MapClient({ iniziale, clubName }:
   { iniziale: MapDay; clubName: string }) {
@@ -23,26 +30,25 @@ export default function MapClient({ iniziale, clubName }:
   const [scelto, setScelto] = useState<string | null>(null)
   const [sync, setSync] = useState<Sync>('ok')
   const [errore, setErrore] = useState<string | null>(null)
+  const [cerca, setCerca] = useState('')
+  const [trovaAperto, setTrovaAperto] = useState(false)
+  const [evidenziati, setEvidenziati] = useState<Set<string> | null>(null)
   const cache = useRef<Map<string, MapDay>>(new Map([[iniziale.date, iniziale]]))
 
-  const carica = useCallback(async (giorno: string, mostraAttesa = true) => {
+  const carica = useCallback(async (giorno: string, mostra = true) => {
     const salvata = cache.current.get(giorno)
-    if (salvata) { setMappa(salvata); return salvata }
-    if (mostraAttesa) setSync('pending')
+    if (salvata) { if (mostra) setMappa(salvata); return salvata }
+    if (mostra) setSync('pending')
     try {
       const r = await fetch(`/api/v1/map?date=${giorno}`)
       if (!r.ok) throw new Error(String(r.status))
       const dati: MapDay = await r.json()
       cache.current.set(giorno, dati)
-      if (mostraAttesa) { setMappa(dati); setSync('ok') }
+      if (mostra) { setMappa(dati); setSync('ok') }
       return dati
-    } catch {
-      if (mostraAttesa) setSync('error')
-      return null
-    }
+    } catch { if (mostra) setSync('error'); return null }
   }, [])
 
-  // Precarica ieri e domani: scorrere tra i giorni deve essere istantaneo.
   useEffect(() => {
     void carica(spostaGiorni(data, 1), false)
     void carica(spostaGiorni(data, -1), false)
@@ -50,58 +56,111 @@ export default function MapClient({ iniziale, clubName }:
 
   const vaiA = (giorno: string) => { setData(giorno); setScelto(null); void carica(giorno) }
 
-  /** Ricarica dal server scartando la cache del giorno toccato. */
   const rinfresca = useCallback(async (giorno = data) => {
     cache.current.delete(giorno)
     const dati = await carica(giorno)
     if (dati) setMappa(dati)
   }, [carica, data])
 
+  // ── ricerca istantanea, sul giorno già caricato: nessuna latenza ─────────
+  const trovati = useMemo(() => {
+    const q = cerca.trim().toLowerCase()
+    if (q.length < 1) return evidenziati
+    const cifre = soloCifre(q)
+    const ids = new Set<string>()
+    for (const u of mappa.umbrellas) {
+      const numero = u.visibleNumber.toLowerCase()
+      if (numero === q || numero.startsWith(q)) { ids.add(u.id); continue }
+      if (u.customerName?.toLowerCase().includes(q)) { ids.add(u.id); continue }
+      if (u.absence?.seasonalName.toLowerCase().includes(q)) { ids.add(u.id); continue }
+      if (cifre.length >= 3 && u.customerPhone && soloCifre(u.customerPhone).includes(cifre)) ids.add(u.id)
+    }
+    return ids
+  }, [cerca, mappa, evidenziati])
+
   const larghezza = useMemo(() =>
     (Math.max(0, ...mappa.umbrellas.map(u => u.posX),
-                 ...mappa.features.map(f => f.posX + f.width - 1)) + 1) * CELLA + PADDING * 2,
-    [mappa])
+                 ...mappa.features.map(f => f.posX + f.width - 1)) + 1) * CELLA + PADDING * 2, [mappa])
   const altezza = useMemo(() =>
     (Math.max(0, ...mappa.umbrellas.map(u => u.posY),
-                 ...mappa.features.map(f => f.posY + f.height - 1)) + 1) * CELLA + PADDING * 2,
-    [mappa])
+                 ...mappa.features.map(f => f.posY + f.height - 1)) + 1) * CELLA + PADDING * 2, [mappa])
 
   const selezionato = mappa.umbrellas.find(u => u.id === scelto) ?? null
   const c = mappa.counters
+  const oggi = data === oggiIso()
 
   return (
     <>
       <header className="topbar">
         <span className="brand">{clubName}</span>
-        <span className="grow" />
+        <div className="search">
+          <input value={cerca} onChange={e => setCerca(e.target.value)}
+                 placeholder="Cerca cliente, telefono o numero ombrellone"
+                 aria-label="Cerca" inputMode="search" />
+          {cerca && <button className="clear" onClick={() => setCerca('')} aria-label="Pulisci">✕</button>}
+        </div>
         <span className="sync" aria-live="polite">
           <span className={`dot ${sync === 'ok' ? '' : sync}`} />
           {sync === 'ok' ? 'sincronizzato' : sync === 'pending' ? 'in corso…' : 'non salvato'}
         </span>
       </header>
 
-      <div className="datebar">
+      {/* Il rischio operativo peggiore è prenotare credendo di guardare oggi. */}
+      <div className={`datebar ${oggi ? '' : 'altro-giorno'}`}>
         <button onClick={() => vaiA(spostaGiorni(data, -1))} aria-label="Giorno precedente">◀</button>
-        <span className="day">{dataLunga(data)}</span>
+        <span className="day">
+          {oggi ? 'Oggi · ' : ''}{dataLunga(data)}
+        </span>
         <button onClick={() => vaiA(spostaGiorni(data, 1))} aria-label="Giorno successivo">▶</button>
-        <button onClick={() => vaiA(oggiIso())} disabled={data === oggiIso()}>Oggi</button>
+        {oggi
+          ? <button disabled>Oggi</button>
+          : <button className="torna-oggi" onClick={() => vaiA(oggiIso())}>← Torna a oggi</button>}
+        {!oggi && <span className="avviso-giorno">Non stai guardando oggi</span>}
       </div>
+
+      {trovati && (
+        <div className="risultati">
+          {cerca
+            ? (trovati.size === 0
+                ? <>Nessun risultato per <b>«{cerca}»</b> in questo giorno</>
+                : <>{trovati.size} {trovati.size === 1 ? 'risultato' : 'risultati'} per <b>«{cerca}»</b></>)
+            : <>Proposta evidenziata sulla mappa: <b>{trovati.size} ombrelloni</b></>}
+          <button onClick={() => { setCerca(''); setEvidenziati(null) }}>Mostra tutti</button>
+        </div>
+      )}
 
       {/* Scenario F: la risposta è già qui, senza toccare nulla. */}
-      <div className="counters">
-        <span className="chip"><b>{c.occupied}</b> occupati</span>
-        <span className="chip"><b>{c.free}</b> liberi</span>
-        {c.seasonalAbsent > 0 && (
-          <span className="chip hi">☆ <b>{c.seasonalAbsent}</b> stagionali assenti</span>
-        )}
-        <span className="chip hi"><b>{c.sellable}</b> vendibili ora</span>
-        <span className="chip"><b>{c.seasonalPresent}</b> stagionali</span>
-        {c.booked > 0 && <span className="chip"><b>{c.booked}</b> prenotati</span>}
-        {c.blocked > 0 && <span className="chip">⊘ <b>{c.blocked}</b> bloccati</span>}
-        <span className="chip">{c.occupancyPercent}% su {c.total}</span>
-      </div>
+      <section className="oggi" aria-label="Situazione del giorno">
+        <div className="oggi-testata">{oggi ? 'Oggi' : dataBreve(data)}</div>
+        <div className="tiles">
+          <div className="tile forte">
+            <b>{c.sellable}</b><span>disponibili<br />da vendere</span>
+          </div>
+          <div className="tile"><b>{c.occupied}</b><span>occupati</span></div>
+          {/* Una casella a zero è rumore: si mostra solo se dice qualcosa. */}
+          {c.booked > 0 && <div className="tile"><b>{c.booked}</b><span>prenotati</span></div>}
+          <div className="tile"><b>{c.seasonalPresent}</b><span>stagionali</span></div>
+          {c.seasonalAbsent > 0 &&
+            <div className="tile ambra"><b>{c.seasonalAbsent}</b><span>stagionali<br />assenti</span></div>}
+          {c.blocked > 0 && <div className="tile"><b>{c.blocked}</b><span>fuori servizio</span></div>}
+        </div>
 
-      <div className="legend legend-top">
+        {/* La metrica che vende il prodotto: non "quanto costa" ma "quanto ha reso". */}
+        {(c.recoveredToday > 0 || c.recoveredSeason > 0) && <div className="recupero">
+          <div>
+            <b>{c.recoveredToday}</b> {c.recoveredToday === 1 ? 'posto recuperato' : 'posti recuperati'} dagli
+            stagionali assenti{c.recoveredTodayCents > 0 && <> · <b>{euro(c.recoveredTodayCents)}</b> oggi</>}
+          </div>
+          {c.recoveredSeason > 0 && (
+            <div className="stagione">
+              In stagione: {c.recoveredSeason} posti recuperati, <b>{euro(c.recoveredSeasonCents)}</b> che
+              sarebbero rimasti sotto l&apos;ombrellone vuoto
+            </div>
+          )}
+        </div>}
+      </section>
+
+      <div className="legend">
         {(['LIBERO','OCCUPATO','PRENOTATO','STAGIONALE_PRESENTE','STAGIONALE_ASSENTE','BLOCCATO'] as const)
           .map(s => (
             <span key={s}>
@@ -125,9 +184,6 @@ export default function MapClient({ iniziale, clubName }:
               </pattern>
             </defs>
 
-            {/* Due passaggi: prima tutti i rettangoli, poi tutte le etichette.
-                Altrimenti un corridoio disegnato dopo copre il nome della
-                passerella disegnata prima. */}
             {mappa.features.map(f => (
               <rect key={f.id} x={PADDING + f.posX * CELLA} y={PADDING + f.posY * CELLA}
                     width={f.width * CELLA - 4} height={f.height * CELLA - 4} rx="6"
@@ -143,17 +199,32 @@ export default function MapClient({ iniziale, clubName }:
             ))}
 
             {mappa.umbrellas.map(u => (
-              <Ombrellone key={u.id} u={u} onClick={() => setScelto(u.id)} />
+              <Ombrellone key={u.id} u={u} onClick={() => setScelto(u.id)}
+                          evidenziato={trovati ? trovati.has(u.id) : null} />
             ))}
           </svg>
-
         </div>
       </div>
 
       <div className="actions">
-        <button onClick={() => vaiA(oggiIso())}>Oggi</button>
+        <button className="trova" onClick={() => setTrovaAperto(true)}>🔎 Trova il posto migliore</button>
+        <button onClick={() => vaiA(oggiIso())} disabled={oggi}>Oggi</button>
         <button onClick={() => void rinfresca()}>Aggiorna</button>
+        {evidenziati && <button onClick={() => setEvidenziati(null)}>Togli evidenza</button>}
       </div>
+
+      {trovaAperto && (
+        <>
+          <div className="scrim" onClick={() => setTrovaAperto(false)} />
+          <TrovaPosti
+            data={data}
+            onChiudi={() => setTrovaAperto(false)}
+            onMostra={(ids) => { setEvidenziati(new Set(ids)); setCerca(''); setTrovaAperto(false) }}
+            onPrenotato={async () => { setTrovaAperto(false); await rinfresca() }}
+            onSync={setSync}
+          />
+        </>
+      )}
 
       {selezionato && (
         <>
@@ -161,10 +232,8 @@ export default function MapClient({ iniziale, clubName }:
           <Pannello
             u={selezionato} data={data} errore={errore}
             onChiudi={() => { setScelto(null); setErrore(null) }}
-            onErrore={setErrore}
-            onSync={setSync}
+            onErrore={setErrore} onSync={setSync}
             onCambiato={async () => { await rinfresca(); setScelto(null) }}
-            /* F5-10: la UI si muove subito, il server riconcilia dopo. */
             onOttimistico={(patch) => setMappa(m => ({
               ...m,
               umbrellas: m.umbrellas.map(x => x.id === selezionato.id ? { ...x, ...patch } : x),
@@ -176,39 +245,38 @@ export default function MapClient({ iniziale, clubName }:
   )
 }
 
-function Ombrellone({ u, onClick }: { u: MapUmbrella; onClick: () => void }) {
+function Ombrellone({ u, onClick, evidenziato }:
+  { u: MapUmbrella; onClick: () => void; evidenziato: boolean | null }) {
   const s = STATES[u.state]
   const x = PADDING + u.posX * CELLA
   const y = PADDING + u.posY * CELLA
-  const lato = CELLA - 5
+  const lato = CELLA - 6
+  const spento = evidenziato === false
 
   return (
-    <g className="umb" onClick={onClick} role="button" tabIndex={0}
-       onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onClick() }}
-       aria-label={`Ombrellone ${u.visibleNumber}, ${s.label}`}>
-      <rect className="body" x={x} y={y} width={lato} height={lato} rx="8"
+    <g className={`umb ${spento ? 'spento' : ''} ${evidenziato ? 'trovato' : ''}`}
+       onClick={onClick} role="button" tabIndex={0}
+       onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick() } }}
+       aria-label={`Ombrellone ${u.visibleNumber}, ${s.label}${u.customerName ? `, ${u.customerName}` : ''}`}>
+      {evidenziato && (
+        <rect x={x - 3} y={y - 3} width={lato + 6} height={lato + 6} rx="11"
+              fill="none" stroke="var(--accent)" strokeWidth="3" />
+      )}
+      <rect className="body" x={x} y={y} width={lato} height={lato} rx="9"
             fill={s.border === 'hatch' ? 'url(#hatch)' : s.fill}
             stroke={s.line} strokeWidth={s.border === 'double' ? 3 : 2}
             strokeDasharray={s.border === 'dashed' ? '5 3' : undefined} />
-      {/* terzo segnale: il bordo doppio dei posti vendibili */}
       {s.border === 'double' && (
-        <rect x={x + 4} y={y + 4} width={lato - 8} height={lato - 8} rx="5"
+        <rect x={x + 4} y={y + 4} width={lato - 8} height={lato - 8} rx="6"
               fill="none" stroke={s.line} strokeWidth="1.5" />
       )}
-      <text x={x + lato / 2} y={y + lato / 2 + 1} textAnchor="middle" dominantBaseline="middle"
-            fontSize="14" fontWeight="700" fill={s.ink}>{u.visibleNumber}</text>
-      <text x={x + lato - 6} y={y + 12} textAnchor="end" fontSize="11" fill={s.ink}>{s.symbol}</text>
+      <text x={x + lato / 2} y={y + lato / 2 + 2} textAnchor="middle" dominantBaseline="middle"
+            fontSize="16" fontWeight="700" fill={s.ink}>{u.visibleNumber}</text>
+      <text x={x + lato - 6} y={y + 14} textAnchor="end" fontSize="12" fill={s.ink}>{s.symbol}</text>
     </g>
   )
 }
 
-/**
- * F5-06 · L'azione primaria CAMBIA in base allo stato.
- *
- * È ciò che rende veloce il pannello: nell'80% dei casi il pulsante grande è
- * già quello giusto. Su un occupato con saldo aperto è incassare, su un
- * vendibile è vendere, su un libero è prenotare.
- */
 function Pannello({ u, data, errore, onChiudi, onErrore, onSync, onCambiato, onOttimistico }: {
   u: MapUmbrella
   data: string
@@ -224,12 +292,22 @@ function Pannello({ u, data, errore, onChiudi, onErrore, onSync, onCambiato, onO
   const [nome, setNome] = useState('')
   const [cognome, setCognome] = useState('')
   const [tel, setTel] = useState('')
+  const [dal, setDal] = useState(data)
+  const [al, setAl] = useState(data)
+  const [persone, setPersone] = useState(2)
+  const [pagato, setPagato] = useState(false)
   const [attesa, setAttesa] = useState(false)
+
+  // Preventivo immediato: l'operatore deve poter dire il prezzo al telefono
+  // mentre compila. Il server ricalcola e resta l'unica verità.
+  const giorni = Math.max(1, giorniTra(dal, al))
+  const stima = (u.basePriceCents ?? 0) * giorni
+  const oltreAssenza = u.absence && (dal < u.absence.from || al > u.absence.to)
 
   async function prenota() {
     if (!cognome.trim()) { onErrore('Serve almeno il cognome.'); return }
+    if (al < dal) { onErrore('La data di fine precede quella di inizio.'); return }
     setAttesa(true); onErrore(null); onSync('pending')
-    // Aggiornamento ottimistico: la mappa reagisce subito.
     onOttimistico({ state: 'OCCUPATO', customerName: `${nome} ${cognome}`.trim() })
     try {
       const rc = await fetch('/api/v1/customers', {
@@ -243,14 +321,41 @@ function Pannello({ u, data, errore, onChiudi, onErrore, onSync, onCambiato, onO
         method: 'POST',
         headers: { 'content-type': 'application/json', 'idempotency-key': crypto.randomUUID() },
         body: JSON.stringify({ umbrellaIds: [u.id], customerId: cliente.id,
-                               from: data, to: data, source: 'RECEPTION' }),
+                               from: dal, to: al, peopleCount: persone, source: 'RECEPTION' }),
       })
       if (!rr.ok) throw await rr.json()
+      const prenotazione = await rr.json()
+
+      if (pagato) {
+        await fetch('/api/v1/payments', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', 'idempotency-key': crypto.randomUUID() },
+          body: JSON.stringify({ reservationId: prenotazione.id,
+                                 amountCents: prenotazione.totalCents, method: 'CASH' }),
+        })
+      }
       onSync('ok'); await onCambiato()
     } catch (e: any) {
-      onSync('error')
-      onErrore(e?.message ?? 'Operazione non riuscita. Riprova.')
-      await onCambiato()          // riconciliazione: la verità è del server
+      onSync('error'); onErrore(e?.message ?? 'Operazione non riuscita. Riprova.')
+      await onCambiato()
+    } finally { setAttesa(false) }
+  }
+
+  async function incassa() {
+    if (!u.reservationId || !u.amountDueCents) return
+    setAttesa(true); onErrore(null); onSync('pending')
+    onOttimistico({ amountDueCents: 0 })
+    try {
+      const r = await fetch('/api/v1/payments', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'idempotency-key': crypto.randomUUID() },
+        body: JSON.stringify({ reservationId: u.reservationId,
+                               amountCents: u.amountDueCents, method: 'CASH' }),
+      })
+      if (!r.ok) throw await r.json()
+      onSync('ok'); await onCambiato()
+    } catch (e: any) {
+      onSync('error'); onErrore(e?.message ?? 'Operazione non riuscita.'); await onCambiato()
     } finally { setAttesa(false) }
   }
 
@@ -271,7 +376,7 @@ function Pannello({ u, data, errore, onChiudi, onErrore, onSync, onCambiato, onO
 
   return (
     <aside className="panel" role="dialog" aria-label={`Ombrellone ${u.visibleNumber}`}>
-      <div style={{ display: 'flex', alignItems: 'start', gap: 12 }}>
+      <div className="head">
         <div className="grow">
           <h2>Ombrellone {u.visibleNumber}</h2>
           <div className="sub">Fila {u.rowLabel} · {u.capacity} posti</div>
@@ -284,7 +389,6 @@ function Pannello({ u, data, errore, onChiudi, onErrore, onSync, onCambiato, onO
       </div>
 
       {errore && <div className="err">{errore}</div>}
-
       {u.blockedReason && <div className="box">Motivo: {u.blockedReason}</div>}
 
       {u.customerName && (
@@ -307,13 +411,11 @@ function Pannello({ u, data, errore, onChiudi, onErrore, onSync, onCambiato, onO
           )}
           {u.isTemporarySlot && (
             <div className="row"><span className="k">Nota</span>
-              <span>posto stagionale venduto temporaneamente</span></div>
+              <span>posto liberato da uno stagionale</span></div>
           )}
         </div>
       )}
 
-      {/* Il costo della vendita è visibile PRIMA di vendere, e la frase che
-          toglie al gestore la paura di perdere il posto. */}
       {u.absence && (
         <div className="box warn">
           <div className="row"><span className="k">Stagionale</span><b>{u.absence.seasonalName}</b></div>
@@ -325,20 +427,53 @@ function Pannello({ u, data, errore, onChiudi, onErrore, onSync, onCambiato, onO
         </div>
       )}
 
+      {daIncassare && (
+        <button className="primary" onClick={() => void incassa()} disabled={attesa}>
+          INCASSA {euro(u.amountDueCents)}
+        </button>
+      )}
+
       {!form && u.sellable && (
         <button className="primary" onClick={() => setForm(true)} disabled={attesa}>
-          {u.absence ? 'VENDI PER OGGI' : 'PRENOTA'}
+          {u.absence ? 'VENDI QUESTO POSTO' : 'PRENOTA'}
         </button>
       )}
 
       {form && (
-        <div className="box" style={{ display: 'grid', gap: 10 }}>
+        <div className="box form">
           <input placeholder="Cognome" value={cognome} autoFocus
                  onChange={e => setCognome(e.target.value)} />
           <input placeholder="Nome (facoltativo)" value={nome}
                  onChange={e => setNome(e.target.value)} />
           <input placeholder="Telefono (facoltativo)" inputMode="tel" value={tel}
                  onChange={e => setTel(e.target.value)} />
+
+          <div className="due-campi">
+            <label>Dal<input type="date" value={dal} onChange={e => setDal(e.target.value)} /></label>
+            <label>Al<input type="date" value={al} min={dal} onChange={e => setAl(e.target.value)} /></label>
+          </div>
+          <label className="persone">Persone
+            <input type="number" min={1} max={u.capacity} value={persone}
+                   onChange={e => setPersone(Number(e.target.value))} />
+          </label>
+
+          {oltreAssenza && (
+            <div className="err">
+              Lo stagionale è assente solo dal {dataBreve(u.absence!.from)} al {dataBreve(u.absence!.to)}:
+              fuori da quelle date il posto resta suo.
+            </div>
+          )}
+
+          <div className="preventivo">
+            <span>{giorni} {giorni === 1 ? 'giorno' : 'giorni'} × {euro(u.basePriceCents)}</span>
+            <b>{euro(stima)}</b>
+          </div>
+
+          <label className="pagato">
+            <input type="checkbox" checked={pagato} onChange={e => setPagato(e.target.checked)} />
+            Incassato subito ({euro(stima)})
+          </label>
+
           <button className="primary" onClick={() => void prenota()} disabled={attesa}>
             {attesa ? 'Registro…' : 'CONFERMA'}
           </button>
@@ -350,6 +485,154 @@ function Pannello({ u, data, errore, onChiudi, onErrore, onSync, onCambiato, onO
         <button className="danger" onClick={() => void libera()} disabled={attesa}>
           Libera ombrellone
         </button>
+      )}
+    </aside>
+  )
+}
+
+
+/**
+ * "Trova il posto migliore" — scenario B.
+ *
+ * Due campi obbligatori soli, periodo e quantità; le preferenze non bloccano
+ * la ricerca. Se non esiste la soluzione perfetta si mostrano comunque le
+ * parziali, marcate: è ciò che permette all'operatore di negoziare al telefono
+ * invece di dire "no".
+ */
+function TrovaPosti({ data, onChiudi, onMostra, onPrenotato, onSync }: {
+  data: string
+  onChiudi: () => void
+  onMostra: (ids: string[]) => void
+  onPrenotato: () => Promise<void>
+  onSync: (s: Sync) => void
+}) {
+  const [dal, setDal] = useState(data)
+  const [al, setAl] = useState(data)
+  const [quanti, setQuanti] = useState(2)
+  const [mare, setMare] = useState(false)
+  const [esito, setEsito] = useState<any>(null)
+  const [attesa, setAttesa] = useState(false)
+  const [errore, setErrore] = useState<string | null>(null)
+  const [prenotando, setPrenotando] = useState<number | null>(null)
+  const [cognome, setCognome] = useState('')
+  const [tel, setTel] = useState('')
+
+  async function cerca() {
+    setAttesa(true); setErrore(null)
+    try {
+      const p = new URLSearchParams({ from: dal, to: al, qty: String(quanti) })
+      if (mare) p.set('sea', '1')
+      const r = await fetch(`/api/v1/availability?${p}`)
+      if (!r.ok) throw await r.json()
+      setEsito(await r.json())
+    } catch (e: any) { setErrore(e?.message ?? 'Ricerca non riuscita.') }
+    finally { setAttesa(false) }
+  }
+
+  async function prenota(sol: any) {
+    if (!cognome.trim()) { setErrore('Serve almeno il cognome.'); return }
+    setAttesa(true); setErrore(null); onSync('pending')
+    try {
+      const rc = await fetch('/api/v1/customers', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ firstName: 'Cliente', lastName: cognome, phone: tel || undefined }),
+      })
+      if (!rc.ok) throw await rc.json()
+      const cliente = await rc.json()
+      const rr = await fetch('/api/v1/reservations', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'idempotency-key': crypto.randomUUID() },
+        body: JSON.stringify({ umbrellaIds: sol.ombrelloni.map((o: any) => o.id),
+                               customerId: cliente.id, from: sol.dal, to: sol.al,
+                               peopleCount: quanti * 2, source: 'PHONE' }),
+      })
+      if (!rr.ok) throw await rr.json()
+      onSync('ok'); await onPrenotato()
+    } catch (e: any) { onSync('error'); setErrore(e?.message ?? 'Prenotazione non riuscita.') }
+    finally { setAttesa(false) }
+  }
+
+  return (
+    <aside className="panel largo" role="dialog" aria-label="Trova il posto migliore">
+      <div className="head">
+        <div className="grow"><h2>Trova il posto migliore</h2>
+          <div className="sub">Periodo e quantità bastano. Il resto è facoltativo.</div></div>
+        <button onClick={onChiudi} aria-label="Chiudi">✕</button>
+      </div>
+
+      <div className="box form">
+        <div className="due-campi">
+          <label>Dal<input type="date" value={dal} onChange={e => { setDal(e.target.value); if (al < e.target.value) setAl(e.target.value) }} /></label>
+          <label>Al<input type="date" value={al} min={dal} onChange={e => setAl(e.target.value)} /></label>
+        </div>
+        <label className="persone">Quanti ombrelloni
+          <input type="number" min={1} max={8} value={quanti}
+                 onChange={e => setQuanti(Number(e.target.value))} />
+        </label>
+        <label className="pagato">
+          <input type="checkbox" checked={mare} onChange={e => setMare(e.target.checked)} />
+          Il più vicino possibile al mare
+        </label>
+        <button className="primary" onClick={() => void cerca()} disabled={attesa}>
+          {attesa ? 'Cerco…' : 'CERCA'}
+        </button>
+      </div>
+
+      {errore && <div className="err">{errore}</div>}
+
+      {esito && (
+        <>
+          <div className="esito-testata">
+            {esito.soluzioni.length === 0
+              ? 'Nessuna combinazione disponibile in quel periodo.'
+              : esito.completeTrovate > 0
+                ? `${esito.soluzioni.length} proposte`
+                : 'Nessuna copertura completa. Ecco il meglio disponibile:'}
+          </div>
+
+          {esito.soluzioni.length > 0 && (
+            <div className="box form">
+              <input placeholder="Cognome del cliente" value={cognome}
+                     onChange={e => setCognome(e.target.value)} />
+              <input placeholder="Telefono (facoltativo)" inputMode="tel" value={tel}
+                     onChange={e => setTel(e.target.value)} />
+            </div>
+          )}
+
+          <div className="proposte">
+            {esito.soluzioni.map((s: any, i: number) => (
+              <div key={i} className={`proposta ${i === 0 ? 'prima' : ''}`}>
+                <div className="numeri">
+                  {i === 0 && <span className="stella" aria-label="migliore">★</span>}
+                  {s.ombrelloni.map((o: any) => o.visibleNumber).join(' + ')}
+                </div>
+                <div className="dettagli">
+                  Fila {[...new Set(s.ombrelloni.map((o: any) => o.rowLabel))].join(', ')}
+                  {' · '}{s.giorniCoperti} {s.giorniCoperti === 1 ? 'giorno' : 'giorni'}
+                  {' · '}<b>{euro(s.prezzoTotaleCents)}</b>
+                </div>
+                {!s.completa && (
+                  <div className="parziale">
+                    Disponibile solo dal {dataBreve(s.dal)} al {dataBreve(s.al)}, non tutto il periodo
+                  </div>
+                )}
+                {s.contieneTemporanei && (
+                  <div className="temporaneo">☆ Include un posto liberato da uno stagionale</div>
+                )}
+                <div className="azioni-proposta">
+                  <button onClick={() => onMostra(s.ombrelloni.map((o: any) => o.id))}>
+                    Vedi sulla mappa
+                  </button>
+                  {prenotando === i
+                    ? <button className="primary" onClick={() => void prenota(s)} disabled={attesa}>
+                        {attesa ? 'Registro…' : 'CONFERMA'}
+                      </button>
+                    : <button onClick={() => setPrenotando(i)}>Prenota</button>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
       )}
     </aside>
   )

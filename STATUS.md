@@ -3,8 +3,11 @@
 Aggiornato: 2026-09-06 · Branch: `main` · Repository: `mimmoseniorio-cpu/GestioneLido`
 
 ## Fase corrente
-**F6 — MVP: iniziata.** `F6-01` e `F6-02` fatti (adiacenza e ricerca
-disponibilità, 24 test). 113 test verdi in totale.
+**F6 — MVP: in corso.** Rifinita la mappa dopo la prova sul campo (gate `F5-11`
+superato, feedback dell'utente recepito) e collegata la ricerca disponibilità.
+113 test verdi.
+
+Aggiornato: 2026-09-06 · dopo il riscontro dell'utente sulla demo
 
 **F5 — Prototipo: la mappa funziona.** 89 test verdi, typecheck pulito, build
 Next.js pulita. Scenario A verificato nel browser in **4 interazioni**,
@@ -55,6 +58,15 @@ Aggiornato: 2026-09-06
 - [F5 extra] API `/api/v1/map`, `/reservations`, `/customers` + script E2E scenario A
 - [F6-01] `punteggioProssimita()` — cosa vuol dire "vicini" (C-04) → `domain/availability/proximity.ts`
 - [F6-02] `cercaDisponibilita()` deterministica, con soluzioni parziali (C-20) → `domain/availability/search.ts`
+- [F6-03/F6-04] "Trova il posto migliore": query + schermata, 3 interazioni alle proposte
+- [F6-19 parziale] Incasso dal pannello e alla conferma → `app/api/v1/payments`
+- [F6-23 parziale] Ricerca istantanea su nome, telefono, numero — client-side, zero latenza
+- [riscontro] Tesi di prodotto precisata nel brief: **capacità vendibile**, non prenotazione
+- [riscontro] `RF-DSH-05` capacità recuperata: posti e incasso, oggi e in stagione
+- [riscontro] Terminologia: "Vendibile" → **"Liberato da stagionale"**, "Bloccato" → "Fuori servizio"
+- [riscontro] Contatori a caselle grandi al posto di "10% su 96"
+- [riscontro] Bersagli da 46 a 56 px; avviso arancione quando la data non è oggi
+- [riscontro] Form di prenotazione con dal/al, preventivo immediato e "incassato subito"
 
 ## In corso
 Nessun task in corso.
@@ -71,11 +83,12 @@ Next.js. Si completa quando esiste l'app.
 ## Prossimi 3
 1. [F6-07] `declareAbsence()` con cutoff — il cuore del prodotto
 2. [F6-08] `cancelAbsence()` con spezzatura dell'intervallo (T-12)
-3. [F6-03] Schermata di ricerca disponibilità (scenario B, ≤ 4 interazioni)
+3. [F6-09/F6-10] Area cliente stagionale: "non sarò presente" in 3 tap
 
-**Nota**: `cercaDisponibilita()` è pura e testata ma non ancora collegata a una
-query: manca il caricamento dei candidati dal database (finestra contigua
-disponibile per ombrellone) e la schermata `F6-03`.
+**Nota su F6-23**: la ricerca è istantanea perché lavora sul giorno già
+caricato in memoria. Trova chi è sulla mappa oggi, non tutti i clienti dello
+storico: quella è la seconda metà del task e richiede l'endpoint già scritto
+(`GET /api/v1/customers?q=`), non ancora collegato alla UI.
 
 ## Blocchi e decisioni aperte
 - ~~`D-01`~~ CHIUSA il 2026-09-06: chi ha pagato tiene il posto. Credito solo a rivendita avvenuta.
