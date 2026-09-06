@@ -252,6 +252,7 @@ export default function MapClient({ iniziale, clubName }:
         <button onClick={() => vaiA(oggiIso())} disabled={oggi}>Oggi</button>
         <button onClick={() => void rinfresca()}>Aggiorna</button>
         <Link href="/dashboard" className="bottone-link">Oggi in numeri</Link>
+        <Link href="/settings/pricing" className="bottone-link">Listino</Link>
         {evidenziati && <button onClick={() => setEvidenziati(null)}>Togli evidenza</button>}
       </div>
 

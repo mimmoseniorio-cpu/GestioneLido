@@ -427,3 +427,11 @@ svg.map .umb:focus-visible rect.body { stroke-width: 5; }
 .anteprima svg { width: 100%; height: auto; min-width: 420px; }
 .avviso-box { background: #fffbeb; border: 1px solid #fcd34d; color: #78350f; padding: 12px; border-radius: 10px; }
 button.azione-primaria.come-bottone { border: 0; min-height: 60px; }
+
+/* ── Listino ────────────────────────────────────────────────────────────── */
+.configura select {
+  font: inherit; min-height: 44px; padding: 0 10px;
+  border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink);
+}
+input.mini { min-height: 40px; width: 92px; padding: 0 8px; }
+.tabella td .mini { text-align: right; }

@@ -7,7 +7,7 @@ Aggiornato: 2026-09-06 · Branch: `main` · Repository: `mimmoseniorio-cpu/Gesti
 link su WhatsApp → assenza in 3 tap dal telefono → il posto compare fra i
 vendibili → il gestore lo rivende vedendo quanto gli costa → **il credito
 matura allo stagionale** → i contatori di capacità recuperata si muovono.
-237 test verdi, fra cui `T-12`, `T-14`, `T-15`, `T-16`, `T-40`, `T-44`, `T-81`,
+247 test verdi, fra cui `T-12`, `T-14`, `T-15`, `T-16`, `T-40`, `T-44`, `T-81`,
 `T-83` e il criterio 9 (la dashboard quadra con le prenotazioni).
 
 Aggiornato: 2026-09-06 · dopo il riscontro dell'utente sulla demo
@@ -91,6 +91,7 @@ Aggiornato: 2026-09-06
 - [F6-24] Dashboard: occupazione, incassi, capacità recuperata, prossimi 7 giorni
 - [F6-26] **Generatore di griglia**: «6 file da 16» crea 96 ombrelloni, zone e passerelle
 - [F6-27 parziale] Rinumerazione con traccia; lo spostamento manuale manca
+- [F6-17] Editor del listino con **simulatore**: «questo ombrellone, questi giorni, quanto costa e per quale regola»
 
 ## In corso
 Nessun task in corso.
@@ -105,9 +106,9 @@ Mancano le sessioni, che richiedono la tabella `Session` (`D-18`) e le rotte
 Next.js. Si completa quando esiste l'app.
 
 ## Prossimi 3
-1. [F6-17] Editor del listino — senza, il gestore non può cambiare i propri prezzi
-2. [F6-30] PWA installabile (`MVP-16`, criterio 7 di accettazione)
-3. [F6-31] Coda di retry e stato di sincronizzazione (criterio 10)
+1. [F6-30] PWA installabile (`MVP-16`, criterio 7 di accettazione)
+2. [F6-31] Coda di retry e stato di sincronizzazione (criterio 10)
+3. [F6-33] GDPR: anonimizzazione ed export cliente (`NF-05`)
 
 **Nota su F6-26**: una mappa generata senza tariffe non può vendere, e il
 motore lo dice invece di registrare zero (`C-43`). Il generatore assegna già
@@ -138,7 +139,7 @@ cp .env.example .env              # DATABASE_URL e TEST_DATABASE_URL
 npm install
 npm run db:deploy                 # applica le migrazioni
 npm run seed                      # 96 ombrelloni, dati realistici
-npm test                          # 237 test
+npm test                          # 247 test
 npm run dev                       # mappa su http://localhost:3000/map
 npm run e2e                       # scenario A, conta le interazioni
 # `npm run seed` stampa in fondo un link stagionale pronto da aprire
