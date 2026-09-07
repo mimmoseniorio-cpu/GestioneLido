@@ -119,6 +119,33 @@ const scheda = async (utente = 'admin@lidoadriano.it') => {
   await p.context().close()
 }
 
+// ── #6 · il giorno guardato sopravvive a indietro, avanti e ricarica ─────
+{
+  const p = await scheda()
+  await p.getByRole('button', { name: 'Giorno successivo' }).click()
+  await p.waitForTimeout(1200)
+  const domani = new URL(p.url()).searchParams.get('data')
+  verifica(`#6 · il giorno finisce nell’indirizzo (${domani})`,
+    !!domani && /^\d{4}-\d{2}-\d{2}$/.test(domani))
+
+  await p.reload({ waitUntil: 'networkidle' })
+  verifica('#6 · e sopravvive alla ricarica',
+    new URL(p.url()).searchParams.get('data') === domani &&
+    /Non stai guardando oggi/.test(await p.locator('body').innerText()))
+
+  await p.goBack({ waitUntil: 'networkidle' })
+  await p.waitForTimeout(800)
+  verifica('#6 · indietro torna a oggi, non da un’altra parte',
+    !new URL(p.url()).searchParams.get('data') &&
+    !/Non stai guardando oggi/.test(await p.locator('body').innerText()))
+
+  await p.goForward({ waitUntil: 'networkidle' })
+  await p.waitForTimeout(800)
+  verifica('#6 · e avanti riporta al giorno di prima, non a oggi',
+    new URL(p.url()).searchParams.get('data') === domani)
+  await p.context().close()
+}
+
 // ── #9 · i bersagli non devono mai scendere sotto la soglia del dito ─────
 {
   for (const [w, h] of [[1363, 936], [1180, 820], [1024, 768], [820, 1180], [390, 844]]) {

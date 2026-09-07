@@ -7,7 +7,7 @@ Aggiornato: 2026-09-06 · Branch: `main` · Repository: `mimmoseniorio-cpu/Gesti
 link su WhatsApp → assenza in 3 tap dal telefono → il posto compare fra i
 vendibili → il gestore lo rivende vedendo quanto gli costa → **il credito
 matura allo stagionale** → i contatori di capacità recuperata si muovono.
-408 test verdi, fra cui `T-12`, `T-14`, `T-15`, `T-16`, `T-27`, `T-28`, `T-40`,
+415 test verdi, fra cui `T-12`, `T-14`, `T-15`, `T-16`, `T-27`, `T-28`, `T-40`,
 `T-44`, `T-81`, `T-83` e il criterio 9 (la dashboard quadra con le prenotazioni).
 Da questo checkpoint gli stagionali **non arrivano più solo dal seed**: il
 gestore li crea, li chiude e registra le assenze di chi telefona.
@@ -146,6 +146,34 @@ lo stesso ombrellone» è attiva sul database vero, non solo in locale.
 Mancano la pianificazione automatica delle copie e un ambiente di collaudo
 separato. Non ci metterei ancora i clienti veri di uno stabilimento vero.
 
+## Riscontro dalla prova su tablet (2026-09-07)
+
+Un agente ha provato il prodotto su schermi di varie misure e ha trovato
+undici difetti. Verificati uno per uno riproducendoli: **sei confermati e
+corretti**, uno non riproducibile, due erano misure sbagliate di chi provava.
+
+Corretti: avviso di prenotazione rifiutata fuori schermo · blocco automatico
+che non scattava · listino modificabile dall'operatore · cliente sbagliato
+nell'elenco · doppio tocco che attraversava il pannello · «rivendibile oggi»
+su una data futura · bersagli sotto i 44 px · giorno perso da indietro e
+ricarica.
+
+**Rimandati a dopo la prova con una persona vera**, per decisione del
+proprietario: contrasti sotto soglia (tre valori misurati) e distinguibilità
+degli stati per chi non vede i colori. Se dalla prova esce che i colori vanno
+ripensati, ritoccarli adesso sarebbe lavoro buttato.
+
+**Non riprodotto**: un link personale risultato non valido appena generato.
+Quattro tentativi, incluso il doppio tocco: funziona sempre. Il messaggio
+visto significa «nessun contratto ha quel token», cioè un link SUPERATO da
+una rigenerazione successiva. Serve l'indirizzo esatto per andare oltre.
+
+**Prestazioni.** I 4,5 s misurati su una pagina e i 12 s del primo caricamento
+non sono l'applicazione: qui le pagine rendono in 30–55 ms. È il risveglio del
+database gratuito, che si sospende dopo qualche minuto di inattività. Si
+elimina solo pagando un piano sempre acceso; in alternativa il gestore apre il
+tablet prima di aprire lo stabilimento.
+
 ## In corso
 Nessun task in corso.
 
@@ -199,12 +227,13 @@ cp .env.example .env              # DATABASE_URL e TEST_DATABASE_URL
 npm install
 npm run db:deploy                 # applica le migrazioni
 npm run seed                      # 96 ombrelloni, dati realistici
-npm test                          # 408 test
+npm test                          # 415 test
 npm run dev                       # mappa su http://localhost:3000/map
 npm run e2e                       # i sei scenari, con i nove criteri contati
 npm run e2e:seasonal              # contratto → link → assenza → posto vendibile
 npm run e2e:rapida                # telefono in inglese: date e chiusura del pannello
 npm run e2e:blocco                # blocco schermo: il server risponde 423, non 200
+npm run e2e:riscontro             # i difetti trovati sul tablet: non devono tornare
 npm run e2e:rimborso              # incasso con metodo, rimborso parziale, soglie
 npm run e2e:disposizione          # sposta e rinumera, e la mappa di lavoro lo segue
 # `npm run seed` stampa in fondo le credenziali e un link stagionale

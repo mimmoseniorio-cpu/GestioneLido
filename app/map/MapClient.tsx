@@ -109,7 +109,31 @@ export default function MapClient({ iniziale, clubName, novita, minutiBlocco, ru
     window.location.href = '/blocco'
   }), [minutiBlocco])
 
-  const vaiA = (giorno: string) => { setData(giorno); setScelto(null); void carica(giorno) }
+  /**
+   * Il giorno guardato sta nell'INDIRIZZO, non solo nello stato.
+   *
+   * Prima era stato locale: il tasto indietro riportava a oggi senza che si
+   * capisse perché, ricaricare perdeva il giorno, e il gestore non poteva
+   * tenersi un segnalibro su domani. Con la data nella barra, indietro e
+   * avanti fanno la cosa ovvia e la pagina si può mandare a qualcuno.
+   */
+  const vaiA = (giorno: string, storia = true) => {
+    setData(giorno); setScelto(null); void carica(giorno)
+    if (!storia || typeof window === 'undefined') return
+    const url = giorno === oggiIso() ? '/map' : `/map?data=${giorno}`
+    window.history.pushState({ data: giorno }, '', url)
+  }
+
+  // Indietro e avanti del browser: si torna al giorno di prima, non a oggi.
+  useEffect(() => {
+    const alPasso = () => {
+      const q = new URLSearchParams(window.location.search).get('data')
+      vaiA(q && /^\d{4}-\d{2}-\d{2}$/.test(q) ? q : oggiIso(), false)
+    }
+    window.addEventListener('popstate', alPasso)
+    return () => window.removeEventListener('popstate', alPasso)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   /** Il tocco su un ombrellone, sordo per un attimo dopo che il pannello si chiude. */
   const scegli = (id: string) => {
