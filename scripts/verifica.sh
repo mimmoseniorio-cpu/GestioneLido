@@ -47,6 +47,9 @@ npx wait-on -t 60000 http://localhost:3000/login
 passo 'Scenari e conteggio delle interazioni'
 npm run e2e
 
+passo 'Difetti trovati sul tablet: non devono tornare'
+npm run e2e:riscontro
+
 passo 'Copia di sicurezza e prova di ripristino'
 npm run backup
 npm run backup:verifica

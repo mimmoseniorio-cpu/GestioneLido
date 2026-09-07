@@ -40,6 +40,14 @@ const criterio = (scenario, cosa, usate, limite) => {
 const controlli = []
 const verifica = (nome, cond) => { controlli.push([nome, cond]); if (!cond) process.exitCode = 1 }
 
+const saldoStagionale = async (p, numero) => {
+  await p.goto(`${URL}/seasonal`, { waitUntil: 'networkidle' })
+  const riga = p.locator('tbody tr').filter({
+    has: p.locator(`td:first-child b:text-is("${numero}")`) })
+  const t = (await riga.locator('td.num').innerText()).trim()
+  return /€/.test(t) ? Math.round(parseFloat(t.replace(/[^\d,]/g, '').replace(',', '.')) * 100) : 0
+}
+
 const staff = async () => {
   const p = await browser.newPage({ viewport: { width: 1180, height: 900 } })
   await accedi(p, URL)
@@ -290,6 +298,15 @@ async function scenarioD(numero) {
   verifica('D · il costo in credito è visibile prima di vendere',
     /Credito a/i.test(pannello))
 
+  // Quanto promette il pannello, e da che saldo si parte.
+  const prometteCredito = /Credito a[\s\S]{0,60}?\d+[,.]\d{2}\s*€/.test(pannello)
+  const primaSaldo = await saldoStagionale(p, numero)
+  await p.goto(`${URL}/map`, { waitUntil: 'networkidle' })
+  await p.getByRole('button', { name: 'Giorno successivo' }).click()
+  await p.waitForTimeout(1500)
+  await p.locator(`g.umb[aria-label^="Ombrellone ${numero},"]`).first().click()
+  await p.waitForSelector('aside.panel')
+
   await c.tap(p.getByRole('button', { name: 'VENDI QUESTO POSTO' }))
   await c.scrivi(p.getByPlaceholder('Cognome'), `ScenarioD${suffisso}`)
   await c.tap(p.getByRole('button', { name: 'CONFERMA' }))
@@ -297,12 +314,29 @@ async function scenarioD(numero) {
   await p.waitForTimeout(3000)
 
   // T-20 · il giro completo: assenza → posto vendibile → venduto → credito.
-  await p.goto(`${URL}/seasonal`, { waitUntil: 'networkidle' })
-  const riga = p.locator('tbody tr').filter({
-    has: p.locator(`td:first-child b:text-is("${numero}")`) })
-  const credito = (await riga.locator('td.num').innerText()).trim()
-  verifica(`D · lo stagionale ha maturato credito sulla rivendita (${credito})`,
-    /€/.test(credito) && credito !== '—')
+  //
+  // Il credito ha un tetto stagionale (D-13): se il contratto l'ha già
+  // raggiunto, NON maturare è il comportamento giusto. La prima versione di
+  // questo controllo lo dava per scontato e falliva a seconda di quale
+  // contratto capitava — un test che dipende dalla fortuna non dimostra nulla.
+  // Quindi si confronta con quello che il pannello aveva promesso prima di
+  // vendere.
+  const dopoSaldo = await saldoStagionale(p, numero)
+  const cresciuto = dopoSaldo > primaSaldo
+  if (prometteCredito) {
+    verifica(`D · il credito promesso è maturato davvero (${primaSaldo} → ${dopoSaldo} cent)`,
+      cresciuto)
+  } else {
+    // Nessuna promessa: il tetto stagionale è già pieno, o l'assenza era
+    // tardiva. Non maturare è il comportamento GIUSTO — ma il saldo non
+    // deve nemmeno muoversi, altrimenti la promessa era una bugia.
+    // Il motivo lo dice il pannello: tetto stagionale pieno, oppure assenza
+    // comunicata dopo le 20:00 del giorno prima (D-12). Stamparlo evita che
+    // chi legge l'esito pensi a un difetto.
+    const motivo = /nessuno\s*—\s*([^\n]+)/.exec(pannello)?.[1] ?? 'motivo non dichiarato'
+    verifica(`D · nessun credito promesso (${motivo}) e infatti il saldo non si muove`,
+      !cresciuto)
+  }
   await p.close()
 }
 

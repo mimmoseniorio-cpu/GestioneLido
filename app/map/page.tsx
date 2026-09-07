@@ -17,6 +17,12 @@ export default async function MapPage() {
     prisma.beachClub.findUnique({ where: { id: ctx.beachClubId }, select: { name: true } }),
     novita(ctx),
   ])
+  // F6-32 · minuti di inattività dopo i quali il tablet si blocca da solo.
+  // Zero se questo utente non ha un PIN: bloccarlo lo chiuderebbe fuori.
+  const utente = await prisma.user.findUnique({
+    where: { id: ctx.userId }, select: { pinHash: true } })
   return <MapClient iniziale={iniziale} clubName={club?.name ?? 'Stabilimento'}
-                    novita={nuove} />
+                    novita={nuove}
+                    minutiBlocco={utente?.pinHash ? ctx.settings.screenLockMinutes : 0}
+                    ruolo={ctx.actor} />
 }

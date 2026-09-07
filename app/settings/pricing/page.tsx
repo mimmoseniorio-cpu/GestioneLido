@@ -1,12 +1,13 @@
 import Link from 'next/link'
 import { scoped } from '@/server/repositories/scoped'
-import { richiediStaff } from '@/server/current-user'
+import { richiediStaffCon } from '@/server/current-user'
+import { P } from '@/domain/auth/permissions'
 import Listino from './Listino'
 
 export const dynamic = 'force-dynamic'
 
 export default async function PaginaListino() {
-  const ctx = await richiediStaff()
+  const ctx = await richiediStaffCon(P.PRICE_RULE_MANAGE)
   const db = scoped(ctx)
   const stagione = await db.season.findFirst({ where: { status: 'ACTIVE' } })
   const [regole, zone, ombrelloni] = await Promise.all([

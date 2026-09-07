@@ -13,6 +13,7 @@ import Link from 'next/link'
 import type { MapDay, MapUmbrella } from '@/server/queries/map'
 import type { ClienteTrovato } from '@/server/queries/customers'
 import type { Novita } from '@/server/queries/novita'
+import { avviaBloccoPerInattivita } from '@/app/lib/blocco-inattivita'
 import { coda, type OperazioneInCoda } from '@/app/lib/coda'
 import { messaggioConferma, linkWhatsApp } from '@/domain/messaging/whatsapp'
 import { STATES, euro, dataLunga, dataBreve, dataChiara, spostaGiorni, oggiIso } from './states'
@@ -27,12 +28,20 @@ const giorniTra = (a: string, b: string) =>
 
 const soloCifre = (s: string) => s.replace(/\D/g, '')
 
-export default function MapClient({ iniziale, clubName, novita }:
-  { iniziale: MapDay; clubName: string; novita: Novita }) {
+export default function MapClient({ iniziale, clubName, novita, minutiBlocco, ruolo }:
+  { iniziale: MapDay; clubName: string; novita: Novita; minutiBlocco: number
+    ruolo: 'ADMIN' | 'OPERATOR' }) {
 
   const [mappa, setMappa] = useState<MapDay>(iniziale)
   const [data, setData] = useState(iniziale.date)
   const [scelto, setScelto] = useState<string | null>(null)
+  /**
+   * Il pannello ora si chiude in 66 ms (F5-10), quindi il secondo tocco di un
+   * doppio tap cade sulla MAPPA e apre l'ombrellone che stava sotto. Chi ha
+   * premuto CONFERMA due volte per impazienza si ritrova il pannello di un
+   * altro posto aperto, e può iniziare a prenotare lì.
+   */
+  const chiusuraRecente = useRef(0)
   const [sync, setSync] = useState<Sync>('ok')
   const [errore, setErrore] = useState<string | null>(null)
   const [cerca, setCerca] = useState('')
@@ -82,7 +91,21 @@ export default function MapClient({ iniziale, clubName, novita }:
     setSync(coda.stato === 'ok' ? 'ok' : coda.stato === 'in-corso' ? 'pending' : 'error')
   }), [])
 
+  // F6-32 · il tablet fermo sul bancone si porta da solo alla schermata del
+  // PIN. Il server lo applica comunque (423 sulle API), ma non può spegnere
+  // una pagina già disegnata: quella resterebbe lì con i nomi dei clienti.
+  useEffect(() => avviaBloccoPerInattivita(minutiBlocco, () => {
+    window.location.href = '/blocco'
+  }), [minutiBlocco])
+
   const vaiA = (giorno: string) => { setData(giorno); setScelto(null); void carica(giorno) }
+
+  /** Il tocco su un ombrellone, sordo per un attimo dopo che il pannello si chiude. */
+  const scegli = (id: string) => {
+    if (Date.now() - chiusuraRecente.current < 500) return
+    setScelto(id)
+  }
+  const chiudiPannello = () => { chiusuraRecente.current = Date.now(); setScelto(null); setErrore(null) }
 
   // Scenario E · la ricerca sulla mappa trova chi c'è OGGI; per il cliente che
   // telefona serve tutta l'anagrafica, quindi si interroga anche il server.
@@ -329,7 +352,7 @@ export default function MapClient({ iniziale, clubName, novita }:
 
       {modo === 'elenco' && (
         <Elenco umbrellas={trovati ? mappa.umbrellas.filter(u => trovati.has(u.id)) : mappa.umbrellas}
-                onScegli={setScelto} />
+                onScegli={scegli} />
       )}
 
       <div className="mapwrap" hidden={modo !== 'mappa'}>
@@ -360,7 +383,7 @@ export default function MapClient({ iniziale, clubName, novita }:
             ))}
 
             {mappa.umbrellas.map(u => (
-              <Ombrellone key={u.id} u={u} onClick={() => setScelto(u.id)}
+              <Ombrellone key={u.id} u={u} onClick={() => scegli(u.id)}
                           evidenziato={trovati ? trovati.has(u.id) : null} />
             ))}
           </svg>
@@ -383,7 +406,14 @@ export default function MapClient({ iniziale, clubName, novita }:
         <Link href="/dashboard" className="bottone-link">Oggi in numeri</Link>
         <Link href="/seasonal" className="bottone-link">Stagionali</Link>
         <Link href="/calendar" className="bottone-link">Calendario</Link>
-        <Link href="/settings/pricing" className="bottone-link">Listino</Link>
+        {/* Un collegamento che porta a una pagina vietata è peggio che non
+            averlo: si tocca, si torna indietro, e non si capisce perché. */}
+        {ruolo === 'ADMIN' && (
+          <>
+            <Link href="/settings/pricing" className="bottone-link">Listino</Link>
+            <Link href="/settings/map" className="bottone-link">Configura la mappa</Link>
+          </>
+        )}
         <Link href="/settings/blocco" className="bottone-link">Blocco schermo</Link>
         {evidenziati && <button onClick={() => setEvidenziati(null)}>Togli evidenza</button>}
       </div>
@@ -403,12 +433,12 @@ export default function MapClient({ iniziale, clubName, novita }:
 
       {selezionato && (
         <>
-          <div className="scrim" onClick={() => { setScelto(null); setErrore(null) }} />
+          <div className="scrim" onClick={chiudiPannello} />
           <Pannello
             u={selezionato} data={data} clubName={clubName} errore={errore}
-            onChiudi={() => { setScelto(null); setErrore(null) }}
+            onChiudi={chiudiPannello}
             onErrore={setErrore} onSync={setSync}
-            onCambiato={async () => { await rinfresca(); setScelto(null) }}
+            onCambiato={async () => { await rinfresca(); chiusuraRecente.current = Date.now(); setScelto(null) }}
             onOttimistico={(patch) => setMappa(m => ({
               ...m,
               umbrellas: m.umbrellas.map(x => x.id === selezionato.id ? { ...x, ...patch } : x),
@@ -454,13 +484,23 @@ function Elenco({ umbrellas, onScegli }:
             <span className="corpo">
               <span className="numero">{u.visibleNumber}</span>
               <span className="stato" style={{ color: s.line }}>{s.short}</span>
-              {/* Su un posto liberato il nome è già nella riga dell'assenza:
-                  ripeterlo ruba la riga a un'informazione utile. */}
-              {u.absence
+              {/* Chi c'è ADESSO viene prima di chi è il titolare.
+                  
+                  Prima si mostrava sempre lo stagionale quando c'era
+                  un'assenza — anche su un posto già rivenduto. La riga diceva
+                  «Prenotato — Francesca Bruno» mentre sull'ombrellone c'era
+                  un altro cliente che aveva pagato: alla reception si
+                  consegna il posto, o si registra un incasso, alla persona
+                  sbagliata. */}
+              {u.customerName
                 ? <span className="chi">
-                    {u.absence.seasonalName}, assente fino al {dataBreve(u.absence.to)}
+                    {u.customerName}
+                    {u.isTemporarySlot && u.absence &&
+                      <span className="minuto"> · posto di {u.absence.seasonalName}</span>}
                   </span>
-                : u.customerName && <span className="chi">{u.customerName}</span>}
+                : u.absence && <span className="chi">
+                    {u.absence.seasonalName}, assente fino al {dataBreve(u.absence.to)}
+                  </span>}
             </span>
             {daPagare && <span className="dovuto">{euro(u.amountDueCents)}</span>}
           </button>

@@ -551,12 +551,23 @@ tr.assente-oggi { background: #fffbeb; }
   color: var(--muto, #5b6b6a);
 }
 
-/* L'errore quando il pannello è già chiuso: sta sopra la mappa, dove
-   l'operatore sta guardando. */
+/* L'errore quando il pannello è già chiuso.
+   
+   FISSA, non in cima al documento: la pagina è alta ~1400 px e la mappa
+   comincia oltre i 700, quindi chi guarda la mappa ha già scorso. Un avviso
+   in cima al documento gli resta dietro le spalle — misurato a -175 px fuori
+   schermo. Una prenotazione rifiutata che nessuno vede è peggio di nessun
+   avviso: l'operatore congeda il cliente convinto di avergli venduto il posto. */
 .err.fascia {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  z-index: 60;
   display: flex;
   align-items: center;
   gap: 10px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, .18);
 }
 .err.fascia .grow { flex: 1; }
 .err.fascia button {

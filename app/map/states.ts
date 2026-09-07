@@ -43,7 +43,12 @@ export const STATES: Record<UmbrellaViewState, StateStyle> = {
   // La casella economicamente più interessante dell'applicazione: l'etichetta
   // dev'essere ESPLICITA, non un sinonimo di "libero" che costringe a pensare.
   STAGIONALE_ASSENTE: {
-    label: 'Liberato da stagionale — rivendibile oggi', short: 'Liberato da stagionale',
+    // Senza «oggi»: la mappa si guarda anche in avanti, e su una data futura
+    // quella parola contraddiceva l'avviso «Non stai guardando oggi» che sta
+    // due dita più in alto. Chi legge in fretta poteva vendere il giorno
+    // sbagliato.
+    label: 'Liberato da stagionale — rivendibile in questa data',
+    short: 'Liberato da stagionale',
     fill: 'var(--s-sellable-fill)', line: 'var(--s-sellable-line)', ink: '#78350f',
     symbol: '☆', border: 'double',
   },

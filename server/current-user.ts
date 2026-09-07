@@ -10,6 +10,7 @@ import { contestoDaSessione, NOME_COOKIE, type SessioneCorrente }
   from '@/server/auth/session'
 import { DomainError } from '@/domain/errors'
 import type { StaffContext } from '@/server/context'
+import { can, type Permission } from '@/domain/auth/permissions'
 
 export async function contestoCorrente(): Promise<SessioneCorrente | null> {
   const c = await cookies()
@@ -29,6 +30,23 @@ export async function richiediStaff(): Promise<StaffContext> {
   const ctx = await contestoCorrente()
   if (!ctx) redirect('/login')
   if (ctx.bloccata) redirect('/blocco')
+  return ctx
+}
+
+/**
+ * Per le pagine che non tutti possono aprire.
+ *
+ * Il caso d'uso rifiuta comunque la scrittura, ma una pagina che si apre e
+ * mostra campi modificabili dice una bugia: l'operatore cambia i prezzi,
+ * preme salva e scopre solo allora che non poteva. Peggio: se non preme
+ * salva, resta convinto di averli cambiati.
+ *
+ * Rimanda alla mappa invece di mostrare un errore: non è un guasto, è una
+ * pagina che per lui non esiste.
+ */
+export async function richiediStaffCon(permesso: Permission): Promise<StaffContext> {
+  const ctx = await richiediStaff()
+  if (!can(ctx.actor, permesso)) redirect('/map')
   return ctx
 }
 
