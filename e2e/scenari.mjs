@@ -204,6 +204,17 @@ async function scenarioC() {
   verifica('C · il cliente vede confermato che il posto resta suo',
     /torna suo|resta suo|assenza/i.test(dopo))
   await ctxCliente.close()
+
+  // F6-29 · l'anello che chiude il meccanismo: se il gestore non se ne
+  // accorge, quel posto resta vuoto e lo stagionale non matura credito.
+  const pg = await staff()
+  await pg.goto(`${URL}/map`, { waitUntil: 'networkidle' })
+  const fascia = pg.locator('.novita')
+  verifica('C · il gestore lo vede sulla mappa, senza cercarlo',
+    (await fascia.count()) === 1 && /comunicato un’assenza/.test(await fascia.innerText()))
+  verifica('C · e la fascia dice quale ombrellone è diventato vendibile',
+    /Ombrellone/.test(await fascia.innerText()))
+  await pg.close()
 }
 
 // ─────────────────────────────────────────────────────────────────────────

@@ -12,6 +12,7 @@ import { useCase } from '@/server/use-case'
 import { P } from '@/domain/auth/permissions'
 import { DomainError } from '@/domain/errors'
 import { audit } from '@/server/audit'
+import { notifica } from '@/server/notifications'
 import { fuoriTempo } from '@/domain/seasonal/cutoff'
 import { sottraiGiorni, giorniVenduti, giornoUtc, giorniInclusi }
   from '@/domain/seasonal/intervals'
@@ -86,6 +87,21 @@ export const declareAbsence = useCase<DichiaraAssenzaInput, {
     await audit(tx, ctx, 'absence.declare',
       { type: 'seasonal_absence', id: assenza.id },
       { after: { dal: iso(da), al: iso(a), tardiva: isLate } })
+
+    // F6-29 · si avvisa solo quando è il CLIENTE a dichiarare: se l'ha
+    // registrata l'operatore, il gestore lo sa già — era lui al telefono.
+    if (ctx.kind === 'CUSTOMER') {
+      const cliente = await db.customer.byId(contratto.customerId)
+      const ombrellone = await db.umbrella.byId(contratto.umbrellaId)
+      await notifica({
+        tipo: 'ASSENZA_DICHIARATA',
+        beachClubId: ctx.beachClubId,
+        seasonalContractId: contratto.id,
+        cliente: cliente ? `${cliente.firstName} ${cliente.lastName}`.trim() : 'Uno stagionale',
+        ombrellone: ombrellone?.visibleNumber ?? '—',
+        dal: iso(da), al: iso(a), tardiva: isLate,
+      })
+    }
 
     return { id: assenza.id, from: iso(da), to: iso(a), isLate,
              giorni: giorniInclusi({ da, a }) }

@@ -12,6 +12,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import type { MapDay, MapUmbrella } from '@/server/queries/map'
 import type { ClienteTrovato } from '@/server/queries/customers'
+import type { Novita } from '@/server/queries/novita'
 import { coda, type OperazioneInCoda } from '@/app/lib/coda'
 import { messaggioConferma, linkWhatsApp } from '@/domain/messaging/whatsapp'
 import { STATES, euro, dataLunga, dataBreve, dataChiara, spostaGiorni, oggiIso } from './states'
@@ -26,8 +27,8 @@ const giorniTra = (a: string, b: string) =>
 
 const soloCifre = (s: string) => s.replace(/\D/g, '')
 
-export default function MapClient({ iniziale, clubName }:
-  { iniziale: MapDay; clubName: string }) {
+export default function MapClient({ iniziale, clubName, novita }:
+  { iniziale: MapDay; clubName: string; novita: Novita }) {
 
   const [mappa, setMappa] = useState<MapDay>(iniziale)
   const [data, setData] = useState(iniziale.date)
@@ -46,6 +47,8 @@ export default function MapClient({ iniziale, clubName }:
   const [evidenziati, setEvidenziati] = useState<Set<string> | null>(null)
   /** `docs/07` §F, sesta domanda: «chi deve ancora pagarmi?», in un tocco. */
   const [soloDaIncassare, setSoloDaIncassare] = useState(false)
+  /** F6-29 · si chiude per la sessione: riaprendo domani torna, se c'è di nuovo. */
+  const [novitaChiuse, setNovitaChiuse] = useState(false)
   const cache = useRef<Map<string, MapDay>>(new Map([[iniziale.date, iniziale]]))
 
   const carica = useCallback(async (giorno: string, mostra = true) => {
@@ -198,6 +201,36 @@ export default function MapClient({ iniziale, clubName }:
               )}
             </div>
           ))}
+        </div>
+      )}
+
+      {/* F6-29 · Un'assenza comunicata dal telefono di un cliente alle undici
+          di sera è capacità vendibile domani. Se nessuno la nota, il posto
+          resta vuoto e lo stagionale non matura credito: il meccanismo che
+          vale il prodotto gira a vuoto. */}
+      {!novitaChiuse && novita.assenze.length > 0 && (
+        <div className="novita">
+          <div className="grow">
+            <b>{novita.assenze.length === 1
+              ? 'Un cliente ha comunicato un’assenza'
+              : `${novita.assenze.length} clienti hanno comunicato un’assenza`}</b>
+            <ul>
+              {novita.assenze.slice(0, 3).map(a => (
+                <li key={a.id}>
+                  Ombrellone <b>{a.ombrellone}</b> · {a.cliente} ·{' '}
+                  {a.dal === a.al
+                    ? dataBreve(a.dal)
+                    : <>{dataBreve(a.dal)} – {dataBreve(a.al)}</>}
+                  {a.tardiva && ' · fuori tempo, nessun credito'}
+                </li>
+              ))}
+              {novita.assenze.length > 3 && (
+                <li>e altre {novita.assenze.length - 3}</li>
+              )}
+            </ul>
+          </div>
+          <Link href="/seasonal" className="bottone-link">Vedi</Link>
+          <button onClick={() => setNovitaChiuse(true)} aria-label="Chiudi">✕</button>
         </div>
       )}
 

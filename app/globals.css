@@ -661,3 +661,23 @@ svg.disposizione .omb.scelto text { fill: #fff; font-weight: 700; }
   color: #fff;
   font-weight: 600;
 }
+
+/* F6-29 · Le assenze comunicate dai clienti: sono capacità vendibile, quindi
+   stanno in cima e in ambra, come gli stagionali assenti sulla mappa. */
+.novita {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 10px 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #e0b64a;
+  background: #fdf6e3;
+}
+.novita .grow { flex: 1; }
+.novita ul { margin: 6px 0 0; padding-left: 18px; }
+.novita li { margin: 2px 0; font-size: 14px; }
+.novita button {
+  min-width: 44px; min-height: 44px;
+  background: none; border: 0; font-size: 18px;
+}
