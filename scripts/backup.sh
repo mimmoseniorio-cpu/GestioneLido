@@ -22,9 +22,13 @@ leggi_env() {
   sed -n "s/^$1=//p" .env | head -1 | sed -e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'$//"
 }
 
+# `if`, non `[ ... ] && ...`: con `set -e` una condizione FALSA come ultimo
+# comando vale come errore e uccide lo script senza dire niente. In locale la
+# variabile non c'era e la condizione era vera, quindi proseguiva; nella CI
+# c'era, e il passo moriva in zero secondi.
 URL="${DIRECT_DATABASE_URL:-${DATABASE_URL:-}}"
-[ -z "$URL" ] && URL=$(leggi_env DIRECT_DATABASE_URL)
-[ -z "$URL" ] && URL=$(leggi_env DATABASE_URL)
+if [ -z "$URL" ]; then URL=$(leggi_env DIRECT_DATABASE_URL); fi
+if [ -z "$URL" ]; then URL=$(leggi_env DATABASE_URL); fi
 if [ -z "$URL" ]; then
   echo "✗ Manca DIRECT_DATABASE_URL (o DATABASE_URL). Vedi .env.example." >&2
   exit 1
