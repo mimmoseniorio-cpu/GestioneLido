@@ -1,15 +1,27 @@
 /**
  * D-12 · L'orario di taglio delle assenze — risolve C-02.
  *
- * Uno stagionale che alle 11:30 di ferragosto dichiara «oggi non vengo» libera
+ * Uno stagionale che alle 13:00 di ferragosto dichiara «oggi non vengo» libera
  * un posto che nessuno comprerà più: i clienti sono arrivati alle 9. Se il
  * sistema gli accredita comunque un credito, lo stabilimento paga per nulla.
  *
  * L'assenza si registra lo stesso — al gestore serve saperlo — ma marcata
  * `is_late`, e non matura credito (K-01).
  *
- * Il taglio si valuta nel FUSO DELLO STABILIMENTO: «entro le 20:00» deve
- * significare le 20:00 sull'orologio del gestore, anche all'ora legale (C-52).
+ * REVISIONE, dopo la prova sul campo. Il taglio era alle 20:00 del giorno
+ * PRECEDENTE. È risultato troppo severo: una comunicazione arrivata alle 20:01
+ * per il giorno dopo non maturava credito, mentre il posto era perfettamente
+ * vendibile — il gestore aveva tutta la notte e la mattina. Una regola che
+ * punisce lo stagionale per un posto che lo stabilimento ha comunque
+ * rivenduto insegna a non comunicare le assenze, e senza quelle il prodotto
+ * non esiste.
+ *
+ * Ora il taglio è alle 10:00 del giorno STESSO: la mattina il posto si vende
+ * ancora, a metà mattinata no. Resta configurabile per stabilimento — chi
+ * apre alle 8 vorrà un'ora diversa da chi apre alle 10.
+ *
+ * Il taglio si valuta nel FUSO DELLO STABILIMENTO: «entro le 10:00» deve
+ * significare le 10:00 sull'orologio del gestore, anche all'ora legale (C-52).
  */
 
 export type RegoleCutoff = {

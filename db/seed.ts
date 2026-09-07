@@ -43,8 +43,8 @@ export async function seedDemo() {
     data: {
       name: 'Lido Adriano', slug: 'lido-adriano', timezone: 'Europe/Rome',
       settings: {
-        absenceCutoffHour: 20,          // D-12: entro le 20:00 del giorno prima
-        absenceCutoffDaysBefore: 1,
+        absenceCutoffHour: 10,          // D-12: entro le 10:00 del giorno stesso
+        absenceCutoffDaysBefore: 0,
         creditPercent: 30,              // D-03: 30% dell'incasso della rivendita
         creditCapCentsPerSeason: 30000, // D-13: tetto stagionale, 300 €
         absenceConflictPolicy: 'IRREVOCABLE', // D-01: chi ha pagato tiene il posto

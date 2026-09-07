@@ -134,16 +134,29 @@ una migrazione manuale. Aggiungerla dopo tocca quasi tutte le tabelle;
 aggiungerla ora costa una colonna. Vedi `C-01` e `docs/03` §3.2.
 
 ### D-12 — Orario di taglio per le assenze
-**Stato:** DECISA (2026-09-05) · **default da confermare**
+**Stato:** DECISA (2026-09-05) · **RIVISTA (2026-09-07) dopo la prova sul campo**
 
-Un'assenza dichiarata alle 11:30 di ferragosto libera un posto che nessuno
+Un'assenza dichiarata a mezzogiorno di ferragosto libera un posto che nessuno
 comprerà più: i clienti sono arrivati alle 9. Se il sistema accredita comunque
 un credito, lo stabilimento paga per nulla.
 
-**Default proposto:** entro le 20:00 del giorno precedente, nel fuso dello
-stabilimento. Dopo il taglio l'assenza si registra comunque — al gestore serve
-saperlo — ma con `is_late = true` e senza maturazione di credito, e la UI lo dice
-**prima** della conferma. Configurabile. Vedi `C-02` e `docs/08` §4.2.
+**Prima versione:** entro le 20:00 del giorno precedente. Troppo severa, e si è
+visto usandola: chi avvisava alle 20:01 per il giorno dopo non maturava nulla,
+mentre il gestore aveva tutta la notte e la mattina per rivendere quel posto —
+e spesso lo rivendeva davvero. Una regola che nega il credito su un posto
+effettivamente venduto insegna allo stagionale a non comunicare le assenze, e
+senza quelle il prodotto non esiste.
+
+**Default in vigore:** entro le **10:00 del giorno stesso** dell'assenza, nel
+fuso dello stabilimento. La mattina il posto si vende ancora, a metà mattinata
+no. Dopo il taglio l'assenza si registra comunque — al gestore serve saperlo —
+ma con `is_late = true` e senza maturazione di credito, e la UI lo dice
+**prima** della conferma.
+
+Configurabile per stabilimento (`absenceCutoffHour`, `absenceCutoffDaysBefore`):
+chi apre alle 8 vorrà un'ora diversa da chi apre alle 10, e chi ha una clientela
+che prenota il giorno prima può tornare al taglio serale mettendo
+`daysBefore: 1`. Vedi `C-02` e `docs/08` §4.2.
 
 ### D-13 — Tetto al credito stagionale
 **Stato:** DECISA (2026-09-05) · **default da confermare**

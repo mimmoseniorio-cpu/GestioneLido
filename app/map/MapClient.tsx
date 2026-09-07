@@ -18,7 +18,18 @@ import { coda, type OperazioneInCoda } from '@/app/lib/coda'
 import { messaggioConferma, linkWhatsApp } from '@/domain/messaging/whatsapp'
 import { STATES, euro, dataLunga, dataBreve, dataChiara, spostaGiorni, oggiIso } from './states'
 
-const CELLA = 56          // bersagli generosi: sole, mani bagnate, una mano sola
+/**
+ * Il lato della casella nelle unità della mappa, non in pixel sullo schermo.
+ *
+ * L'SVG si adatta alla larghezza disponibile, quindi il bersaglio VERO è
+ * questo numero moltiplicato per quanto la mappa è stata rimpicciolita: a
+ * 1180 px di finestra diventa 54, a 1024 diventa 46, su un telefono 37. La
+ * misura dichiarata nel brief (mai sotto 44) non era rispettata, e non lo si
+ * vedeva perché in sviluppo la finestra è larga.
+ */
+const CELLA = 56
+/** Sotto questa misura il dito sbaglia: si scorre la mappa, non la si riduce. */
+const BERSAGLIO_MINIMO = 44
 const PADDING = 10
 
 type Sync = 'ok' | 'pending' | 'error'
@@ -358,7 +369,12 @@ export default function MapClient({ iniziale, clubName, novita, minutiBlocco, ru
       <div className="mapwrap" hidden={modo !== 'mappa'}>
         <div className="mapcard">
           <div className="sea">～ ～ ～ mare ～ ～ ～</div>
+          {/* Larghezza minima: sotto, la mappa scorre invece di rimpicciolire
+              gli ombrelloni sotto la soglia del dito. Meglio far scorrere una
+              mappa grande che offrire bersagli che si sbagliano — su uno
+              schermo largo non cambia nulla, perché il minimo non si attiva. */}
           <svg className="map" viewBox={`0 0 ${larghezza} ${altezza}`} role="img"
+               style={{ minWidth: Math.round(larghezza * (BERSAGLIO_MINIMO / CELLA)) }}
                aria-label={`Mappa dello stabilimento, ${dataLunga(data)}`}>
             <defs>
               <pattern id="hatch" width="7" height="7" patternUnits="userSpaceOnUse"
@@ -523,6 +539,13 @@ function Ombrellone({ u, onClick, evidenziato }:
        onClick={onClick} role="button" tabIndex={0}
        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick() } }}
        aria-label={`Ombrellone ${u.visibleNumber}, ${s.label}${u.customerName ? `, ${u.customerName}` : ''}`}>
+      {/* L'area toccabile è la CASELLA INTERA, non il rettangolo disegnato.
+          Fra un ombrellone e l'altro ci sono 6 unità di aria: senza questo,
+          il dito che cade nell'intercapedine non prende niente, e il bersaglio
+          reale è più piccolo di quello che si vede. Invisibile, quindi non
+          cambia il disegno; `pointer-events` la rende comunque toccabile. */}
+      <rect x={x - 3} y={y - 3} width={CELLA} height={CELLA}
+            fill="transparent" style={{ pointerEvents: 'all' }} />
       {evidenziato && (
         <rect x={x - 3} y={y - 3} width={lato + 6} height={lato + 6} rx="11"
               fill="none" stroke="var(--accent)" strokeWidth="3" />

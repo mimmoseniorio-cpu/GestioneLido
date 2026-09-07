@@ -127,7 +127,11 @@ input {
 .mapwrap { padding: 0 16px 16px; }
 .mapcard {
   background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
-  padding: 12px; overflow: hidden;
+  padding: 12px;
+  /* Era `hidden`: tagliava la mappa quando questa non poteva più rimpicciolire.
+     Ora scorre, ed è l'unico scorrimento orizzontale ammesso nel prodotto. */
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 .sea {
   text-align: center; letter-spacing: .35em; color: #0369a1;

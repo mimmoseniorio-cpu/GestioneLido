@@ -119,5 +119,25 @@ const scheda = async (utente = 'admin@lidoadriano.it') => {
   await p.context().close()
 }
 
+// ── #9 · i bersagli non devono mai scendere sotto la soglia del dito ─────
+{
+  for (const [w, h] of [[1363, 936], [1180, 820], [1024, 768], [820, 1180], [390, 844]]) {
+    const c = await browser.newContext({ viewport: { width: w, height: h } })
+    const p = await c.newPage()
+    await accedi(p, SITO)
+    await p.goto(`${SITO}/map`, { waitUntil: 'networkidle' })
+    // Su schermo stretto la mappa non è il modo predefinito: la si chiede.
+    const bottone = p.locator('.commuta button', { hasText: 'Mappa' })
+    if (await bottone.count()) await bottone.click()
+    await p.waitForTimeout(400)
+    const lato = await p.evaluate(() => {
+      const g = document.querySelector('g.umb')     // l'area toccabile, non il disegno
+      return g ? Math.round(g.getBoundingClientRect().width * 10) / 10 : 0
+    })
+    verifica(`#9 · a ${w}×${h} il bersaglio è ${lato} px (minimo dichiarato 44)`, lato >= 44)
+    await c.close()
+  }
+}
+
 for (const [nome, ok] of esiti) console.log(`${ok ? '✓' : '✗'} ${nome}`)
 await browser.close()

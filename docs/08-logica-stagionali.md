@@ -112,11 +112,12 @@ prenotazioni collegate.
 Configurabile in `BeachClub.settings`, proposta di default:
 
 ```
-cutoff = 20:00 del giorno precedente al primo giorno di assenza
+cutoff = 10:00 del PRIMO GIORNO di assenza   (D-12 rivista il 2026-09-07;
+                                             prima: 20:00 del giorno precedente)
 ```
 
 Calcolato nel fuso dello stabilimento (`BeachClub.timezone`), mai in UTC:
-"entro le 20:00" deve significare le 20:00 sull'orologio del gestore, anche
+"entro le 10:00" deve significare le 10:00 sull'orologio del gestore, anche
 all'ora legale.
 
 Dopo il cutoff l'assenza si registra ancora — al gestore serve saperlo — ma con

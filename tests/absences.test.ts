@@ -66,7 +66,52 @@ beforeAll(async () => { await prisma.$connect() })
 afterAll(async () => { await prisma.$disconnect() })
 
 // ─────────────────────────────────────────────────────────────────────────
-describe('D-12 · orario di taglio (funzioni pure)', () => {
+describe('D-12 rivista · il taglio è la mattina del giorno stesso', () => {
+  // La regola vera del prodotto, dopo la prova sul campo: 10:00 del giorno
+  // di assenza. Prima era 20:00 del giorno PRIMA, ed era troppo severa —
+  // chi avvisava alle 20:01 per il giorno dopo non maturava credito mentre
+  // il gestore aveva tutta la notte e la mattina per rivendere il posto.
+  const oggi = { absenceCutoffHour: 10, absenceCutoffDaysBefore: 0 }
+  const ferragosto = day(2027, 8, 15)
+
+  it('avvisare la sera prima è ampiamente in tempo — era il caso rotto', () => {
+    // 15 agosto 2027, ore legale: il taglio è alle 10:00 locali = 08:00 UTC.
+    expect(fuoriTempo(new Date('2027-08-14T21:30:00Z'), ferragosto, oggi, 'Europe/Rome'))
+      .toBe(false)
+  })
+
+  it('avvisare la mattina stessa, presto, è in tempo', () => {
+    expect(fuoriTempo(new Date('2027-08-15T06:00:00Z'), ferragosto, oggi, 'Europe/Rome'))
+      .toBe(false)   // 08:00 a Roma
+  })
+
+  it('un minuto dopo il taglio è tardi', () => {
+    expect(fuoriTempo(new Date('2027-08-15T08:01:00Z'), ferragosto, oggi, 'Europe/Rome'))
+      .toBe(true)    // 10:01 a Roma
+  })
+
+  it('a mezzogiorno il posto non si vende più: niente credito', () => {
+    expect(fuoriTempo(new Date('2027-08-15T10:00:00Z'), ferragosto, oggi, 'Europe/Rome'))
+      .toBe(true)    // 12:00 a Roma
+  })
+
+  it('resta configurabile: chi apre alle 8 mette un taglio diverso', () => {
+    const presto = { absenceCutoffHour: 8, absenceCutoffDaysBefore: 0 }
+    expect(fuoriTempo(new Date('2027-08-15T06:30:00Z'), ferragosto, presto, 'Europe/Rome'))
+      .toBe(true)    // 08:30 a Roma, oltre il taglio delle 8
+  })
+
+  it('e il fuso resta quello dello stabilimento, anche d’inverno', () => {
+    const gennaio = day(2027, 1, 15)
+    // Ora solare: 10:00 a Roma = 09:00 UTC.
+    expect(fuoriTempo(new Date('2027-01-15T08:59:00Z'), gennaio, oggi, 'Europe/Rome'))
+      .toBe(false)
+    expect(fuoriTempo(new Date('2027-01-15T09:01:00Z'), gennaio, oggi, 'Europe/Rome'))
+      .toBe(true)
+  })
+})
+
+describe('D-12 · il meccanismo del taglio, con la vecchia regola come esempio', () => {
   const regole = { absenceCutoffHour: 20, absenceCutoffDaysBefore: 1 }
 
   it('il taglio è alle 20:00 del giorno prima, ora italiana', () => {

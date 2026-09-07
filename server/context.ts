@@ -44,8 +44,9 @@ export type ClubSettings = {
 }
 
 export const DEFAULT_SETTINGS: ClubSettings = {
-  absenceCutoffHour: 20,
-  absenceCutoffDaysBefore: 1,
+  // D-12 (rivista) · le 10:00 del giorno stesso, non le 20:00 di quello prima.
+  absenceCutoffHour: 10,
+  absenceCutoffDaysBefore: 0,
   creditPercent: 30,
   creditCapCentsPerSeason: 30_000,
   absenceConflictPolicy: 'IRREVOCABLE', // D-01

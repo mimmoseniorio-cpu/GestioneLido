@@ -81,7 +81,10 @@ Il cliente **non installa nulla**. Lo stagionale accede via link personale.
    Nessun flusso principale deve passare da `Menu → Clienti → Cerca → Dettaglio`.
 2. **Stato leggibile senza colore.** Ogni stato ombrellone ha colore **+** icona
    **+** trattamento del bordo. Deve funzionare per un daltonico e sotto il sole.
-3. **Poche azioni, grosse.** Target touch minimo 44×44 px. Le 5 azioni frequenti
+3. **Poche azioni, grosse.** Target touch minimo 44×44 px — misurato sul
+   RESO, non sulle unità di disegno: la mappa si adatta alla larghezza, e sotto
+   una certa soglia deve scorrere invece di rimpicciolire i bersagli. Su un
+   tablet da 1180 px in su restano sopra i 56 px. Le 5 azioni frequenti
    sono raggiungibili in ≤ 2 tap dalla mappa.
 4. **Lo stato dell'ombrellone è derivato, non memorizzato.** Vedi RD-01.
 5. **Niente feature creep.** Test di ammissione di ogni feature: *"riduce i
