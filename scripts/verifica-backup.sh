@@ -20,7 +20,12 @@ if [ -z "$FILE" ] || [ ! -f "$FILE" ]; then
 fi
 
 PROVA="${DB_PROVA:-gestionelido_verifica_backup}"
-URL_PROVA="${URL_DB_PROVA:-postgresql://lido:lido@127.0.0.1:5432/$PROVA}"
+# Stesso indirizzo del database di sviluppo, con un nome diverso: chi ha
+# `.env` configurato non deve passare nulla a mano.
+BASE=$(sed -n 's/^DATABASE_URL=//p' .env 2>/dev/null | head -1 | tr -d '"'"'"'')
+BASE="${BASE%%\?*}"
+URL_PROVA="${URL_DB_PROVA:-${BASE:+${BASE%/*}/$PROVA}}"
+URL_PROVA="${URL_PROVA:-postgresql://lido:lido@127.0.0.1:5432/$PROVA}"
 
 echo "· provo $FILE su $PROVA"
 psql "${URL_PROVA%/*}/postgres" -q -c "DROP DATABASE IF EXISTS $PROVA;" \

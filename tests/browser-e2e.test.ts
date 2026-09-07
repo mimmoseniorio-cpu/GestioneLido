@@ -6,8 +6,8 @@
  * inventato non dà un errore chiaro, dice solo che l'eseguibile non parte.
  */
 import { describe, it, expect } from 'vitest'
-// @ts-expect-error — modulo JavaScript senza tipi, di proposito: gli script
-// e2e girano con node semplice, senza passare dal compilatore.
+// Modulo JavaScript di proposito: gli script e2e girano con node semplice,
+// senza passare dal compilatore. I tipi TypeScript li deduce da solo.
 import { percorsoBrowser } from '../e2e/browser.mjs'
 
 describe('percorsoBrowser', () => {
@@ -21,6 +21,8 @@ describe('percorsoBrowser', () => {
   })
 
   it('i valori vuoti non contano come candidati', () => {
-    expect(percorsoBrowser([undefined, '', null])).toBeNull()
+    // `PW_CHROMIUM` non impostata arriva come undefined, e una stringa vuota
+    // è ciò che si ottiene da una variabile dichiarata e lasciata in bianco.
+    expect(percorsoBrowser([undefined, ''])).toBeNull()
   })
 })

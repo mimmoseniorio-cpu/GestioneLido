@@ -13,7 +13,18 @@
 # trattato come tale — non su una cartella condivisa, non in allegato.
 set -euo pipefail
 
+# Prisma e Next leggono `.env` da soli; uno script di shell no, e chi lancia
+# `npm run backup` non ha motivo di aspettarsi la differenza. Si legge la
+# singola riga che serve, invece di eseguire il file: un `source` su un .env
+# con spazi o apici fa cose che nessuno ha chiesto.
+leggi_env() {
+  [ -f .env ] || return 0
+  sed -n "s/^$1=//p" .env | head -1 | sed -e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'$//"
+}
+
 URL="${DIRECT_DATABASE_URL:-${DATABASE_URL:-}}"
+[ -z "$URL" ] && URL=$(leggi_env DIRECT_DATABASE_URL)
+[ -z "$URL" ] && URL=$(leggi_env DATABASE_URL)
 if [ -z "$URL" ]; then
   echo "✗ Manca DIRECT_DATABASE_URL (o DATABASE_URL). Vedi .env.example." >&2
   exit 1

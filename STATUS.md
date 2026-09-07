@@ -207,7 +207,9 @@ npm run e2e:disposizione          # sposta e rinumera, e la mappa di lavoro lo s
 # `npm run seed` stampa in fondo le credenziali e un link stagionale
 #   admin@lidoadriano.it / lido2026
 npm run typecheck
-npm run backup                    # copia di sicurezza; poi backup:verifica
+npm run verifica                  # TUTTO il cancello, in un comando: tipi,
+                                  # test, build, scenari, copia e ripristino
+npm run backup                    # solo la copia; poi backup:verifica
 ```
 Il database di sviluppo e' usa-e-getta: `npm run db:reset` lo ricrea da zero.
 I test girano su `gestionelido_test`, mai sul database di sviluppo.

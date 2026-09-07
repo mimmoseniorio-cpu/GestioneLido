@@ -16,6 +16,7 @@
     "seed:first-run": "tsx db/deploy-seed.ts",
     "backup": "bash scripts/backup.sh",
     "backup:verifica": "bash scripts/verifica-backup.sh",
+    "verifica": "bash scripts/verifica.sh",
     "test": "vitest run",
     "test:watch": "vitest",
     "e2e": "node e2e/scenari.mjs",
@@ -29,7 +30,8 @@
     "seed": "tsx db/seed.ts",
     "seed:first-run": "tsx db/deploy-seed.ts",
     "backup": "bash scripts/backup.sh",
-    "backup:verifica": "bash scripts/verifica-backup.sh"
+    "backup:verifica": "bash scripts/verifica-backup.sh",
+    "verifica": "bash scripts/verifica.sh"
   },
   "dependencies": {
     "@node-rs/argon2": "^2.2.0",
