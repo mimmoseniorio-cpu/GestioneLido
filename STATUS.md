@@ -93,6 +93,7 @@ Aggiornato: 2026-09-06
 - [F6-24] Dashboard: occupazione, incassi, capacità recuperata, prossimi 7 giorni
 - [F6-26] **Generatore di griglia**: «6 file da 16» crea 96 ombrelloni, zone e passerelle
 - [F6-27] Editor della disposizione: **tocca e posa**, rinumerazione, vincolo unico sulla casella
+- [F6-23] Filtro **«Da incassare (N)»**: la sesta domanda dello scenario F, in un tocco
 - [F7-01..F7-05, F7-07, F7-08] **Suite E2E sui sei scenari**: i nove criteri di `docs/07`
   misurati contando le interazioni, più il ciclo completo (T-20) e la rete degradata
 - [F6-17] Editor del listino con **simulatore**: «questo ombrellone, questi giorni, quanto costa e per quale regola»
@@ -147,7 +148,7 @@ tale, e ora ogni pagina e ogni API passano dalla sessione reale.
 ## Prossimi 3
 1. [F4-10] Ambienti separati e backup automatici (la produzione c'è, il resto no)
 2. [F6-28] WhatsApp anche per la conferma di prenotazione (oggi solo per il link stagionale)
-3. [F6-23] Ricerca globale: manca il filtro «solo da incassare» di `docs/07` §F
+3. [F6-29] Notifica al gestore quando uno stagionale dichiara un'assenza
 
 **Il pezzo più grosso che manca non è codice**: è `F4-10`, il deploy, che
 richiede la scelta del fornitore — con il vincolo che supporti `btree_gist`.

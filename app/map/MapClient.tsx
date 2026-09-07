@@ -43,6 +43,8 @@ export default function MapClient({ iniziale, clubName }:
   const [trovaAperto, setTrovaAperto] = useState(false)
   const [clienti, setClienti] = useState<ClienteTrovato[]>([])
   const [evidenziati, setEvidenziati] = useState<Set<string> | null>(null)
+  /** `docs/07` §F, sesta domanda: «chi deve ancora pagarmi?», in un tocco. */
+  const [soloDaIncassare, setSoloDaIncassare] = useState(false)
   const cache = useRef<Map<string, MapDay>>(new Map([[iniziale.date, iniziale]]))
 
   const carica = useCallback(async (giorno: string, mostra = true) => {
@@ -101,9 +103,16 @@ export default function MapClient({ iniziale, clubName }:
     if (dati) setMappa(dati)
   }, [carica, data])
 
+  /** Chi deve ancora pagare, sul giorno caricato. Serve anche al contatore. */
+  const daIncassare = useMemo(
+    () => mappa.umbrellas.filter(u => (u.amountDueCents ?? 0) > 0), [mappa])
+
   // ── ricerca istantanea, sul giorno già caricato: nessuna latenza ─────────
   const trovati = useMemo(() => {
     const q = cerca.trim().toLowerCase()
+    // Il filtro passa dalla stessa selezione della ricerca: mappa ed elenco
+    // la rispettano già entrambi, e due meccanismi paralleli divergerebbero.
+    if (soloDaIncassare && q.length < 1) return new Set(daIncassare.map(u => u.id))
     if (q.length < 1) return evidenziati
     const cifre = soloCifre(q)
     const ids = new Set<string>()
@@ -115,7 +124,7 @@ export default function MapClient({ iniziale, clubName }:
       if (cifre.length >= 3 && u.customerPhone && soloCifre(u.customerPhone).includes(cifre)) ids.add(u.id)
     }
     return ids
-  }, [cerca, mappa, evidenziati])
+  }, [cerca, mappa, evidenziati, soloDaIncassare, daIncassare])
 
   const larghezza = useMemo(() =>
     (Math.max(0, ...mappa.umbrellas.map(u => u.posX),
@@ -206,8 +215,13 @@ export default function MapClient({ iniziale, clubName }:
             ? (trovati.size === 0
                 ? <>Nessun risultato per <b>«{cerca}»</b> in questo giorno</>
                 : <>{trovati.size} {trovati.size === 1 ? 'risultato' : 'risultati'} per <b>«{cerca}»</b></>)
-            : <>Proposta evidenziata sulla mappa: <b>{trovati.size} ombrelloni</b></>}
-          <button onClick={() => { setCerca(''); setEvidenziati(null) }}>Mostra tutti</button>
+            : soloDaIncassare
+              ? <>Da incassare: <b>{trovati.size} {trovati.size === 1 ? 'ombrellone' : 'ombrelloni'}</b>
+                  {' · '}<b>{euro(daIncassare.reduce((t, u) => t + (u.amountDueCents ?? 0), 0))}</b></>
+              : <>Proposta evidenziata sulla mappa: <b>{trovati.size} ombrelloni</b></>}
+          <button onClick={() => { setCerca(''); setEvidenziati(null); setSoloDaIncassare(false) }}>
+            Mostra tutti
+          </button>
         </div>
       )}
 
@@ -323,6 +337,15 @@ export default function MapClient({ iniziale, clubName }:
         <button className="trova" onClick={() => setTrovaAperto(true)}>🔎 Trova il posto migliore</button>
         <button onClick={() => vaiA(oggiIso())} disabled={oggi}>Oggi</button>
         <button onClick={() => void rinfresca()}>Aggiorna</button>
+        {/* Un tocco. Il numero è già sul pulsante: chi chiede «chi deve
+            ancora pagarmi?» ha metà risposta senza premere nulla. */}
+        {daIncassare.length > 0 && (
+          <button className={soloDaIncassare ? 'attivo' : ''}
+                  aria-pressed={soloDaIncassare}
+                  onClick={() => { setSoloDaIncassare(v => !v); setCerca('') }}>
+            Da incassare ({daIncassare.length})
+          </button>
+        )}
         <Link href="/dashboard" className="bottone-link">Oggi in numeri</Link>
         <Link href="/seasonal" className="bottone-link">Stagionali</Link>
         <Link href="/calendar" className="bottone-link">Calendario</Link>

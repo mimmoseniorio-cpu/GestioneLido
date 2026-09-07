@@ -75,6 +75,27 @@ async function scenarioF() {
     /\d/.test(testo))
   verifica('F · la mappa entra intera: 96 ombrelloni disegnati',
     (await p.locator('g.umb').count()) === 96)
+
+  // Sesta domanda: «chi deve ancora pagarmi?». `docs/07` §F le dà un tocco.
+  const filtro = p.locator('.actions button', { hasText: /Da incassare/ })
+  if (await filtro.count() === 0) {
+    verifica('F · «chi deve ancora pagarmi» ha un filtro da un tocco', false)
+    await p.close(); return
+  }
+  const quanti = parseInt((await filtro.innerText()).replace(/\D/g, ''), 10)
+  const c = new Conta(p)
+  await c.tap(filtro)
+  await p.waitForSelector('.risultati')
+  criterio('F', 'chi deve ancora pagarmi', c.n, 1)
+  verifica(`F · il filtro mostra i ${quanti} da incassare, e il totale in euro`,
+    /Da incassare/.test(await p.locator('.risultati').innerText()) &&
+    /€/.test(await p.locator('.risultati').innerText()))
+
+  await p.locator('.commuta button', { hasText: 'Elenco' }).click()
+  await p.waitForTimeout(400)
+  const righe = await p.locator('.elenco-ombrelloni .riga-ombrellone').count()
+  verifica(`F · anche l’elenco rispetta il filtro, non solo la mappa (${righe} righe)`,
+    righe === quanti)
   await p.close()
 }
 

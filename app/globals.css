@@ -652,3 +652,12 @@ svg.disposizione .omb rect { fill: #fff; stroke: #9aa8a6; cursor: pointer; }
 svg.disposizione .omb text { font-size: 13px; fill: #22312f; pointer-events: none; }
 svg.disposizione .omb.scelto rect { fill: #1d6b60; stroke: #14513f; stroke-width: 2; }
 svg.disposizione .omb.scelto text { fill: #fff; font-weight: 700; }
+
+/* Il filtro attivo si deve vedere da lontano: se resta acceso senza che si
+   noti, il gestore legge una mappa parziale credendola intera. */
+.actions button.attivo {
+  background: var(--primario, #1d6b60);
+  border-color: var(--primario, #1d6b60);
+  color: #fff;
+  font-weight: 600;
+}
