@@ -69,6 +69,12 @@ jobs:
       # Non basta che lo script giri: si controlla che dal dump tornino i tre
       # vincoli EXCLUDE, i trigger e btree_gist. Se si perdessero, il database
       # ripristinato accetterebbe di vendere due volte lo stesso ombrellone.
+      # `pg_dump` e `psql` non sono garantiti sul runner, e devono essere della
+      # stessa versione maggiore del server (16): un pg_dump più vecchio si
+      # rifiuta di leggere un database più nuovo.
+      - name: Strumenti di PostgreSQL
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client-16
+
       - name: Copia di sicurezza e prova di ripristino
         env:
           URL_DB_PROVA: postgresql://lido:lido@localhost:5432/gestionelido_verifica
