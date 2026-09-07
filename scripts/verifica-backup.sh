@@ -19,13 +19,25 @@ if [ -z "$FILE" ] || [ ! -f "$FILE" ]; then
   exit 1
 fi
 
-PROVA="${DB_PROVA:-gestionelido_verifica_backup}"
-# Stesso indirizzo del database di sviluppo, con un nome diverso: chi ha
-# `.env` configurato non deve passare nulla a mano.
-BASE=$(sed -n 's/^DATABASE_URL=//p' .env 2>/dev/null | head -1 | tr -d '"'"'"'')
-BASE="${BASE%%\?*}"
-URL_PROVA="${URL_DB_PROVA:-${BASE:+${BASE%/*}/$PROVA}}"
-URL_PROVA="${URL_PROVA:-postgresql://lido:lido@127.0.0.1:5432/$PROVA}"
+# L'indirizzo del database di prova. Ordine: quello passato, poi quello di
+# sviluppo con un nome diverso, infine un valore di ripiego.
+#
+# Il `.env` si legge solo se c'è: con `set -o pipefail`, una pipeline che
+# comincia con un `sed` su un file inesistente fallisce, e `set -e` spegne lo
+# script senza stampare niente. È quello che succedeva nella CI, dove `.env`
+# non esiste — un passo rosso in zero secondi e nessuna spiegazione.
+BASE=""
+if [ -f .env ]; then
+  BASE=$(sed -n 's/^DATABASE_URL=//p' .env | head -1 | tr -d '"'"'"'')
+  BASE="${BASE%%\?*}"
+fi
+URL_PROVA="${URL_DB_PROVA:-${BASE:+${BASE%/*}/gestionelido_verifica_backup}}"
+URL_PROVA="${URL_PROVA:-postgresql://lido:lido@127.0.0.1:5432/gestionelido_verifica_backup}"
+
+# Il nome si RICAVA dall'indirizzo, non si tiene a parte: tenendoli separati
+# si finiva per creare un database e ripristinare su un altro.
+PROVA="${URL_PROVA##*/}"
+PROVA="${PROVA%%\?*}"
 
 echo "· provo $FILE su $PROVA"
 psql "${URL_PROVA%/*}/postgres" -q -c "DROP DATABASE IF EXISTS $PROVA;" \
