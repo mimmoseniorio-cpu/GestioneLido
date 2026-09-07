@@ -17,6 +17,18 @@ npm run typecheck
 passo 'Test'
 npm test
 
+# La CI non ha `/opt/pw-browsers`, questo contenitore sì. Un test che si
+# appoggia a un percorso presente solo qui passa in locale e fallisce là —
+# è già successo. Se il percorso esiste, si rifà il giro senza.
+if [ -d /opt/pw-browsers ]; then
+  passo 'Test anche senza il browser locale (come nella CI)'
+  PW_BROWSERS_NASCOSTI=1 sh -c 'mv /opt/pw-browsers /opt/pw-browsers.off; \
+    npm test > /tmp/verifica-senza-browser.log 2>&1; esito=$?; \
+    mv /opt/pw-browsers.off /opt/pw-browsers; exit $esito' \
+    || { tail -30 /tmp/verifica-senza-browser.log; exit 1; }
+  grep -E 'Tests ' /tmp/verifica-senza-browser.log
+fi
+
 passo 'Compilazione'
 npm run build
 
