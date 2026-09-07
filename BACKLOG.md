@@ -104,14 +104,14 @@ tocca al massimo 5–6 file e ha un criterio di "fatto" verificabile.
 
 | ID | Task | Modello | Fatto quando |
 |---|---|---|---|
-| F7-01 | E2E scenario A + conteggio interazioni | 🟡 | ≤ 4 |
-| F7-02 | E2E scenario B | 🟡 | ≤ 4 alle proposte, ≤ 8 totali |
-| F7-03 | E2E scenario C (cliente e operatore) | 🟡 | ≤ 3 tap / ≤ 4 |
-| F7-04 | E2E scenario D | 🔴 | ≤ 4, credito corretto |
-| F7-05 | E2E scenario E | 🟡 | ≤ 3 |
-| F7-06 | Verifica scenario F con persona reale | 🔴 | 6 domande in 5 s |
-| F7-07 | T-20: ciclo completo end-to-end | 🔴 | Verde |
-| F7-08 | Prova con rete degradata | 🔴 | Criterio 10 |
+| ✅ F7-01 | E2E scenario A + conteggio interazioni | 🟡 | ≤ 4 |
+| ✅ F7-02 | E2E scenario B | 🟡 | ≤ 4 alle proposte, ≤ 8 totali |
+| ✅ F7-03 | E2E scenario C (cliente e operatore) | 🟡 | ≤ 3 tap / ≤ 4 |
+| ✅ F7-04 | E2E scenario D | 🔴 | ≤ 4, credito corretto |
+| ✅ F7-05 | E2E scenario E | 🟡 | ≤ 3 |
+| ⏸ F7-06 | Verifica scenario F **con persona reale** — non eseguibile da un agente | 🔴 | 6 domande in 5 s |
+| ✅ F7-07 | T-20: ciclo completo end-to-end (assenza → vendita → credito) | 🔴 | Verde |
+| ✅ F7-08 | Prova con rete degradata | 🔴 | Criterio 10 |
 | F7-09 | Prova di ripristino da backup | 🟡 | Ripristino verificato almeno una volta |
 | F7-10 | **Mezza giornata reale con il gestore** | 🔴 | Criterio 11: quaderno chiuso |
 

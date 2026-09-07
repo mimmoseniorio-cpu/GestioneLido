@@ -93,6 +93,8 @@ Aggiornato: 2026-09-06
 - [F6-24] Dashboard: occupazione, incassi, capacità recuperata, prossimi 7 giorni
 - [F6-26] **Generatore di griglia**: «6 file da 16» crea 96 ombrelloni, zone e passerelle
 - [F6-27] Editor della disposizione: **tocca e posa**, rinumerazione, vincolo unico sulla casella
+- [F7-01..F7-05, F7-07, F7-08] **Suite E2E sui sei scenari**: i nove criteri di `docs/07`
+  misurati contando le interazioni, più il ciclo completo (T-20) e la rete degradata
 - [F6-17] Editor del listino con **simulatore**: «questo ombrellone, questi giorni, quanto costa e per quale regola»
 - [F6-30] PWA installabile: manifest, service worker, icone — **criterio 7**
 - [F6-31] Coda di scritture con ritentativo e stato visibile — **criterio 10**
@@ -134,7 +136,7 @@ Non ci metterei ancora i clienti veri di uno stabilimento vero.
 ## In corso
 Nessun task in corso.
 
-**`F5-11` non posso farlo io**: il gate previsto è una prova su un tablet vero
+**`F5-11` e `F7-06` non posso farli io**: il gate previsto è una prova su un tablet vero
 con una persona vera. Gli screenshot e lo script E2E dimostrano il flusso e
 contano le interazioni, ma non dicono se un bagnino al sole capisce la mappa in
 cinque secondi. Serve mezz'ora tua, o del gestore, prima di costruirci sopra F6.
@@ -143,9 +145,9 @@ cinque secondi. Serve mezz'ora tua, o del gestore, prima di costruirci sopra F6.
 tale, e ora ogni pagina e ogni API passano dalla sessione reale.
 
 ## Prossimi 3
-1. [F7] Suite end-to-end sui sei scenari di `docs/07`
-2. [F4-10] Ambienti separati e backup automatici (la produzione c'è, il resto no)
-3. [F6-28] WhatsApp anche per la conferma di prenotazione (oggi solo per il link stagionale)
+1. [F4-10] Ambienti separati e backup automatici (la produzione c'è, il resto no)
+2. [F6-28] WhatsApp anche per la conferma di prenotazione (oggi solo per il link stagionale)
+3. [F6-23] Ricerca globale: manca il filtro «solo da incassare» di `docs/07` §F
 
 **Il pezzo più grosso che manca non è codice**: è `F4-10`, il deploy, che
 richiede la scelta del fornitore — con il vincolo che supporti `btree_gist`.
@@ -186,7 +188,7 @@ npm run db:deploy                 # applica le migrazioni
 npm run seed                      # 96 ombrelloni, dati realistici
 npm test                          # 382 test
 npm run dev                       # mappa su http://localhost:3000/map
-npm run e2e                       # scenario A, conta le interazioni
+npm run e2e                       # i sei scenari, con i nove criteri contati
 npm run e2e:seasonal              # contratto → link → assenza → posto vendibile
 npm run e2e:rapida                # telefono in inglese: date e chiusura del pannello
 npm run e2e:blocco                # blocco schermo: il server risponde 423, non 200
