@@ -879,11 +879,23 @@ function Pannello({ u, data, clubName, errore, onChiudi, onErrore, onSync, onCam
       )}
 
       {/* Il cliente non installa nulla: riceve il suo link su WhatsApp e da lì
-          comunica le assenze. Rigenerarlo invalida il precedente (C-06). */}
+          comunica le assenze.
+          
+          Il token è memorizzato SOLO hashato (D-05), quindi non esiste modo di
+          rimostrare quello in corso: l'unica cosa che si può fare è generarne
+          uno nuovo, e il vecchio muore. Va detto PRIMA di premere, non dopo:
+          «manda il link» non suona come un'azione che rompe qualcosa, e un
+          gestore che lo tocca per curiosità spegne il link che il cliente ha
+          nella chat — se ne accorgerà solo provando a comunicare un'assenza. */}
       {u.seasonalContractId && !link && (
-        <button onClick={() => void mandaLink()} disabled={attesa}>
-          Manda il link personale allo stagionale
-        </button>
+        <div className="box">
+          <button onClick={() => void mandaLink()} disabled={attesa}>
+            Genera un nuovo link personale
+          </button>
+          <div className="k" style={{ marginTop: 6 }}>
+            Quello che il cliente ha già smetterà di funzionare: mandagli il nuovo.
+          </div>
+        </div>
       )}
       {link && (
         <div className="box">
@@ -894,7 +906,12 @@ function Pannello({ u, data, clubName, errore, onChiudi, onErrore, onSync, onCam
                 Apri WhatsApp con il messaggio pronto
               </a>
             : <div className="k">Nessun telefono in anagrafica: copia il link e mandaglielo.</div>}
-          <div className="k" style={{ marginTop: 8 }}>Il link precedente non funziona più.</div>
+          {/* Il perché, non solo il cosa: senza il link nuovo il cliente non
+              può più comunicare le assenze, ed è tutto il senso del prodotto. */}
+          <div className="k" style={{ marginTop: 8 }}>
+            Il link precedente non funziona più. Se non gli mandi questo, non potrà
+            più comunicare le assenze.
+          </div>
         </div>
       )}
     </aside>

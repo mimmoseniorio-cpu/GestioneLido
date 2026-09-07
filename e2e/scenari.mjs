@@ -179,11 +179,19 @@ async function scenarioC() {
   const stagionale = p.locator('g.umb[aria-label*="Stagionale"]').first()
   await stagionale.click()
   await p.waitForSelector('aside.panel')
-  await p.getByRole('button', { name: /Manda il link personale/ }).click()
+  // L'avviso deve stare PRIMA del tocco: rigenerare spegne il link che il
+  // cliente ha già nella chat, e «manda il link» non lo faceva capire.
+  const prima = await p.locator('aside.panel').innerText()
+  verifica('C · prima di rigenerare, il pannello dice che il vecchio link morirà',
+    /smetterà di funzionare/.test(prima))
+
+  await p.getByRole('button', { name: /Genera un nuovo link personale/ }).click()
   await p.waitForSelector('.link-personale, code', { timeout: 15_000 })
   const link = (await p.locator('.link-personale, code').first().innerText()).trim()
   verifica('C · il gestore ottiene il link personale da mandare su WhatsApp',
     /\/s\/[A-Za-z0-9_-]{20,}/.test(link))
+  verifica('C · e dopo gli si dice perché va mandato, non solo che il vecchio è morto',
+    /non potrà più comunicare le assenze/.test(await p.locator('aside.panel').innerText()))
   await p.close()
 
   // Il cliente: browser nuovo, nessuna sessione, nessuna password.
