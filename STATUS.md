@@ -7,7 +7,7 @@ Aggiornato: 2026-09-06 · Branch: `main` · Repository: `mimmoseniorio-cpu/Gesti
 link su WhatsApp → assenza in 3 tap dal telefono → il posto compare fra i
 vendibili → il gestore lo rivende vedendo quanto gli costa → **il credito
 matura allo stagionale** → i contatori di capacità recuperata si muovono.
-382 test verdi, fra cui `T-12`, `T-14`, `T-15`, `T-16`, `T-27`, `T-28`, `T-40`,
+392 test verdi, fra cui `T-12`, `T-14`, `T-15`, `T-16`, `T-27`, `T-28`, `T-40`,
 `T-44`, `T-81`, `T-83` e il criterio 9 (la dashboard quadra con le prenotazioni).
 Da questo checkpoint gli stagionali **non arrivano più solo dal seed**: il
 gestore li crea, li chiude e registra le assenze di chi telefona.
@@ -78,7 +78,7 @@ Aggiornato: 2026-09-06
 - [F6-06] Magic link: generazione, hash, revoca, rigenerazione + messaggio WhatsApp
 - [F6-09] Area cliente `/s/[token]`: ombrellone, assenze, credito
 - [F6-10] "Non sarò presente" in **3 tap**, verificato nel browser
-- [F6-28 parziale] WhatsApp con messaggio pronto per il link stagionale
+- [F6-28] WhatsApp: link stagionale **e conferma di prenotazione**, già scritti e modificabili
 - [F6-12] Credito maturato alla rivendita, nella stessa transazione → `domain/seasonal/credit.ts`
 - [F6-13] Il costo in credito visibile nel pannello **prima** di vendere
 - [F6-14] Storno del credito se la rivendita viene annullata (T-14), tetto stagionale (T-15)
@@ -152,9 +152,9 @@ cinque secondi. Serve mezz'ora tua, o del gestore, prima di costruirci sopra F6.
 tale, e ora ogni pagina e ogni API passano dalla sessione reale.
 
 ## Prossimi 3
-1. [F4-10] Ambienti separati e backup automatici (la produzione c'è, il resto no)
-2. [F6-28] WhatsApp anche per la conferma di prenotazione (oggi solo per il link stagionale)
-3. [F6-29] Notifica al gestore quando uno stagionale dichiara un'assenza
+1. [F6-29] Notifica al gestore quando uno stagionale dichiara un'assenza
+2. [F4-10] Copie di sicurezza pianificate e ambiente di collaudo separato
+3. [F5-11 / F7-06] **Prova con una persona vera davanti al tablet** — tocca a te
 
 **Il pezzo più grosso che manca non è codice**: è `F4-10`, il deploy, che
 richiede la scelta del fornitore — con il vincolo che supporti `btree_gist`.
@@ -193,7 +193,7 @@ cp .env.example .env              # DATABASE_URL e TEST_DATABASE_URL
 npm install
 npm run db:deploy                 # applica le migrazioni
 npm run seed                      # 96 ombrelloni, dati realistici
-npm test                          # 382 test
+npm test                          # 392 test
 npm run dev                       # mappa su http://localhost:3000/map
 npm run e2e                       # i sei scenari, con i nove criteri contati
 npm run e2e:seasonal              # contratto → link → assenza → posto vendibile

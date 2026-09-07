@@ -13,6 +13,7 @@ import Link from 'next/link'
 import type { MapDay, MapUmbrella } from '@/server/queries/map'
 import type { ClienteTrovato } from '@/server/queries/customers'
 import { coda, type OperazioneInCoda } from '@/app/lib/coda'
+import { messaggioConferma, linkWhatsApp } from '@/domain/messaging/whatsapp'
 import { STATES, euro, dataLunga, dataBreve, dataChiara, spostaGiorni, oggiIso } from './states'
 
 const CELLA = 56          // bersagli generosi: sole, mani bagnate, una mano sola
@@ -371,7 +372,7 @@ export default function MapClient({ iniziale, clubName }:
         <>
           <div className="scrim" onClick={() => { setScelto(null); setErrore(null) }} />
           <Pannello
-            u={selezionato} data={data} errore={errore}
+            u={selezionato} data={data} clubName={clubName} errore={errore}
             onChiudi={() => { setScelto(null); setErrore(null) }}
             onErrore={setErrore} onSync={setSync}
             onCambiato={async () => { await rinfresca(); setScelto(null) }}
@@ -468,9 +469,12 @@ function Ombrellone({ u, onClick, evidenziato }:
   )
 }
 
-function Pannello({ u, data, errore, onChiudi, onErrore, onSync, onCambiato, onOttimistico }: {
+function Pannello({ u, data, clubName, errore, onChiudi, onErrore, onSync, onCambiato,
+                   onOttimistico }: {
   u: MapUmbrella
   data: string
+  /** serve al messaggio di conferma: il cliente deve leggere il nome vero */
+  clubName: string
   errore: string | null
   onChiudi: () => void
   onErrore: (m: string | null) => void
@@ -656,7 +660,7 @@ function Pannello({ u, data, errore, onChiudi, onErrore, onSync, onCambiato, onO
           {u.customerPhone && (
             <div className="row">
               <span>{u.customerPhone}</span>
-              <a href={`https://wa.me/${u.customerPhone.replace(/\D/g, '')}`}
+              <a href={linkWhatsApp(u.customerPhone, '') ?? '#'}
                  target="_blank" rel="noreferrer">WhatsApp</a>
             </div>
           )}
@@ -718,6 +722,29 @@ function Pannello({ u, data, errore, onChiudi, onErrore, onSync, onCambiato, onO
 
       {/* F6-19 · si rimborsa solo ciò che è entrato (C-46), quindi il pulsante
           esiste solo se qualcosa è stato incassato. */}
+      {/* F6-28 · La conferma parte da qui, già scritta, e il gestore la può
+          correggere prima di premere invio. Il prodotto non manda niente da
+          solo: un messaggio partito a nome suo senza che l'abbia letto
+          sarebbe un'altra cosa, e non l'abbiamo scelta. */}
+      {u.customerPhone && u.period && u.customerName && (() => {
+        const testo = messaggioConferma({
+          // Il nome di battesimo, non il cognome: «Buongiorno Antonio» è come
+          // si parla in uno stabilimento, «Buongiorno Ferrari» è una banca.
+          nome: u.customerName.split(' ')[0] ?? u.customerName,
+          club: clubName,
+          ombrelloni: [u.visibleNumber],
+          dal: u.period.from, al: u.period.to,
+          totaleCents: (u.pagatoCents ?? 0) + (u.amountDueCents ?? 0),
+          pagato: (u.amountDueCents ?? 0) === 0,
+        })
+        const link = linkWhatsApp(u.customerPhone, testo)
+        return link ? (
+          <a className="bottone-link" href={link} target="_blank" rel="noreferrer">
+            Manda la conferma su WhatsApp
+          </a>
+        ) : null
+      })()}
+
       {(u.pagatoCents ?? 0) > 0 && !rimborso && (
         <button onClick={() => { setRimborso(true); setImportoRimborso(
                   ((u.pagatoCents ?? 0) / 100).toFixed(2).replace('.', ',')) }}

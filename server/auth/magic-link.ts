@@ -33,12 +33,3 @@ export function tokenCorrisponde(token: string, hashAtteso: string): boolean {
 /** L'indirizzo da mandare al cliente. */
 export const urlPersonale = (base: string, token: string) =>
   `${base.replace(/\/$/, '')}/s/${token}`
-
-/** Messaggio WhatsApp precompilato, modificabile prima dell'invio (RF-SYS-03). */
-export function messaggioWhatsApp(nome: string, numero: string, link: string, club: string) {
-  const testo =
-    `Buongiorno ${nome}, questo è il suo link personale di ${club} per l'ombrellone ${numero}.\n\n` +
-    `Se un giorno non viene, lo comunichi da qui: il posto resta suo, ma noi possiamo ` +
-    `assegnarlo a qualcun altro solo per quel giorno.\n\n${link}`
-  return testo
-}

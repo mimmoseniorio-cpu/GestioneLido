@@ -3,7 +3,8 @@ import { scoped } from '@/server/repositories/scoped'
 import { richiediStaffApi } from '@/server/current-user'
 import { requirePermission } from '@/server/context'
 import { P } from '@/domain/auth/permissions'
-import { generaToken, urlPersonale, messaggioWhatsApp } from '@/server/auth/magic-link'
+import { generaToken, urlPersonale } from '@/server/auth/magic-link'
+import { messaggioLinkStagionale, linkWhatsApp } from '@/domain/messaging/whatsapp'
 import { prisma } from '@/server/repositories/scoped'
 import { ok, fail, baseUrl } from '@/server/http'
 
@@ -34,12 +35,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     const base = baseUrl(req)
     const link = urlPersonale(base, token)
-    const testo = messaggioWhatsApp(cliente.firstName, ombrellone.visibleNumber, link, club.name)
+    const testo = messaggioLinkStagionale(
+      cliente.firstName, ombrellone.visibleNumber, link, club.name)
 
     return ok({
       link,
       whatsapp: cliente.phoneNormalized
-        ? `https://wa.me/${cliente.phoneNormalized.replace(/\D/g, '')}?text=${encodeURIComponent(testo)}`
+        ? linkWhatsApp(cliente.phoneNormalized, testo)
         : null,
       testo,
     }, 201)

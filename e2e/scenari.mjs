@@ -308,6 +308,41 @@ async function scenarioE() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
+// F6-28 · La conferma su WhatsApp, già scritta.
+// ─────────────────────────────────────────────────────────────────────────
+async function scenarioConferma() {
+  const p = await staff()
+  const giorno = await (await p.request.get(`${URL}/api/v1/map`)).json()
+  const conTelefono = giorno.umbrellas.find(u => u.customerPhone && u.customerName && u.period)
+  if (!conTelefono) {
+    verifica('Conferma · c’è una prenotazione con un telefono', false)
+    await p.close(); return
+  }
+
+  await p.goto(`${URL}/map`, { waitUntil: 'networkidle' })
+  await p.locator(`g.umb[aria-label^="Ombrellone ${conTelefono.visibleNumber},"]`).first().click()
+  await p.waitForSelector('aside.panel')
+  const link = p.getByRole('link', { name: 'Manda la conferma su WhatsApp' })
+  if (await link.count() === 0) {
+    verifica('Conferma · il pannello offre la conferma su WhatsApp', false)
+    await p.close(); return
+  }
+  const testo = decodeURIComponent(((await link.getAttribute('href')) ?? '').split('text=')[1] ?? '')
+
+  // Le tre cose che il cliente cercherà nella chat arrivando in spiaggia.
+  verifica(`Conferma · dice quale ombrellone (${conTelefono.visibleNumber})`,
+    testo.includes(`ombrellone ${conTelefono.visibleNumber}`))
+  verifica('Conferma · dice i giorni', /\d{1,2} (gennaio|febbraio|marzo|aprile|maggio|giugno|luglio|agosto|settembre|ottobre|novembre|dicembre)/.test(testo))
+  verifica('Conferma · dice quanto, e se è già pagato',
+    /€/.test(testo) && /(saldato|da pagare)/.test(testo))
+  // Il nome dello stabilimento era fisso a «Stabilimento»: si notava appena
+  // in cima alla pagina, ma qui lo legge il cliente.
+  verifica('Conferma · nomina lo stabilimento vero, non un segnaposto',
+    /Lido/.test(testo) && !/^Stabilimento$/.test(testo))
+  await p.close()
+}
+
+// ─────────────────────────────────────────────────────────────────────────
 // Criterio 10 · la rete cade a metà prenotazione (F7-08).
 //
 // Su una spiaggia il segnale va e viene. Ciò che non è passato deve restare
@@ -357,6 +392,7 @@ const scenari = [
   ['Cbis', async () => { liberatoDaCbis = await scenarioCbis() }],
   ['D', async () => scenarioD(liberatoDaCbis)],
   ['E', scenarioE],
+  ['Conferma', scenarioConferma],
   ['Rete', scenarioRete],
 ]
 for (const [nome, fn] of scenari) {

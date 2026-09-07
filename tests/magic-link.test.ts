@@ -6,7 +6,7 @@
  * superficie resti quella minima: il proprio ombrellone e la propria assenza.
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
-import { generaToken, hashToken, tokenCorrisponde, urlPersonale, messaggioWhatsApp }
+import { generaToken, hashToken, tokenCorrisponde, urlPersonale }
   from '@/server/auth/magic-link'
 import { contestoDaToken } from '@/server/customer-session'
 import { declareAbsence } from '@/server/use-cases/absences'
@@ -55,15 +55,8 @@ describe('generazione del token', () => {
     expect(tokenCorrisponde(generaToken().token, hash)).toBe(false)
   })
 
-  it('compone il link e un messaggio WhatsApp comprensibile', () => {
-    const link = urlPersonale('https://lido.example/', 'abc')
-    expect(link).toBe('https://lido.example/s/abc')
-    const m = messaggioWhatsApp('Luigi', '51', link, 'Lido Adriano')
-    expect(m).toContain('Luigi')
-    expect(m).toContain('ombrellone 51')
-    expect(m).toContain(link)
-    // La promessa che convince a comunicare l'assenza.
-    expect(m).toContain('il posto resta suo')
+  it('compone il link personale', () => {
+    expect(urlPersonale('https://lido.example/', 'abc')).toBe('https://lido.example/s/abc')
   })
 })
 

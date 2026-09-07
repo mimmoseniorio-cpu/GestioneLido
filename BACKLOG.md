@@ -91,7 +91,7 @@ tocca al massimo 5–6 file e ha un criterio di "fatto" verificabile.
 | ✅ F6-25 | Calendario: griglia ombrelloni × giorni | 🟡 | Sostituisce le tre viste |
 | ✅ F6-26 | **Generatore di griglia** (S-23) | 🔴 | 96 ombrelloni configurati in < 2 minuti |
 | ✅ F6-27 | Editor mappa: rinumerazione, blocco e **spostamento** (tocca e posa) | 🟡 | T-83, T-84, T-85 verdi |
-| 🟡 F6-28 | Pulsante WhatsApp — **parziale**: fatto per il link stagionale; manca per la conferma prenotazione | 🟢 | `RF-SYS-03` |
+| ✅ F6-28 | WhatsApp: link stagionale **e conferma di prenotazione** (RF-SYS-03) | 🟢 | Messaggio precompilato, modificabile prima dell'invio |
 | F6-29 | `NotificationPort` con implementazione a log | 🟢 | Astrazione pronta per `R2` |
 | ✅ F6-30 | PWA: manifest, service worker (shell, **non** dati) | 🟡 | Installabile, criterio 7 |
 | ✅ F6-31 | Stato di sincronizzazione + coda retry | 🔴 | T-70, T-71 verdi, criterio 10 |
