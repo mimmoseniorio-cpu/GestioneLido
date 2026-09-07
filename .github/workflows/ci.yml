@@ -27,6 +27,7 @@ jobs:
 
     env:
       DATABASE_URL: postgresql://lido:lido@localhost:5432/gestionelido_test?schema=public
+      DIRECT_DATABASE_URL: postgresql://lido:lido@localhost:5432/gestionelido_test?schema=public
       TEST_DATABASE_URL: postgresql://lido:lido@localhost:5432/gestionelido_test?schema=public
 
     steps:
@@ -41,3 +42,36 @@ jobs:
       - run: npm run typecheck
       - run: npx prisma migrate deploy
       - run: npm test
+
+      # ── I nove criteri di docs/07, a ogni push ────────────────────────────
+      #
+      # «Semplice» per questo prodotto è una tabella di numeri, non un
+      # aggettivo: prenotare costa al massimo quattro interazioni, uno
+      # stagionale comunica un'assenza in tre tap. Verificarli a mano ogni
+      # tanto vuol dire scoprire fra un mese che sono diventati sei.
+      - name: Stabilimento dimostrativo
+        run: npm run seed
+
+      - name: Chromium per gli scenari
+        run: npx playwright install --with-deps chromium
+
+      - name: Compila e avvia
+        run: |
+          npm run build
+          npm start &
+          npx wait-on -t 60000 http://localhost:3000/login
+
+      - name: Scenari end-to-end e conteggio delle interazioni
+        run: npm run e2e
+
+      # ── La copia di sicurezza deve restare ripristinabile ─────────────────
+      #
+      # Non basta che lo script giri: si controlla che dal dump tornino i tre
+      # vincoli EXCLUDE, i trigger e btree_gist. Se si perdessero, il database
+      # ripristinato accetterebbe di vendere due volte lo stesso ombrellone.
+      - name: Copia di sicurezza e prova di ripristino
+        env:
+          URL_DB_PROVA: postgresql://lido:lido@localhost:5432/gestionelido_verifica
+        run: |
+          npm run backup
+          npm run backup:verifica

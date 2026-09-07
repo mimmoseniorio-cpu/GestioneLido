@@ -9,11 +9,11 @@
  *
  * Uso:  npm start   (in un altro terminale)  →  node e2e/seasonal.mjs
  */
-import { chromium } from 'playwright'
+import { apriBrowser } from './browser.mjs'
 import { accedi } from './login.mjs'
 
 const URL = process.env.E2E_URL ?? 'http://localhost:3000'
-const b = await chromium.launch({ executablePath: process.env.PW_CHROMIUM ?? '/opt/pw-browsers/chromium' })
+const b = await apriBrowser()
 const p = await b.newPage({ viewport: { width: 1180, height: 820 } })
 
 const esiti = []

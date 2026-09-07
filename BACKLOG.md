@@ -41,7 +41,7 @@ tocca al massimo 5–6 file e ha un criterio di "fatto" verificabile.
 | ✅ F4-07 | Middleware idempotenza (`Idempotency-Key`) | 🔴 | T-21 verde |
 | ✅ F4-08 | Servizio audit log (before/after, solo campi cambiati) | 🟡 | Ogni operazione critica lascia traccia |
 | ✅ F4-09 | CI: typecheck, lint, unit, integration su Postgres effimero | 🟡 | Pipeline verde su push |
-| 🟡 F4-10 | Tre ambienti + backup automatici (`D-09`) — **parziale**: produzione su Vercel + Neon online; mancano ambienti separati e backup | 🟡 | Deploy su staging funzionante |
+| 🟡 F4-10 | Tre ambienti + backup automatici (`D-09`) — **parziale**: produzione online, i rilasci di prova non toccano il database vero, copie verificabili; mancano la pianificazione e un ambiente di collaudo | 🟡 | Deploy su staging funzionante |
 
 ## F5 — Prototipo
 *Gate: scenari A e F dimostrabili su tablet reale.*
@@ -112,7 +112,7 @@ tocca al massimo 5–6 file e ha un criterio di "fatto" verificabile.
 | ⏸ F7-06 | Verifica scenario F **con persona reale** — non eseguibile da un agente | 🔴 | 6 domande in 5 s |
 | ✅ F7-07 | T-20: ciclo completo end-to-end (assenza → vendita → credito) | 🔴 | Verde |
 | ✅ F7-08 | Prova con rete degradata | 🔴 | Criterio 10 |
-| F7-09 | Prova di ripristino da backup | 🟡 | Ripristino verificato almeno una volta |
+| ✅ F7-09 | Prova di ripristino da backup (`npm run backup:verifica`, anche in CI) | 🟡 | Ripristino verificato almeno una volta |
 | F7-10 | **Mezza giornata reale con il gestore** | 🔴 | Criterio 11: quaderno chiuso |
 
 ---

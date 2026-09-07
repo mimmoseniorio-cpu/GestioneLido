@@ -7,7 +7,7 @@ Aggiornato: 2026-09-06 · Branch: `main` · Repository: `mimmoseniorio-cpu/Gesti
 link su WhatsApp → assenza in 3 tap dal telefono → il posto compare fra i
 vendibili → il gestore lo rivende vedendo quanto gli costa → **il credito
 matura allo stagionale** → i contatori di capacità recuperata si muovono.
-404 test verdi, fra cui `T-12`, `T-14`, `T-15`, `T-16`, `T-27`, `T-28`, `T-40`,
+407 test verdi, fra cui `T-12`, `T-14`, `T-15`, `T-16`, `T-27`, `T-28`, `T-40`,
 `T-44`, `T-81`, `T-83` e il criterio 9 (la dashboard quadra con le prenotazioni).
 Da questo checkpoint gli stagionali **non arrivano più solo dal seed**: il
 gestore li crea, li chiude e registra le assenze di chi telefona.
@@ -79,6 +79,7 @@ Aggiornato: 2026-09-06
 - [F6-09] Area cliente `/s/[token]`: ombrellone, assenze, credito
 - [F6-10] "Non sarò presente" in **3 tap**, verificato nel browser
 - [F6-28] WhatsApp: link stagionale **e conferma di prenotazione**, già scritti e modificabili
+- [CI] I nove criteri di `docs/07` girano a ogni push, insieme alla prova di ripristino
 - [F6-29] `NotificationPort` + la fascia sulla mappa: l'assenza comunicata di sera
   dal telefono di un cliente è capacità vendibile domani, e il gestore la vede senza cercarla
 - [F6-12] Credito maturato alla rivendita, nella stessa transazione → `domain/seasonal/credit.ts`
@@ -195,7 +196,7 @@ cp .env.example .env              # DATABASE_URL e TEST_DATABASE_URL
 npm install
 npm run db:deploy                 # applica le migrazioni
 npm run seed                      # 96 ombrelloni, dati realistici
-npm test                          # 404 test
+npm test                          # 407 test
 npm run dev                       # mappa su http://localhost:3000/map
 npm run e2e                       # i sei scenari, con i nove criteri contati
 npm run e2e:seasonal              # contratto → link → assenza → posto vendibile

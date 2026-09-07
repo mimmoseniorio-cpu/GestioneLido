@@ -7,12 +7,12 @@
  *  2. La data dev'essere leggibile anche se il telefono è in inglese: il
  *     selettore nativo scriveva «09/06/2026» per il 6 settembre.
  */
-import { chromium } from 'playwright'
+import { apriBrowser } from './browser.mjs'
 import { accedi } from './login.mjs'
 
 const URL = process.env.E2E_URL ?? 'http://localhost:3000'
 // Telefono in inglese: è la condizione in cui la data diventa ambigua.
-const b = await chromium.launch({ executablePath: process.env.PW_CHROMIUM ?? '/opt/pw-browsers/chromium' })
+const b = await apriBrowser()
 const p = await b.newPage({ viewport: { width: 412, height: 915 }, locale: 'en-US' })
 
 const esiti = []

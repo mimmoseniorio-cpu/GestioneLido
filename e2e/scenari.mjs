@@ -13,12 +13,11 @@
  *
  * Uso:  npm start  →  npm run e2e
  */
-import { chromium } from 'playwright'
+import { apriBrowser } from './browser.mjs'
 import { accedi } from './login.mjs'
 
 const URL = process.env.E2E_URL ?? 'http://localhost:3000'
-const browser = await chromium.launch({
-  executablePath: process.env.PW_CHROMIUM ?? '/opt/pw-browsers/chromium' })
+const browser = await apriBrowser()
 
 /** Un tap, una digitazione: le interazioni si contano solo passando da qui. */
 class Conta {
