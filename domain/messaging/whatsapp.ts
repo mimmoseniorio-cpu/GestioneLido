@@ -63,9 +63,16 @@ export function messaggioConferma(c: Conferma) {
   )
 }
 
-/** L'indirizzo che apre WhatsApp con il messaggio già scritto. */
-export function linkWhatsApp(telefono: string, testo: string) {
+/**
+ * L'indirizzo che apre WhatsApp, con il messaggio già scritto se c'è.
+ *
+ * Senza testo NON si aggiunge `?text=`: un parametro vuoto in fondo
+ * all'indirizzo non fa danni, ma è la prima cosa che si nota aprendo il link,
+ * e chi la vede pensa che il messaggio si sia perso per strada.
+ */
+export function linkWhatsApp(telefono: string, testo = '') {
   const numero = telefono.replace(/\D/g, '')
   if (!numero) return null
-  return `https://wa.me/${numero}?text=${encodeURIComponent(testo)}`
+  const base = `https://wa.me/${numero}`
+  return testo.trim() ? `${base}?text=${encodeURIComponent(testo)}` : base
 }

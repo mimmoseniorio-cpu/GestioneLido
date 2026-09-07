@@ -12,6 +12,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import type { SchedaCliente } from '@/server/queries/customers'
+import { linkWhatsApp } from '@/domain/messaging/whatsapp'
 
 const euro = (c: number) =>
   (c / 100).toLocaleString('it-IT', { style: 'currency', currency: 'EUR' })
@@ -52,8 +53,8 @@ export default function Scheda({ dati }: { dati: SchedaCliente }) {
           <h1>{dati.nome} {dati.cognome}</h1>
           {dati.telefono && <div className="tel">{dati.telefono}</div>}
         </div>
-        {dati.telefonoWhatsApp && (
-          <a className="wa" href={`https://wa.me/${dati.telefonoWhatsApp}`}
+        {dati.telefonoWhatsApp && linkWhatsApp(dati.telefonoWhatsApp) && (
+          <a className="wa" href={linkWhatsApp(dati.telefonoWhatsApp)!}
              target="_blank" rel="noreferrer">WhatsApp</a>
         )}
       </div>

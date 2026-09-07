@@ -349,6 +349,13 @@ async function scenarioConferma() {
   // in cima alla pagina, ma qui lo legge il cliente.
   verifica('Conferma · nomina lo stabilimento vero, non un segnaposto',
     /Lido/.test(testo) && !/^Stabilimento$/.test(testo))
+
+  // Due link distinti: scrivere due righe al volo, e mandare la conferma.
+  // Il primo non deve avere un «?text=» vuoto in fondo — non fa danni, ma
+  // chi lo vede pensa che il messaggio si sia perso per strada.
+  const chat = await p.getByRole('link', { name: 'Scrivi su WhatsApp' }).getAttribute('href')
+  verifica(`Conferma · la chat semplice non ha un «?text=» vuoto (${chat})`,
+    !!chat && !chat.includes('text='))
   await p.close()
 }
 

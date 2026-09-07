@@ -76,4 +76,12 @@ describe('linkWhatsApp', () => {
     expect(linkWhatsApp('', 'x')).toBeNull()
     expect(linkWhatsApp('non è un numero', 'x')).toBeNull()
   })
+
+  it('senza testo non lascia un «?text=» vuoto in fondo', () => {
+    // Non fa danni, ma è la prima cosa che si nota aprendo il link: chi la
+    // vede pensa che il messaggio si sia perso per strada.
+    expect(linkWhatsApp('+39 343 962 3203')).toBe('https://wa.me/393439623203')
+    expect(linkWhatsApp('+39 343 962 3203', '')).toBe('https://wa.me/393439623203')
+    expect(linkWhatsApp('+39 343 962 3203', '   ')).toBe('https://wa.me/393439623203')
+  })
 })

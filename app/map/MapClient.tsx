@@ -693,8 +693,12 @@ function Pannello({ u, data, clubName, errore, onChiudi, onErrore, onSync, onCam
           {u.customerPhone && (
             <div className="row">
               <span>{u.customerPhone}</span>
-              <a href={linkWhatsApp(u.customerPhone, '') ?? '#'}
-                 target="_blank" rel="noreferrer">WhatsApp</a>
+              {/* Solo la chat, senza messaggio: serve a scrivere due righe al
+                  volo. La conferma della prenotazione è il pulsante sotto. */}
+              {linkWhatsApp(u.customerPhone) && (
+                <a href={linkWhatsApp(u.customerPhone)!}
+                   target="_blank" rel="noreferrer">Scrivi su WhatsApp</a>
+              )}
             </div>
           )}
           {u.period && (
