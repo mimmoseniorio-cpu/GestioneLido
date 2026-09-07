@@ -141,15 +141,58 @@ elenco ordinato per urgenza, ed è lì che si vede se funziona davvero.
 
 ---
 
+## Copie di sicurezza
+
+Neon tiene una propria cronologia, ma un backup che vive solo dentro il
+fornitore non è un backup: se si perde l'accesso all'account, si perde anche
+quello. La copia va tirata giù e tenuta altrove.
+
+```bash
+npm run backup            # → ./backup/gestionelido-<data>.sql.gz
+npm run backup:verifica   # la ripristina davvero, e controlla che regga
+```
+
+Va eseguito da una macchina che raggiunge il database — il tuo computer, con
+`DIRECT_DATABASE_URL` nel `.env`. Serve `pg_dump`
+(`apt install postgresql-client`, o `brew install libpq`).
+
+**`backup:verifica` non è una formalità.** Ripristina la copia su un database
+usa-e-getta e controlla che ci siano ancora i tre vincoli `EXCLUDE`, i trigger
+e `btree_gist`. Se si perdessero, il database ripristinato accetterebbe di
+vendere due volte lo stesso ombrellone — e non lo scopriresti finché non
+succede, su dati veri.
+
+Il file contiene **nomi, telefoni e pagamenti dei clienti**. È già escluso dal
+repository; non va su cartelle condivise né in allegato a una mail.
+
+---
+
+## Rilasci di prova (preview)
+
+Su Vercel le variabili d'ambiente valgono per «Production **and Preview**».
+Senza mettersi in mezzo, aprire una pull request farebbe applicare al database
+vero le migrazioni di un ramo non ancora provato.
+
+Il progetto si rifiuta di farlo: in preview salta migrazioni e dati
+dimostrativi, e lo scrive nel log. Non devi configurare niente.
+
+Se un giorno vorrai preview con un database proprio: crea un secondo database
+(su Neon è un *branch*), imposta le sue variabili **solo per Preview** e
+aggiungi `ALLOW_PREVIEW_DB_WRITES=true`. Se le variabili puntassero ancora al
+database di produzione, la build si ferma invece di migrare.
+
+---
+
 ## Da sapere
 
 - **I dati dimostrativi si caricano una sola volta.** A ogni rilascio
   successivo il database viene lasciato in pace: se ci metti dati veri, non
   te li cancello. Per ricominciare da zero, si svuota il database da Neon e
   il rilascio successivo lo ripopola.
-- **È una prova, non un impianto di produzione.** Mancano ancora i backup
-  automatici e gli ambienti separati (`F4-10` completo). Non ci metterei
-  ancora i clienti veri di uno stabilimento vero.
+- **È una prova, non un impianto di produzione.** La copia di sicurezza ora
+  si fa e si verifica, ma a mano: manca la pianificazione automatica, e
+  manca un ambiente di collaudo separato. Prima di metterci i clienti veri di
+  uno stabilimento vero, servono tutte e due.
 - **Ogni `git push` rilascia in automatico.** Quando aggiungo qualcosa, la
   trovi online in un paio di minuti senza fare nulla.
 - **Il database dimostrativo è pubblico a chi ha il link.** Le password sono

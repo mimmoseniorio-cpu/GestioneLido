@@ -3,3 +3,8 @@ node_modules/
 .env
 *.tsbuildinfo
 coverage/
+
+# Le copie di sicurezza contengono nomi, telefoni e pagamenti dei clienti:
+# non entrano nel repository per nessun motivo.
+backup/
+*.sql.gz

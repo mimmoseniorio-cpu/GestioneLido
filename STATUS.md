@@ -131,8 +131,14 @@ Il primo rilascio ha chiuso l'incognita che pesava di più: **Neon applica
 `btree_gist`** e i tre vincoli EXCLUDE. La garanzia «non si vende due volte
 lo stesso ombrellone» è attiva sul database vero, non solo in locale.
 
-`F4-10` resta **parziale**: mancano ambienti separati e backup automatici.
-Non ci metterei ancora i clienti veri di uno stabilimento vero.
+`F4-10` resta **parziale**, ma i due buchi peggiori sono chiusi:
+- un rilascio di prova non tocca più il database vero (`db/prepara.ts`);
+- `npm run backup` + `npm run backup:verifica`: la copia si fa **e si
+  ripristina davvero**, controllando che vincoli, trigger e `btree_gist`
+  siano ancora al loro posto.
+
+Mancano la pianificazione automatica delle copie e un ambiente di collaudo
+separato. Non ci metterei ancora i clienti veri di uno stabilimento vero.
 
 ## In corso
 Nessun task in corso.
@@ -198,6 +204,7 @@ npm run e2e:disposizione          # sposta e rinumera, e la mappa di lavoro lo s
 # `npm run seed` stampa in fondo le credenziali e un link stagionale
 #   admin@lidoadriano.it / lido2026
 npm run typecheck
+npm run backup                    # copia di sicurezza; poi backup:verifica
 ```
 Il database di sviluppo e' usa-e-getta: `npm run db:reset` lo ricrea da zero.
 I test girano su `gestionelido_test`, mai sul database di sviluppo.
