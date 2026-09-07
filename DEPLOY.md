@@ -87,7 +87,18 @@ progetto Vercel.
 
 ---
 
-## Passo 3 · L'ultima variabile (importante)
+## Passo 3 · L'ultima variabile (importante) — ✅ fatta
+
+> Nell'interfaccia attuale di Vercel le variabili non hanno una voce propria
+> nel menù: stanno **dentro l'ambiente**. Settings → Environments → clic su
+> **Production** → lì c'è *Environment Variables*.
+>
+> Per verificare che abbia preso non basta aprire l'app dal dominio pulito:
+> da lì il link verrebbe giusto anche senza `APP_URL`, perché il codice lo
+> dedurrebbe dall'indirizzo. Bisogna aprirla da un indirizzo di distribuzione
+> (Deployments → Visit, quello con il codice in mezzo) e chiedere il link
+> personale di uno stagionale: deve puntare comunque al dominio pulito.
+
 
 Torna su Vercel → *Settings* → *Environment Variables* → `APP_URL` →
 scrivici l'indirizzo del punto 5, per esteso:

@@ -128,6 +128,8 @@ Aggiornato: 2026-09-06
 
 ## In produzione
 **È online e provabile dal telefono**: `https://gestione-lido.vercel.app`
+(`APP_URL` impostata: i link personali degli stagionali restano validi fra un
+rilascio e l'altro, qualunque indirizzo usi il gestore per entrare)
 (`admin@lidoadriano.it` / `lido2026`). Vercel per l'applicazione, Neon per il
 database, entrambi a costo zero — procedura in `DEPLOY.md`.
 
